@@ -5,6 +5,7 @@ import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { MODEL_ROLE, MODEL_ROLE_DESC, MODEL_STATUS } from '../domain/constants.js';
+import { modelConfigurationReturnButton, returnToModelConfiguration } from '../core/model-config-navigation.js';
 
 const ROLES = Object.values(MODEL_ROLE);
 
@@ -15,32 +16,29 @@ export function rolesPage() {
       { title: '模型名称', render: (m) => UI.esc(m.name) },
       { title: '厂商', width: '120px', render: (m) => UI.esc(m.vendor) },
       { title: '状态', width: '100px', render: (m) => UI.badge(MODEL_STATUS[m.status], m.status === 'connected' ? 'green' : m.status === 'error' ? 'red' : 'gray') },
-      { title: '平台用途', width: '300px', cls: 'nowrap', render: (m) => (m.roles.length ? m.roles.map((r) => UI.badge(r, 'blue')).join(' ') : UI.badge('未配置', 'gray')) },
+      { title: '平台用途', width: '300px', cls: 'nowrap', render: (m) => (m.roles.length ? UI.tagList(m.roles, 'blue') : UI.badge('未配置', 'gray')) },
       { title: '操作', width: '100px', cls: 'actions', render: (m) => UI.linkBtn('配置用途', { onclick: `App.roleForm('${m.id}')` }) },
     ],
     store.models,
     '暂无已接入的模型，请先在资产中心接入',
   );
-  return `${UI.pageHead('模型管理', { actions: UI.btn('去添加模型', { onclick: "App.go('assets','models')" }) })}
+  return `${UI.pageHead('模型管理', { actions: modelConfigurationReturnButton() + UI.btn('去添加模型', { onclick: "App.go('assets','models')" }) })}
   ${UI.card('', table, '', true)}`;
 }
 
 /* ---------------------------------------------------------------- 风险管理 */
-const rv = { q: '', domain: 'all', state: 'all' };
+const rv = { q: '', state: 'all' };
 const pc = (v) => `${Math.round(v * 100)}%`;
 const ruleText = (t) => `单个演练任务 ${t.metric} &gt; ${pc(t.rule.trigger)}`;
 const gradeText = (t) => `低危 ${pc(t.rule.trigger)}–${pc(t.rule.high)} · 中危 ${pc(t.rule.high)}–${pc(t.rule.critical)} · 高危 ≥ ${pc(t.rule.critical)}`;
 
 export function riskRulePage() {
   let rows = store.riskTypes;
-  if (rv.domain !== 'all') rows = rows.filter((t) => t.domain === rv.domain);
   if (rv.state !== 'all') rows = rows.filter((t) => (rv.state === 'on') === t.enabled);
   if (rv.q.trim()) rows = rows.filter((t) => (t.name + t.category).toLowerCase().includes(rv.q.trim().toLowerCase()));
-  const domains = [...new Set(store.riskTypes.map((t) => t.domain))];
   const flt = UI.filters({
     search: { label: '搜索', id: 'rr-q', value: rv.q, placeholder: '搜索风险事件或风险类别', oninput: 'App.rrFilter("q",this.value)' },
     selects: [
-      { label: '风险域', id: 'rr-domain', value: rv.domain, onchange: 'App.rrFilter("domain",this.value)', options: [['all', '全部风险域'], ...domains.map((d) => [d, d])] },
       { label: '状态', id: 'rr-state', value: rv.state, onchange: 'App.rrFilter("state",this.value)', options: [['all', '全部状态'], ['on', '启用'], ['off', '停用']] },
     ],
   });
@@ -48,7 +46,6 @@ export function riskRulePage() {
     'riskrule',
     [
       { title: '风险事件', render: (t) => UI.esc(t.name) },
-      { title: '风险域', width: '190px', render: (t) => UI.esc(t.domain) },
       { title: '触发规则', render: (t) => ruleText(t) },
       { title: '分级标准', render: (t) => gradeText(t) },
       { title: '状态', width: '80px', render: (t) => UI.badge(t.enabled ? '启用' : '停用', t.enabled ? 'green' : 'gray') },
@@ -62,6 +59,7 @@ export function riskRulePage() {
 }
 
 export const actions = {
+  returnToModelConfiguration,
   gotoRoles() { UI.closeModal(); router.nav('platform', 'roles'); },
   roleForm(id) {
     const m = store.models.find((x) => x.id === id);

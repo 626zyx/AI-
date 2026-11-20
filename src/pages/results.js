@@ -20,7 +20,12 @@ const COMPARE_MODES = {
 };
 
 const doneTasks = () => store.listTasks().filter((t) => t.status === 'done');
-const guardText = (t) => (t.guardId ? UI.esc(t.guardName) : `<span class="faint">${GUARD_NONE}</span>`);
+const guardText = (t) => {
+  const config = { ...t, ...t.executionSnapshot, ...t.configSnapshot };
+  if (!config.guardId) return `<span class="faint">${GUARD_NONE}</span>`;
+  const name = (config.guardName || '已启用').replace(/[（(](?:输入|输出)(?:\s*\+\s*(?:输入|输出))?[）)]$/, '').trim();
+  return UI.esc(`${name}（${store.guardStageText(config)}）`);
+};
 
 function rowsData() {
   let rows = doneTasks();
@@ -50,17 +55,16 @@ export function resultsPage() {
         options: [['all', '全部等级'], ['critical', '高危'], ['high', '中危'], ['medium', '低危'], ['none', '安全']],
       },
     ],
-    sort: { label: view.sortDesc ? 'ASR：从高到低' : 'ASR：从低到高', onclick: 'App.rsSort()' },
   });
 
   const table = UI.pagedTable(
     'results',
     [
       { title: '靶标名称', render: (t) => UI.esc(t.targetName) },
-      { title: 'ASR', width: '90px', render: (t) => `<span class="num">${UI.pct(t.asr)}</span>` },
+      { title: 'ASR', width: '90px', sort: { direction: view.sortDesc ? 'descending' : 'ascending', onclick: 'App.rsSort()' }, render: (t) => `<span class="num">${UI.pct(t.asr)}</span>` },
       { title: '风险等级', width: '100px', render: (t) => UI.riskBadge(t.risk) },
-      { title: '攻击策略', render: (t) => UI.esc(t.strategyName) },
-      { title: '蓝队', width: '110px', render: guardText },
+      { title: '红队配置', render: (t) => UI.esc(t.strategyName) },
+      { title: '蓝队配置', width: '170px', render: guardText },
       { title: '裁判模型', render: (t) => UI.esc(t.judgeName) },
       {
         title: '操作', width: '170px', cls: 'actions',
@@ -71,10 +75,10 @@ export function resultsPage() {
       },
     ],
     rows,
-    '暂无演练结果',
+    '暂无模型评估结果',
   );
 
-  return `${UI.pageHead('演练结果')}
+  return `${UI.pageHead('模型评估')}
   ${flt}
   ${UI.card('', table, '', true)}`;
 }

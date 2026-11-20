@@ -3,6 +3,8 @@ import { icon } from '../core/icons.js';
 import * as UI from '../core/ui.js';
 import * as store from '../domain/store.js';
 import * as router from '../core/router.js';
+import { detailFields, detailBlock, detailContent, detailTableField, methodConfigurationTable, openConfigDetail } from '../core/config-detail.js';
+import { openEditor } from './strategy-editor.js';
 
 /* ---------------------------------------------------------------- 攻击策略 */
 const sView = { q: '', status: 'all' };
@@ -25,17 +27,17 @@ export function attackStrategyPage() {
   const table = UI.pagedTable(
     'strategies',
     [
-      { title: '策略名称', render: (s) => `<button class="link-btn" onclick="App.openStrategy('${s.id}')">${UI.esc(s.name)}</button>` },
+      { title: '策略名称', render: (s) => `<button class="link-btn" onclick="App.${s.status === 'draft' ? 'editStrategy' : 'openStrategy'}('${s.id}')">${UI.esc(s.name)}</button>` },
       { title: '攻击方法', render: (s) => `<span class="mono text-support">${UI.esc(s.methods.map((m) => m.name).join(' · ') || '—')}</span>` },
       { title: '攻击题库', render: (s) => `<div class="cfg-lines">${store.strategyBankLines(s).map((l) => `<div>${UI.esc(l)}</div>`).join('') || '—'}</div>` },
       { title: '状态', width: '100px', render: (s) => UI.badge(store.STRATEGY_STATUS[s.status], s.status === 'published' ? 'blue' : 'gray') },
       { title: '更新时间', width: '150px', cls: 'num', render: (s) => UI.esc(s.updatedAt) },
       {
-        title: '操作', width: '120px', cls: 'actions',
-        render: (s) => `<div class="row-actions">
-          ${UI.linkBtn('详情', { onclick: `App.openStrategy('${s.id}')` })}
-          ${UI.linkBtn('编辑', { onclick: `App.editStrategy('${s.id}')`, disabled: s.status === 'published' })}
-          ${s.status === 'draft' ? UI.linkBtn('删除', { danger: true, onclick: `App.delStrategy('${s.id}')` }) : ''}
+        title: '操作', width: '190px', cls: 'actions',
+        render: (s) => `<div class="row-actions strategy-row-actions" data-strategy-status="${s.status}">
+          ${s.status === 'draft'
+            ? UI.linkBtn('编辑', { onclick: `App.editStrategy('${s.id}')` }) + UI.linkBtn('删除', { danger: true, onclick: `App.delStrategy('${s.id}')` })
+            : UI.linkBtn('详情', { onclick: `App.openStrategy('${s.id}')` }) + UI.linkBtn('复制', { onclick: `App.copyStrategy('${s.id}')` }) + UI.linkBtn('删除', { danger: true, onclick: `App.delStrategy('${s.id}')` })}
         </div>`,
       },
     ],
@@ -56,7 +58,7 @@ export function guardStrategyPage() {
     [
       { title: '策略名称', render: (g) => `<button class="link-btn" onclick="App.openGuard('${g.id}')">${UI.esc(g.name)}</button>` },
       { title: '来源', width: '90px', render: () => '系统' },
-      { title: '审核维度', render: (g) => g.dims.map(([n]) => UI.badge(n, 'gray')).join(' ') },
+      { title: '审核维度', render: (g) => UI.tagList(g.dims.map(([n]) => n)) },
       { title: '可部署位置', width: '130px', render: (g) => g.stages.join(' / ') },
       {
         title: '操作', width: '90px', cls: 'actions',
@@ -73,8 +75,8 @@ export function guardStrategyPage() {
 export const actions = {
   delStrategy(id) {
     const s = store.strategies.find((x) => x.id === id);
-    if (!s || s.status !== 'draft') return;
-    UI.modal('删除攻击策略', `<p>确定删除「${UI.esc(s.name)}」？删除后不可恢复。</p>`,
+    if (!s) return;
+    UI.modal('删除攻击策略', `<p>确定删除「${UI.esc(s.name)}」？${s.status === 'published' ? '删除后不可再用于新建或开始演练，待开始任务需重新选择策略；已开始任务及历史记录保留。' : '删除后不可恢复。'}</p>`,
       `${UI.btn('取消', { onclick: 'UI.closeModal()' })}${UI.btn('删除', { kind: 'danger', onclick: `App.delStrategyOk('${id}')` })}`);
   },
   delStrategyOk(id) {
@@ -84,36 +86,38 @@ export const actions = {
   },
   sgSearch(v) { sView.q = v; UI.resetPage('strategies'); router.nav('strategy', 'attack'); },
   sgStatus(v) { sView.status = v; UI.resetPage('strategies'); router.nav('strategy', 'attack'); },
+  copyStrategy(id) {
+    try {
+      const copiedId = store.copyStrategy(id);
+      sView.q = ''; sView.status = 'all'; UI.resetPage('strategies');
+      UI.closeDrawer(); router.nav('strategy', 'attack');
+      openEditor(copiedId);
+      return copiedId;
+    } catch (error) { UI.toast(error.message); }
+  },
   /* 详情抽屉：攻击题库 / 攻击方法与任务详情「详细配置」同一写法 */
   openStrategy(id) {
     const s = store.strategies.find((x) => x.id === id);
     if (!s) return;
-    const lines = (arr) => `<div class="cfg-lines">${arr.map((l) => `<div>${UI.esc(l)}</div>`).join('')}</div>`;
-    const body = `
-      ${UI.card('基本信息', UI.kvTable([
-        ['策略名称', UI.esc(s.name)],
-        ['策略描述', UI.esc(s.desc || '—')],
-        ['状态', UI.badge(store.STRATEGY_STATUS[s.status], s.status === 'published' ? 'blue' : 'gray')],
-        [s.status === 'published' ? '发布时间' : '更新时间', `<span class="num">${UI.esc(s.updatedAt)}</span>`],
-      ]))}
-      <div class="mt-16">${UI.card('策略配置', UI.kvTable([
-        ['攻击题库', lines(store.strategyBankLines(s))],
-        ['攻击方法', lines(s.methods.map((m) => store.methodConfigText(m)))],
-      ]))}</div>`;
-    const foot = `${s.status === 'draft' ? UI.btn('删除', { kind: 'danger', onclick: `App.delStrategy('${s.id}')` }) : ''}${s.status === 'draft' ? UI.btn('编辑', { onclick: `UI.closeDrawer();App.editStrategy('${s.id}')` }) : ''}${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`;
-    UI.drawer('攻击策略详情', body, foot);
+    if (s.status === 'draft') { UI.closeDrawer(); return openEditor(id); }
+    const body = detailContent(detailBlock('策略基础信息', detailFields([
+      ['策略名称', s.name], ['策略描述', s.desc], ['状态', store.STRATEGY_STATUS[s.status]],
+      [s.status === 'published' ? '发布时间' : '更新时间', s.updatedAt],
+    ])) + detailBlock('详细配置信息', detailFields([['题库范围', store.strategyBankLines(s).join('；')]])
+      + detailTableField('攻击方法', methodConfigurationTable([...s.methods].sort((a, b) => a.order - b.order)))));
+    const foot = `${UI.btn('复制', { onclick: `App.copyStrategy('${s.id}')` })}${UI.btn('删除', { kind: 'danger', onclick: `App.delStrategy('${s.id}')` })}${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`;
+    openConfigDetail('攻击策略详情', body, foot);
   },
   openGuard(id) {
     const g = store.guards.find((x) => x.id === id);
     if (!g) return;
-    UI.drawer('防护策略详情',
-      `${UI.card('基本信息', UI.kvTable([
-        ['策略名称', UI.esc(g.name)],
-        ['来源', '系统'],
-        ['可部署位置', `输入侧：审核发给靶标的提示词<br>输出侧：审核靶标生成的回复`],
-        ['判定结果', '安全 / 有争议 / 不安全'],
-      ]))}
-      <div class="mt-16">${UI.card(`审核维度（${g.dims.length}）`, UI.kvTable(g.dims.map(([n, d]) => [UI.esc(n), UI.esc(d)])))}</div>`,
-      UI.btn('关闭', { onclick: 'UI.closeDrawer()' }));
+    openConfigDetail('防护策略详情', detailContent(
+      detailBlock('策略基础信息', detailFields([['策略名称', g.name], ['来源', '系统']]))
+      + detailBlock('详细配置信息', detailFields([
+        ['防护位置', g.stages.join(' + ')], ['输入审核', '审核发给靶标的提示词'],
+        ['输出审核', '审核靶标生成的回复'], ['判定结果', '安全 / 有争议 / 不安全'],
+      ]) + detailTableField(`审核维度（${g.dims.length}）`, UI.table([
+        { title: '维度', render: row => UI.esc(row[0]) }, { title: '说明', render: row => UI.esc(row[1]) },
+      ], g.dims)))));
   },
 };

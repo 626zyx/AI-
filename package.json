@@ -1,0 +1,12 @@
+{
+  "name": "auton-arena-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test _tools/task-domain.test.mjs _tools/task-ui.test.mjs _tools/wizard-navigation.test.mjs _tools/task-reports.test.mjs _tools/scene3d.test.mjs _tools/table-sort.test.mjs _tools/strategy-details.test.mjs _tools/strategy-copy.test.mjs _tools/strategy-delete.test.mjs _tools/agent-creation.test.mjs _tools/agent-evidence.test.mjs _tools/agent-performance.test.mjs _tools/agent-onboarding.test.mjs _tools/posture.test.mjs _tools/five-task-batch.test.mjs _tools/welcome.test.mjs",
+    "check": "node _tools/check.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}

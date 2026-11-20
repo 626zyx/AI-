@@ -1,259 +1,158 @@
-/* 资产中心 · 智能体：接入列表 + 接入表单。
- * 接入方式只有一种——自定义 CLI。模板只是表单的一键填充助手。
- * 攻击入口是二期主动注入才用的字段，表单里默认收起。 */
+/* User-delivered Agent images. Runtime and declared surfaces are verified by the integration service. */
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
-import { AGENT_TEMPLATE, CRED_DELIVERY, PROMPT_TRANSPORT, MODEL_STATUS } from '../domain/constants.js';
-
-/* 模板自带的攻击入口清单。二期注入时用，verified 标注平台已实测验证过的入口。 */
-const TEMPLATE_SURFACES = {
-  qwen_code: [
-    { vector: 'qwen_md', kind: 'instruction', path: 'QWEN.md', desc: '项目级上下文文件，会话启动时加载', verified: true },
-    { vector: 'agents_md', kind: 'instruction', path: 'AGENTS.md', desc: '通用仓库级指令文件', verified: false },
-    { vector: 'qwen_user_md', kind: 'instruction', path: 'HOME/.qwen/QWEN.md', desc: '用户级上下文文件', verified: false },
-    { vector: 'qwen_project_skill', kind: 'skill', path: '.qwen/skills/<name>/SKILL.md', desc: '项目级技能', verified: false },
-    { vector: 'qwen_user_skill', kind: 'skill', path: 'HOME/.qwen/skills/<name>/SKILL.md', desc: '用户级技能', verified: false },
-    { vector: 'agents_skill', kind: 'skill', path: '.agents/skills/<name>/SKILL.md', desc: '通用技能标准路径', verified: false },
-  ],
-  blank: [],
-};
+import { CONFIGURE_MODEL_VALUE, configureModelsOption, configureMoreModels } from '../core/model-config-navigation.js';
+import { validateAgentSubmission } from '../domain/agent-onboarding.js';
+import { SURFACE_GROUPS, SURFACE_TYPES, surfaceTypeId, surfaceTypeOf, surfaceTypeLabel, surfaceGroupOf, surfaceTypeValue } from '../domain/attack-surfaces.js';
+import { detailContent, detailBlock, detailFields, detailTableField, openConfigDetail } from '../core/config-detail.js';
 
 const view = { q: '' };
+const statusLabel = status => ({ connected: '已接入', planned: '待验证', error: '验证失败' })[status] || status;
+const statusBadge = agent => UI.badge(statusLabel(agent.status), agent.status === 'connected' ? 'green' : agent.status === 'error' ? 'red' : 'gray');
+const baseModels = () => store.modelsWithRole('智能体基座').filter(model => model.status === 'connected');
+const opt = (value, label, current) => `<option value="${UI.esc(value)}"${value === current ? ' selected' : ''}>${UI.esc(label)}</option>`;
+const surfaceGroupLabel = surface => surfaceGroupOf(surface)?.label || '—';
+let form = null;
 
 export function agentsPage() {
-  let rows = store.agents;
-  if (view.q.trim()) {
-    const q = view.q.trim().toLowerCase();
-    rows = rows.filter((a) => (a.name + a.launchCmd + a.baseModelName).toLowerCase().includes(q));
-  }
-
-  const flt = UI.filters({
-    search: { label: '搜索', id: 'aga-q', value: view.q, placeholder: '搜索名称 / 启动命令 / 基座模型', oninput: 'App.agaSearch(this.value)' },
-  });
-
-  const table = UI.pagedTable(
-    'agents',
-    [
-      { title: '名称', render: (a) => `<button class="link-btn" onclick="App.openAgentAsset('${a.id}')">${UI.esc(a.name)}</button>` },
-      { title: '启动命令', render: (a) => (a.launchCmd ? `<code>${UI.esc(a.launchCmd)}</code>` : '<span class="faint">—</span>') },
-      { title: '容器镜像', render: (a) => (a.runnerImage ? `<code>${UI.esc(a.runnerImage)}</code>` : '<span class="faint">—</span>') },
-      { title: '基座模型', width: '180px', render: (a) => UI.esc(a.baseModelName) },
-      { title: '状态', width: '100px', render: (a) => UI.badge(a.statusLabel || MODEL_STATUS[a.status] || a.status, a.status === 'connected' ? 'green' : 'gray') },
-      {
-        title: '操作', width: '160px', cls: 'actions',
-        render: (a) => `<div class="row-actions">
-          ${UI.linkBtn('详情', { onclick: `App.openAgentAsset('${a.id}')` })}
-          ${UI.linkBtn('编辑', { onclick: `App.editAgent('${a.id}')` })}
-          ${UI.linkBtn('删除', { danger: true, onclick: 'App.deleteBlocked()' })}
-        </div>`,
-      },
-    ],
-    rows,
-    '暂无接入的智能体',
-  );
-
-  return `${UI.pageHead('智能体', {
-    actions: UI.btn('接入智能体', { kind: 'primary', ico: 'plus', onclick: 'App.editAgent()' }),
-  })}${flt}${UI.card('', table, '', true)}`;
+  const rows = store.agents.filter(agent => `${agent.name} ${agent.baseModelName}`.toLowerCase().includes(view.q.trim().toLowerCase()));
+  return `${UI.pageHead('智能体', { actions: UI.btn('接入智能体', { kind: 'primary', ico: 'plus', onclick: 'App.editAgent()' }) })}
+    ${UI.filters({ search: { label: '搜索', id: 'aga-q', value: view.q, placeholder: '搜索智能体名称或基座模型', oninput: 'App.agaSearch(this.value)' } })}
+    ${UI.card('', UI.pagedTable('agents', [
+      { title: '智能体名称', render: agent => UI.linkBtn(agent.name, { onclick: `App.openAgentAsset('${agent.id}')` }) },
+      { title: '镜像', render: agent => `<span class="ag-image-ref">${UI.esc(agent.image || '—')}</span>` },
+      { title: '基座模型', render: agent => UI.esc(agent.baseModelName) },
+      { title: '状态', width: '100px', render: statusBadge },
+      { title: '操作', width: '150px', cls: 'actions', render: agent => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openAgentAsset('${agent.id}')` })}${UI.linkBtn('编辑', { onclick: `App.editAgent('${agent.id}')`, disabled: agent.status === 'connected' })}${UI.linkBtn('删除', { danger: true, onclick: `App.agaDelete('${agent.id}')` })}</div>` },
+    ], rows, '暂无接入的智能体'), '', true)}`;
 }
 
-/* ---------------------------------------------------------------- 详情 */
+function agentDrawer(agent) {
+  const declared = agent.surfaceDeclarations || [], verified = agent.surfaces || [];
+  return detailContent(detailBlock('基础信息', detailFields([
+    ['智能体名称', agent.name], ['基座模型', agent.baseModelName],
+    ['状态', statusLabel(agent.status)], ['用途说明', agent.description || agent.desc],
+  ])) + detailBlock('接入信息', detailFields([
+    ['镜像地址', agent.image], ['启动程序', agent.command?.[0]], ['启动参数', agent.command?.slice(1).join(' · ') || '—'],
+    ['任务输入', ({ stdin: '标准输入', argv: '命令行参数', file: '任务文件' })[agent.taskInput]],
+    ...(agent.taskInput !== 'stdin' ? [['任务参数名', agent.promptFlag || '位置参数']] : []),
+  ])) + detailBlock('注入面文件', detailTableField('申报与核验', UI.table([
+    { title: '分类', width: '150px', render: surface => `<span class="ag-surface-group">${UI.esc(surfaceGroupLabel(surface))}</span><span>${UI.esc(surfaceTypeLabel(surface))}</span>` },
+    { title: '文件路径', render: surface => `<span class="ag-image-ref">${UI.esc(surface.path)}</span>` },
+    { title: '状态', width: '80px', render: surface => verified.some(item => item.path === surface.path && item.verified) ? UI.badge('已核验', 'green') : UI.badge('待核验', 'gray') },
+  ], declared.length ? declared : verified, '尚未申报注入面文件'))
+    + `<p class="muted text-support">${UI.esc(agent.verificationNote || '文件由用户申报，平台核验后作为任务可选范围；不会仅凭镜像名称自动认定加载能力。')}</p>`));
+}
 export function agentAssetDetailPage(cur) {
-  const a = store.agentOf(cur?.param);
-  if (!a) return `${UI.pageHead('智能体详情')}<div class="empty"><strong>智能体不存在</strong></div>`;
-
-  const credRows = [['投递方式', UI.esc(CRED_DELIVERY[a.delivery]?.label || a.delivery || '—')]];
-  if (a.delivery !== 'config') credRows.push(['环境变量', a.envNames ? `<code>${UI.esc(a.envNames)}</code>` : '—']);
-  if (a.delivery !== 'env') credRows.push(['配置文件', a.configPath ? `<code>${UI.esc(a.configPath)}</code> · ${UI.esc(a.configFormat || 'json')}` : '—']);
-
-  const sRows = (a.surfaces || []).map((s) => `<tr>
-    <td><code>${UI.esc(s.vector)}</code></td>
-    <td>${UI.esc(s.kind === 'instruction' ? '指令文件' : s.kind === 'skill' ? '技能文件' : '配置文件')}</td>
-    <td><code>${UI.esc(s.path)}</code></td>
-    <td>${s.verified ? UI.badge('已验证', 'green') : UI.badge('未验证', 'gray')}</td>
-  </tr>`).join('');
-
-  const tasks = store.listAgentTasks().filter((t) => t.targetId === a.id);
-  const tRows = tasks.map((t) => `<tr>
-    <td><button class="link-btn" onclick="App.openAgTask('${t.id}')">${UI.esc(t.name)}</button></td>
-    <td>${UI.esc(t.sceneBankName)}</td>
-    <td class="num">${UI.pct(t.agg.value)}</td>
-    <td class="num">${UI.esc(t.finishedAt || '—')}</td>
-  </tr>`).join('') || '<tr><td colspan="4" class="empty-cell">暂无演练任务</td></tr>';
-
-  return `${UI.backBtn()}
-  ${UI.pageHead(a.name, { actions: UI.btn('编辑', { onclick: `App.editAgent('${a.id}')` }) })}
-  <div class="detail-grid">
-    <div class="detail-left">
-      ${UI.card('接入信息', UI.kvTable([
-    ['名称', UI.esc(a.name)],
-    ['启动命令', a.launchCmd ? `<code>${UI.esc(a.launchCmd)}</code>` : '—'],
-    ['容器镜像', a.runnerImage ? `<code>${UI.esc(a.runnerImage)}</code>` : '—'],
-    ['提示词传递', UI.esc(PROMPT_TRANSPORT[a.promptTransport] || a.promptTransport || '—')],
-    ['基座模型', UI.esc(a.baseModelName)],
-    ['状态', UI.badge(a.statusLabel || a.status, a.status === 'connected' ? 'green' : 'gray')],
-    ['备注', UI.esc(a.note || '—')],
-  ]))}
-      ${UI.card('凭据投递', UI.kvTable(credRows))}
-      ${sRows ? UI.card('攻击入口', `<p class="faint text-support">二期主动注入时攻击方会往这些路径写入诱导内容。一期演练不使用。</p>
-        <table class="kv-table tight">
-          <thead><tr><th>入口</th><th>类型</th><th>容器内路径</th><th>验证</th></tr></thead>
-          <tbody>${sRows}</tbody>
-        </table>`, '', true) : ''}
-    </div>
-    <div class="detail-right">
-      ${UI.card('演练任务', `<table class="kv-table tight">
-        <thead><tr><th>任务</th><th>题库</th><th class="num">ASR</th><th class="num">完成时间</th></tr></thead>
-        <tbody>${tRows}</tbody></table>`, '', true)}
-    </div>
-  </div>`;
+  if (cur?.param) setTimeout(() => actions.openAgentAsset(cur.param), 0);
+  return agentsPage();
 }
 
-/* ---------------------------------------------------------------- 表单 */
-let form = null;
-let advOpen = false;
-
-function blankForm() {
-  return {
-    id: '', name: '', launchCmd: '', runnerImage: '', promptTransport: 'stdin',
-    baseModelId: '', status: 'connected', note: '',
-    delivery: 'env', envNames: 'OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL',
-    configPath: '', configFormat: 'json',
-    surfaces: [],
-  };
+function surfaceOptions(row) {
+  const current = surfaceTypeId(row);
+  return SURFACE_GROUPS.map(group => {
+    const types = SURFACE_TYPES.filter(type => type.group === group.id);
+    const legacy = row.kind === 'memory' && !row.subtype && types.some(type => type.kind === 'memory') ? opt(current, surfaceTypeLabel(row), current) : '';
+    return `<optgroup label="${UI.esc(group.label)}">${legacy}${types.map(type => opt(type.id, type.label, current)).join('')}</optgroup>`;
+  }).join('');
+}
+function loadingHelp(row) {
+  const loading = surfaceTypeOf(row)?.loading;
+  return `<p class="ag-surface-help" id="ag-surface-help-${row.index}">类别说明：${UI.esc(loading || '加载方式取决于所用 Agent，接入后按具体文件核验。')}（非当前镜像的核验结论）</p>`;
+}
+function declarationsHTML() {
+  return `<div class="ag-surface-editor">${UI.table([
+    { title: '分类', width: '216px', render: (row) => `<select aria-label="注入面 ${row.index + 1} 分类" aria-describedby="ag-surface-help-${row.index}" onchange="App.agaSurface(${row.index},'kind',this.value)">${surfaceOptions(row)}</select>` },
+    { title: '具体文件路径', render: (row) => `<input aria-label="注入面 ${row.index + 1} 文件路径" value="${UI.esc(row.path || '')}" placeholder="如 AGENTS.md 或 HOME/.qwen/QWEN.md" oninput="App.agaSurface(${row.index},'path',this.value)" />${loadingHelp(row)}` },
+    { title: '', width: '72px', render: (row) => UI.linkBtn('删除', { danger: true, onclick: `App.agaRemoveSurface(${row.index})` }) },
+  ], form.surfaceDeclarations.map((row, index) => ({ ...row, index })), '未申报注入面文件')}${UI.linkBtn('添加文件', { onclick: 'App.agaAddSurface()' })}</div>`;
 }
 
-function applyTemplate(key) {
-  const t = AGENT_TEMPLATE[key] || AGENT_TEMPLATE.blank;
-  form.launchCmd = t.cmd;
-  form.runnerImage = t.image;
-  form.promptTransport = t.transport;
-  form.delivery = t.delivery;
-  form.envNames = t.envNames;
-  form.configPath = t.configPath;
-  form.configFormat = t.configFormat;
-  form.surfaces = (TEMPLATE_SURFACES[key] || []).map((s) => ({ ...s }));
-}
-
-export function openAgentForm(id) {
-  const old = id && store.agentOf(id);
-  form = old ? { ...blankForm(), ...old, surfaces: (old.surfaces || []).map((s) => ({ ...s })) } : blankForm();
-  if (!form.baseModelId) form.baseModelId = store.models[0]?.id || '';
-  advOpen = false;
-  renderForm();
-}
-
-const section = (title, body) => `<section class="form-sec"><h3>${UI.esc(title)}</h3>${body}</section>`;
-const req = '<span class="req">*</span>';
-
-function renderForm() {
-  const opt = (v, label, cur) => `<option value="${UI.esc(v)}" ${v === cur ? 'selected' : ''}>${UI.esc(label)}</option>`;
-
-  const credFields = `
-    <div class="field"><label for="aga-del">投递方式</label>
-      <select id="aga-del" onchange="App.agaSet('delivery',this.value)">
-        ${Object.entries(CRED_DELIVERY).map(([k, v]) => opt(k, v.label, form.delivery)).join('')}
-      </select>
-      <span class="faint text-support">${UI.esc(CRED_DELIVERY[form.delivery]?.desc || '')}</span>
-    </div>
-    ${form.delivery !== 'config' ? `<div class="field"><label for="aga-env">环境变量名</label>
-      <input type="text" id="aga-env" value="${UI.esc(form.envNames)}" oninput="App.agaSet('envNames',this.value)"
-        placeholder="密钥、地址、模型名对应的变量名，逗号分隔" /></div>` : ''}
-    ${form.delivery !== 'env' ? `<div class="form-row">
-      <div class="field"><label for="aga-cfgp">配置文件路径</label>
-        <input type="text" id="aga-cfgp" value="${UI.esc(form.configPath)}" oninput="App.agaSet('configPath',this.value)"
-          placeholder="容器内路径，如 HOME/.xxx/settings.json" /></div>
-      <div class="field"><label for="aga-cfgf">文件格式</label>
-        <select id="aga-cfgf" onchange="App.agaSet('configFormat',this.value)">
-          ${['json', 'yaml', 'toml', 'text'].map((f) => opt(f, f.toUpperCase(), form.configFormat)).join('')}
-        </select></div>
-    </div>` : ''}`;
-
-  const sRows = form.surfaces.length
-    ? form.surfaces.map((s, i) => `<tr>
-        <td><input value="${UI.esc(s.vector)}" oninput="App.agaSurface(${i},'vector',this.value)" placeholder="入口名" /></td>
-        <td><input value="${UI.esc(s.path)}" oninput="App.agaSurface(${i},'path',this.value)" placeholder="容器内路径" /></td>
-        <td>${UI.linkBtn('移除', { danger: true, onclick: `App.agaSurfaceDel(${i})` })}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="3" class="empty-cell">未声明，二期主动注入前可留空</td></tr>';
-
+function renderForm({ preserveScroll = false } = {}) {
+  const scrollTop = preserveScroll ? document.querySelector('.agent-onboarding-modal .modal-body')?.scrollTop || 0 : 0;
+  const f = form;
+  const text = (key, label, placeholder = '', multiline = false, required = false, help = '') => `<div class="field"><label for="agf-${key}">${label}${required ? ' <span class="req">*</span>' : ''}</label>${multiline
+    ? `<textarea id="agf-${key}" rows="2" placeholder="${UI.esc(placeholder)}" oninput="App.agaSet('${key}',this.value)">${UI.esc(f[key] || '')}</textarea>`
+    : `<input id="agf-${key}" type="text" value="${UI.esc(f[key] || '')}" placeholder="${UI.esc(placeholder)}" oninput="App.agaSet('${key}',this.value)" />`}${help ? `<p class="muted text-support">${UI.esc(help)}</p>` : ''}</div>`;
   const body = `<div class="form-secs">
-    ${section('接入信息', `
-      <div class="field"><label for="aga-tpl">从模板填充</label>
-        <select id="aga-tpl" onchange="App.agaTemplate(this.value)">
-          ${Object.entries(AGENT_TEMPLATE).map(([k, v]) => opt(k, v.label, '__none')).join('')}
-        </select>
-        <span class="faint text-support">选择后自动填好下面各项，仍可逐项修改</span>
-      </div>
-      <div class="field"><label for="aga-name">名称${req}</label>
-        <input type="text" id="aga-name" value="${UI.esc(form.name)}" oninput="App.agaSet('name',this.value)"
-          placeholder="如 内部文档助手 · DeepSeek-Flash" /></div>
-      <div class="form-row">
-        <div class="field"><label for="aga-cmd">启动命令${req}</label>
-          <input type="text" id="aga-cmd" value="${UI.esc(form.launchCmd)}" oninput="App.agaSet('launchCmd',this.value)"
-            placeholder="容器内可执行的一行命令" /></div>
-        <div class="field"><label for="aga-img">容器镜像${req}</label>
-          <input type="text" id="aga-img" value="${UI.esc(form.runnerImage)}" oninput="App.agaSet('runnerImage',this.value)"
-            placeholder="如 myorg/my-agent:latest" /></div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label for="aga-tr">提示词传递方式</label>
-          <select id="aga-tr" onchange="App.agaSet('promptTransport',this.value)">
-            ${Object.entries(PROMPT_TRANSPORT).map(([k, v]) => opt(k, v, form.promptTransport)).join('')}
-          </select></div>
-        <div class="field"><label for="aga-base">基座模型${req}</label>
-          <select id="aga-base" onchange="App.agaSet('baseModelId',this.value)">
-            ${store.models.map((m) => opt(m.id, m.name, form.baseModelId)).join('')}
-          </select></div>
-      </div>
-      <div class="field"><label for="aga-note">备注</label>
-        <input type="text" id="aga-note" value="${UI.esc(form.note)}" oninput="App.agaSet('note',this.value)" /></div>`)}
-
-    ${section('凭据投递', `<p class="faint text-support">智能体从哪里读取模型地址与密钥。</p>${credFields}`)}
-
-    <section class="form-sec">
-      <button class="adv-toggle" onclick="App.agaAdv()">
-        ${advOpen ? '收起' : '展开'}高级设置（攻击入口，二期注入用）
-      </button>
-      ${advOpen ? `
-        <p class="faint text-support">智能体启动时会自动读取的配置文件路径。一期演练不使用，可留空；
-        二期主动注入时攻击方会往这些位置写入诱导内容。</p>
-        <table class="kv-table tight">
-          <thead><tr><th>入口名</th><th>容器内路径</th><th></th></tr></thead>
-          <tbody>${sRows}</tbody>
-        </table>
-        ${UI.btn('添加入口', { onclick: 'App.agaSurfaceAdd()' })}` : ''}
+    <section><h3>基本信息</h3>
+      ${text('name', '智能体名称', '平台内显示的名称', false, true)}
+      ${text('description', '用途说明', '例如：读取业务文档并整理客服回复', true, false, '选填，自然语言说明已有能力，用于资产识别与后续选型，不会作为任务指令。')}
+      <div class="field"><label for="agf-base">基座模型 <span class="req">*</span></label><select id="agf-base" onchange="App.agaSet('baseModelId',this.value)">${opt('', '请选择基座模型', f.baseModelId)}${baseModels().map(model => opt(model.id, model.name, f.baseModelId)).join('')}${configureModelsOption}</select><p class="muted text-support">从已接入的模型资产获取地址、模型标识和凭据，无需重复填写。</p></div>
     </section>
+    <section><h3>镜像与任务入口</h3>
+      ${text('image', '镜像地址', 'registry.example.com/team/agent:1.0.0', false, true, '完整地址须包含版本标签或 sha256 摘要，无需另填版本；不填网页地址或压缩包路径。')}
+      ${text('executable', '启动程序', '如 agent-cli 或 /app/run-agent', false, true, '填写镜像内已有的非交互程序名或路径，不在此处拼接参数。')}
+      ${text('argumentsText', '启动参数', '--non-interactive\n--output-format\njson', true, false, '选填，每行一个参数或参数值，保留行内空格；无需引号，不填写任务正文或任务参数名。')}
+      <div class="field"><label for="agf-input">任务文本传入方式 <span class="req">*</span></label><select id="agf-input" onchange="App.agaSet('taskInput',this.value,true)">${opt('stdin','标准输入（stdin）',f.taskInput)}${opt('argv','命令行参数（argv）',f.taskInput)}${opt('file','文本文件路径',f.taskInput)}</select><p class="muted text-support">平台读取 task.md 并补充运行说明，形成完整任务文本后传入。文件方式由平台生成 UTF-8 文件并传递路径。</p></div>
+      ${f.taskInput !== 'stdin' ? text('promptFlag', f.taskInput === 'argv' ? '任务参数名' : '任务文件参数名', f.taskInput === 'argv' ? '如 -p、-n 或 --prompt' : '如 --prompt-file', false, false, '填写单个参数名；留空表示作为最后一个位置参数。平台自动追加任务文本或文件路径。') : ''}
+      <p class="ag-contract-note">镜像必须读取并使用 OPENAI_BASE_URL、OPENAI_MODEL、OPENAI_API_KEY，具体值由平台从所选模型资产获取并在运行时注入。镜像开发者须在交付前完成适配，详见“使用指南 → 接入智能体 → 基座模型连接”。</p>
+    </section>
+    <section><h3>注入面文件</h3><p class="muted text-support">仅申报 Agent 的指令、技能、命令、规则、配置或记忆文件，不包含普通业务文件。项目内用相对路径，用户目录用 HOME/ 前缀；技能路径具体到 SKILL.md。</p>
+      ${declarationsHTML()}
+      <p class="muted text-support">没有文件注入能力可留空，仅用于基础安全演练。路径不是通过镜像名称推断，声明后仍需验证加载条件。</p>
+    </section>
+    <p class="muted text-support">镜像应包含程序及依赖，并已有接收完整任务、非交互执行后退出的入口。保存后为“待验证”。</p>
+    <p id="agf-check" class="muted text-support" role="status"></p>
   </div>`;
-
-  const foot = `${UI.btn('取消', { onclick: 'UI.closeModal()' })}
-    ${UI.btn('保存', { kind: 'primary', onclick: 'App.agaSave()' })}`;
-
-  UI.modal(form.id ? '编辑智能体' : '接入智能体', body, foot, { wide: true, cls: 'modal-wiz' });
+  UI.modal(f.id ? '编辑接入信息' : '接入智能体', body, `${UI.btn('校验信息', { onclick: 'App.agaTest()' })}${UI.btn('取消', { onclick: 'UI.closeModal()' })}${UI.btn('保存接入信息', { kind: 'primary', onclick: 'App.agaSave()' })}`, { wide: true, cls: 'agent-onboarding-modal' });
+  if (preserveScroll) document.querySelector('.agent-onboarding-modal .modal-body').scrollTop = scrollTop;
 }
-
+function refreshDeclarations() {
+  const editor = document.querySelector('.ag-surface-editor');
+  if (!editor) return;
+  // Update only the rows: keep the surrounding modal, scroll position and other fields.
+  const body = editor.closest('.modal-body'), scrollTop = body.scrollTop;
+  editor.outerHTML = declarationsHTML();
+  body.scrollTop = scrollTop;
+  clearCheck();
+}
+const validatedForm = () => validateAgentSubmission(form, { models: store.models, existing: store.agents });
+const clearCheck = () => { const check = document.getElementById('agf-check'); if (check) check.textContent = ''; };
 export const actions = {
-  agaSearch(v) { view.q = v; UI.resetPage('agents'); router.nav('assets', 'agents'); },
-  openAgentAsset(id) { router.nav('assets', 'agent-detail', id); },
-  editAgent(id) { openAgentForm(id); },
-  agaSet(k, v) {
-    form[k] = v;
-    /* 文本输入不重绘，避免失焦 */
-    if (['delivery', 'promptTransport', 'configFormat', 'baseModelId'].includes(k)) renderForm();
+  agaSearch(value) { view.q = value; UI.resetPage('agents'); router.nav('assets', 'agents'); },
+  openAgentAsset(id) { const agent = store.agentOf(id); if (agent) openConfigDetail('智能体详情', agentDrawer(agent)); },
+  editAgent(id) {
+    const old = id && store.agentOf(id);
+    if (old?.status === 'connected') return UI.toast('已接入版本不可修改，请创建新的接入记录');
+    form = { id: null, name: '', baseModelId: '', taskInput: 'stdin', ...structuredClone(old || {}), executable: old?.command?.[0] || '', argumentsText: old?.command?.slice(1).join('\n') || '', surfaceDeclarations: structuredClone(old?.surfaceDeclarations || []) };
+    renderForm();
   },
-  agaTemplate(k) { applyTemplate(k); renderForm(); },
-  agaAdv() { advOpen = !advOpen; renderForm(); },
-  agaSurface(i, k, v) { form.surfaces[i][k] = v; },
-  agaSurfaceAdd() { form.surfaces.push({ vector: '', kind: 'instruction', path: '', desc: '', verified: false }); renderForm(); },
-  agaSurfaceDel(i) { form.surfaces.splice(i, 1); renderForm(); },
+  agaSet(key, value, rerender = false) {
+    if (!form || !['name','baseModelId','image','executable','argumentsText','taskInput','promptFlag','description'].includes(key)) return;
+    if (key === 'baseModelId' && value === CONFIGURE_MODEL_VALUE) return configureMoreModels(renderForm, '返回智能体接入');
+    form[key] = value; clearCheck(); if (rerender) renderForm({ preserveScroll: true });
+  },
+  agaSurface(index, key, value) {
+    if (!form?.surfaceDeclarations[index] || !['kind','path'].includes(key)) return;
+    const row = form.surfaceDeclarations[index];
+    if (key === 'kind') {
+      try {
+        const type = surfaceTypeValue(value);
+        delete row.subtype;
+        Object.assign(row, type);
+        refreshDeclarations();
+      } catch (error) { UI.toast(error.message); }
+    } else { row.path = value; clearCheck(); }
+  },
+  agaAddSurface() { form.surfaceDeclarations.push({ kind: 'instruction', path: '' }); refreshDeclarations(); },
+  agaRemoveSurface(index) { form.surfaceDeclarations.splice(index, 1); refreshDeclarations(); },
+  agaTest() {
+    try { validatedForm(); document.getElementById('agf-check').textContent = '填写信息校验通过；运行能力和注入面加载条件尚待验证。'; }
+    catch (error) { UI.toast(error.message); }
+  },
   agaSave() {
-    if (!form.name.trim()) return UI.toast('请填写名称');
-    if (!form.launchCmd.trim()) return UI.toast('请填写启动命令');
-    if (!form.runnerImage.trim()) return UI.toast('请填写容器镜像');
-    store.saveAgent({ ...form, name: form.name.trim() });
-    UI.closeModal();
-    UI.toast('已保存');
-    router.nav('assets', 'agents');
+    try { store.saveAgent({ ...validatedForm(), id: form.id }); UI.closeModal(); UI.toast('接入信息已保存，待验证'); router.nav('assets', 'agents'); }
+    catch (error) { UI.toast(error.message); }
+  },
+  agaDelete(id) {
+    const agent = store.agentOf(id); if (!agent) return;
+    if (store.listAgentTasks().some(task => task.targetId === id)) return UI.toast('该智能体已有演练任务引用，不能删除');
+    UI.modal('删除智能体', `<p>删除「${UI.esc(agent.name)}」的接入记录？</p>`, UI.btn('取消', { onclick: 'UI.closeModal()' }) + UI.btn('删除', { kind: 'danger', onclick: `App.agaDeleteConfirm('${id}')` }));
+  },
+  agaDeleteConfirm(id) {
+    if (store.listAgentTasks().some(task => task.targetId === id)) return UI.toast('该智能体已有演练任务引用，不能删除');
+    store.deleteAgent(id); UI.closeModal(); router.nav('assets', 'agents');
   },
 };

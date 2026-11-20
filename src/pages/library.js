@@ -2,6 +2,7 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
+import { detailFields, detailBlock, detailContent, detailTableField, parameterTable, openConfigDetail } from '../core/config-detail.js';
 
 /* ---------------------------------------------------------------- 攻击方法 */
 const mView = { q: '', family: 'all' };
@@ -26,6 +27,7 @@ export function methodsPage() {
     'methods',
     [
       { title: '名称 / 说明', render: (m) => `<button class="link-btn" onclick="App.openMethod('${m.id}')">${UI.esc(m.name)}</button><div class="faint text-support">${UI.esc(m.desc)}</div>` },
+      { title: '来源', width: '80px', render: () => UI.badge('系统', 'blue') },
       { title: '技术路线', width: '150px', render: (m) => UI.esc(m.family) },
       { title: '依赖模型', width: '200px', render: (m) => UI.esc(depsOf(m).join('、') || '无') },
       {
@@ -40,7 +42,6 @@ export function methodsPage() {
 }
 
 const depsOf = (m) => [m.generator ? '攻击生成模型' : '', m.process ? '过程裁判' : ''].filter(Boolean);
-const paramValue = (v) => (v === true ? '开启' : v === false ? '关闭' : String(v));
 
 /* ---------------------------------------------------------------- 攻击题库 */
 const bView = { q: '' };
@@ -60,7 +61,7 @@ export function banksPage() {
       { title: '名称', width: '200px', cls: 'nowrap', render: (b) => `<button class="link-btn" onclick="App.openBank('${b.id}')">${UI.esc(b.name)}</button>` },
       { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', b.source === 'system' ? 'blue' : 'gray') },
       { title: '行业', width: '90px', render: (b) => UI.esc(b.industry) },
-      { title: '场景标签', render: (b) => `<span class="tags">${b.scenes.map((id) => UI.badge(store.sceneLabel(id), 'gray')).join('')}</span>` },
+      { title: '场景标签', render: (b) => UI.tagList(b.scenes.map((id) => store.sceneLabel(id))) },
       { title: '数量', width: '80px', cls: 'num', render: (b) => `<span class="num">${b.items.length}</span>` },
       { title: '创建时间', width: '150px', cls: 'num', render: (b) => UI.esc(b.createdAt || '—') },
       {
@@ -96,21 +97,21 @@ function bankBody(b) {
   const table = UI.table(
     [
       { title: '编号 / 题目', render: (i) => `<div class="mono faint text-support">${UI.esc(i.id)}</div>${UI.esc(i.prompt)}` },
-      { title: '攻击场景', width: '170px', render: (i) => UI.badge(store.sceneLabel(i.scene), 'gray') },
+      { title: '攻击场景', width: '30%', render: (i) => UI.badge(store.sceneLabel(i.scene), 'gray') },
     ],
     slice,
     '该筛选条件下暂无题目',
   );
-  return `<div class="flex mb-12">${UI.badge(b.source === 'system' ? '系统' : '自建', b.source === 'system' ? 'blue' : 'gray')}
-      <span>${UI.esc(b.industry)}</span><span class="num">${b.items.length} 题</span></div>
-    ${UI.filters({
+  return detailContent(detailBlock('题库基础信息', detailFields([
+    ['题库名称', b.name], ['来源', b.source === 'system' ? '系统' : '自建'],
+    ['行业', b.industry], ['题目数', b.items.length], ['创建时间', b.createdAt],
+  ])) + detailBlock('题目内容', UI.filters({
       search: { label: '搜索', id: 'bd-q', value: dView.q, placeholder: '搜索编号或题目', oninput: 'App.bdSearch(this.value)' },
       selects: [{
         label: '攻击场景', id: 'bd-scene', value: dView.scene, onchange: 'App.bdScene(this.value)',
         options: [['all', '全部场景'], ...b.scenes.map((id) => [id, store.sceneLabel(id)])],
       }],
-    })}
-    ${UI.card('', table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.bdPage({p})'), '', true)}`;
+    }) + table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.bdPage({p})')));
 }
 
 /* 抽屉内局部重绘：只换 body，保留输入焦点 */
@@ -204,26 +205,12 @@ export const actions = {
   openMethod(id) {
     const m = store.methods.find((x) => x.id === id);
     if (!m) return;
-    const params = m.params.length
-      ? UI.table(
-          [
-            { title: '参数', render: (p) => UI.esc(p.label) },
-            { title: '默认值', render: (p) => `<span class="mono text-support">${UI.esc(paramValue(p.value))}</span>` },
-          ],
-          m.params,
-        )
-      : '<p class="muted">无可配置参数</p>';
-    UI.drawer(
-      m.name,
-      `${UI.card('基本信息', UI.kvTable([
-        ['说明', UI.esc(m.desc)],
-        ['技术路线', UI.esc(m.family)],
-        ['交互轮次', UI.esc(m.turns)],
-        ['依赖模型', UI.esc(depsOf(m).join('、') || '无')],
-      ]))}
-      <div class="mt-16">${UI.card('参数', params, '', !!m.params.length)}</div>`,
-      UI.btn('关闭', { onclick: 'UI.closeDrawer()' }),
-    );
+    openConfigDetail('攻击方法详情', detailContent(
+      detailBlock('方法基础信息', detailFields([
+        ['方法名称', m.name], ['说明', m.desc], ['来源', '系统'], ['技术路线', m.family],
+      ])) + detailBlock('详细配置信息', detailFields([
+        ['交互轮次', m.turns], ['依赖模型', depsOf(m).join('、') || '无'],
+      ]) + detailTableField('方法参数', parameterTable(m.params.map(p => [p.label, p.value]))))));
   },
 
   bkSearch(v) { bView.q = v; UI.resetPage('banks'); router.nav('strategy', 'banks'); },
@@ -231,7 +218,7 @@ export const actions = {
     const b = store.getBank(id);
     if (!b) return;
     Object.assign(dView, { id, q: '', scene: 'all', page: 1 });
-    UI.drawer(b.name, bankBody(b), `${UI.btn('导出', { onclick: `App.exportBank('${id}')` })}${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`);
+    openConfigDetail('攻击题库详情', bankBody(b), `${UI.btn('导出', { onclick: `App.exportBank('${id}')` })}${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`);
   },
   bdSearch(v) { dView.q = v; dView.page = 1; redrawBank(); },
   bdScene(v) { dView.scene = v; dView.page = 1; redrawBank(); },

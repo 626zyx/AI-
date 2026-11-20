@@ -25,14 +25,14 @@ export function modelsPage() {
   const table = UI.pagedTable(
     'models',
     [
-      { title: '模型名称', render: (m) => UI.esc(m.name) },
+      { title: '模型名称', render: (m) => `<button class="link-btn" onclick="App.openModel('${m.id}')">${UI.esc(m.name)}</button>` },
       { title: '厂商', width: '120px', render: (m) => UI.esc(m.vendor) },
       { title: '请求模型标识', width: '160px', render: (m) => UI.esc(m.apiModel) },
       { title: '接入地址', render: (m) => UI.esc(m.baseUrl) },
       { title: '状态', width: '100px', render: (m) => statusBadge(m) },
       {
-        title: '操作', width: '110px', cls: 'actions',
-        render: (m) => `<div class="row-actions">${UI.linkBtn('编辑', { onclick: `App.modelForm('${m.id}')` })}${UI.linkBtn('删除', { danger: true, onclick: `App.delModel('${m.id}')` })}</div>`,
+        title: '操作', width: '150px', cls: 'actions',
+        render: (m) => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openModel('${m.id}')` })}${UI.linkBtn('编辑', { onclick: `App.modelForm('${m.id}')` })}${UI.linkBtn('删除', { danger: true, onclick: `App.delModel('${m.id}')` })}</div>`,
       },
     ],
     rows,
@@ -51,27 +51,30 @@ function statusBadge(m) {
 const req = '<span class="req">*</span>';
 function renderForm() {
   const f = form;
+  /* 被任务、策略或智能体引用后，名称、模型标识、地址、接口类型锁定，只能轮换 API Key */
+  const lock = f.id && store.modelUsage(f.id).length ? 'disabled' : '';
   const opt = (v, l, cur, dis) => `<option value="${v}" ${v === cur ? 'selected' : ''} ${dis ? 'disabled' : ''}>${UI.esc(l)}</option>`;
   const testLine = f.test === 'ok' ? '<span style="color:var(--vd-safe)">连接成功</span>'
     : f.test === 'fail' ? '<span class="text-danger">连接失败，请检查地址与 Key</span>'
     : f.test === 'run' ? '<span class="muted">测试中…</span>' : '';
   const body = `<div class="form-secs">
+    ${lock ? '<p class="faint text-support">该模型已被演练任务、策略或智能体引用，为保证历史结果可追溯，只能更换 API Key。</p>' : ''}
     <div class="form-row">
       <div class="field"><label for="mf-name">模型名称${req}</label>
-        <input type="text" id="mf-name" value="${UI.esc(f.name)}" placeholder="平台内显示，如 DeepSeek-V3" oninput="App.mfField('name',this.value)" />
+        <input type="text" id="mf-name" ${lock} value="${UI.esc(f.name)}" placeholder="平台内显示，如 DeepSeek-V3" oninput="App.mfField('name',this.value)" />
         <span class="faint text-support">只用于平台内展示和筛选。</span></div>
       <div class="field"><label for="mf-model">请求模型标识（model）${req}</label>
-        <input type="text" id="mf-model" value="${UI.esc(f.apiModel)}" placeholder="如 deepseek-chat、qwen-flash" oninput="App.mfField('apiModel',this.value)" />
+        <input type="text" id="mf-model" ${lock} value="${UI.esc(f.apiModel)}" placeholder="如 deepseek-chat、qwen-flash" oninput="App.mfField('apiModel',this.value)" />
         <span class="faint text-support">请求体里的 model 字段，以服务方文档为准。</span></div>
     </div>
     <div class="field"><label for="mf-url">API 地址（Base URL）${req}</label>
-      <input type="text" id="mf-url" value="${UI.esc(f.baseUrl)}" placeholder="https://api.example.com/v1" oninput="App.mfField('baseUrl',this.value)" />
+      <input type="text" id="mf-url" ${lock} value="${UI.esc(f.baseUrl)}" placeholder="https://api.example.com/v1" oninput="App.mfField('baseUrl',this.value)" />
       <span class="faint text-support">云端模型填服务方地址；自部署模型填推理服务（如 vLLM、Ollama）暴露的 OpenAI 兼容地址。</span></div>
     <div class="form-row">
       <div class="field"><label for="mf-type">接口类型</label>
-        <select id="mf-type" onchange="App.mfField('apiType',this.value)">${API_TYPE.map((t) => opt(t.id, t.label, f.apiType, !t.ok)).join('')}</select></div>
+        <select id="mf-type" ${lock} onchange="App.mfField('apiType',this.value)">${API_TYPE.map((t) => opt(t.id, t.label, f.apiType, !t.ok)).join('')}</select></div>
       <div class="field"><label for="mf-auth">鉴权方式</label>
-        <select id="mf-auth" onchange="App.mfField('auth',this.value,true)">${opt('key', 'API Key', f.auth)}${opt('none', '无鉴权（内网部署）', f.auth)}</select></div>
+        <select id="mf-auth" ${lock} onchange="App.mfField('auth',this.value,true)">${opt('key', 'API Key', f.auth)}${opt('none', '无鉴权（内网部署）', f.auth)}</select></div>
     </div>
     ${f.auth === 'key' ? `<div class="field"><label for="mf-key">API Key${f.id ? '' : req}</label>
       <input id="mf-key" type="password" value="${UI.esc(f.apiKey)}" placeholder="${f.id ? '已保存，留空则不修改' : '填写 API Key'}" oninput="App.mfField('apiKey',this.value)" /></div>` : ''}
@@ -124,9 +127,23 @@ export const actions = {
     UI.toast(f.id ? '已保存' : '已接入，可在模型管理中配置平台用途');
     router.nav('assets', 'models');
   },
+  openModel(id) {
+    const m = store.models.find((x) => x.id === id);
+    if (!m) return;
+    UI.drawer(m.name, `${UI.card('基础信息', UI.kvTable([
+      ['模型名称', UI.esc(m.name)],
+      ['厂商', UI.esc(m.vendor)],
+      ['请求模型标识', UI.esc(m.apiModel)],
+      ['接入地址', UI.esc(m.baseUrl)],
+      ['接口类型', UI.esc(API_TYPE.find((x) => x.id === m.apiType)?.label || m.apiType)],
+      ['状态', statusBadge(m)],
+    ]))}`,
+    `${UI.btn('编辑', { onclick: `UI.closeDrawer();App.modelForm('${id}')` })}${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`);
+  },
   delModel(id) {
     const m = store.models.find((x) => x.id === id);
     if (!m) return;
+    if (store.modelUsage(id).length) return UI.toast('该模型已被引用，不能删除');
     const roleTip = m.roles.length ? `该模型在模型管理中配置了「${m.roles.join('、')}」用途，删除后需重新配置。` : '';
     UI.modal('删除模型', `<p>确定删除「${UI.esc(m.name)}」？${roleTip}已完成任务的结果不受影响。</p>`,
       `${UI.btn('取消', { onclick: 'UI.closeModal()' })}${UI.btn('删除', { kind: 'danger', onclick: `App.delModelOk('${id}')` })}`);

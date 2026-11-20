@@ -1,0 +1,35 @@
+/* 任务摘要及完整配置抽屉，复用全站 drawer 容器。 */
+.tc-summary { margin-bottom: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.tc-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 18px 0; }
+.tc-summary-heading h2 { margin: 0; font-size: 14px; font-weight: var(--w-medium); }
+.tc-trigger { flex-shrink: 0; white-space: nowrap; }
+.tc-overview { display: grid; grid-template-columns: 1fr 1.2fr 1.25fr 1fr; gap: 12px 24px; margin: 0; padding: 14px 18px 16px; }
+.tc-overview > div { display: flex; align-items: baseline; gap: 10px; min-width: 0; font-size: var(--t-support); }
+.tc-overview dt { color: var(--muted); flex-shrink: 0; }
+.tc-overview dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.tc-config-drawer > .modal-body { background: var(--canvas); padding: 20px; }
+.tc-drawer-content { display: flex; flex-direction: column; gap: 16px; }
+.tc-detail-block { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 18px; }
+.tc-detail-block > h3 { margin: 0 0 13px; font-size: var(--t-section); font-weight: var(--w-medium); }
+.tc-fields { margin: 0; }
+.tc-fields > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 16px; padding: 7px 0; font-size: var(--t-support); line-height: var(--lh-body); }
+.tc-fields dt { color: var(--muted); }
+.tc-fields dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.tc-config-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.tc-config-object { margin-top: 0; padding-top: 0; border-top: 0; }
+.tc-config-group h4 { margin: 0 0 8px; color: var(--text); font-weight: var(--w-medium); font-size: var(--t-body); }
+.tc-methods > div { display: block; }
+.tc-methods dd { margin-top: 8px; }
+.tc-methods .table-wrap { margin: 0; }
+.tc-config-group table { margin-top: 10px; }
+.tc-detail-block table.grid th, .tc-detail-block table.grid td { font-size: var(--t-support); padding: 10px; vertical-align: top; }
+.tc-detail-block table.grid td { overflow-wrap: anywhere; }
+.tc-detail-block > .filters { margin-bottom: 14px; }
+.tc-detail-block .filter { min-width: 0; }
+.tc-detail-block .filter.search { max-width: none; flex-basis: 220px; }
+.tc-detail-block .filter input, .tc-detail-block .filter select { min-width: 0; }
+.tc-detail-block .badge { white-space: normal; }
+@media (max-width: 1150px) { .tc-overview { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .tc-overview { gap: 12px 20px; padding: 12px 14px 16px; } .tc-overview > div { display: block; } .tc-overview dt { margin-bottom: 5px; } .tc-summary-heading { padding: 13px 14px 0; } .tc-config-drawer > .modal-body { padding: 12px; } .tc-detail-block { padding: 14px; } .tc-fields > div { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; } }
+
+.tc-overview.tc-overview-agent { grid-template-columns: repeat(3, minmax(0, 1fr)); }

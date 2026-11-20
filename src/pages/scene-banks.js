@@ -4,13 +4,14 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
-import { RISK_LABEL, SCENE_FLAG } from '../domain/constants.js';
+import { RISK_LABEL } from '../domain/constants.js';
+import { detailFields, detailBlock, detailContent, openConfigDetail } from '../core/config-detail.js';
 
 const view = { q: '' };
 
 /* ---------------------------------------------------------------- 列表 */
 export function sceneBanksPage() {
-  let rows = store.sceneBanks;
+  let rows = store.sceneBanks.filter(bank => bank.items?.length);
   if (view.q.trim()) {
     const q = view.q.trim().toLowerCase();
     rows = rows.filter((b) => (b.name + b.code).toLowerCase().includes(q));
@@ -32,10 +33,7 @@ export function sceneBanksPage() {
           const cov = store.bankLabelCoverage(b);
           const keys = Object.keys(cov);
           if (!keys.length) return '<span class="faint">明细未加载</span>';
-          return `<span class="tags">${keys
-            .sort((x, y) => cov[y] - cov[x])
-            .map((k) => UI.badge(`${RISK_LABEL[k]?.label || k} ${cov[k]}`, RISK_LABEL[k]?.cls || 'gray'))
-            .join('')}</span>`;
+          return UI.tagList(keys.sort((x, y) => cov[y] - cov[x]).map((k) => RISK_LABEL[k]?.label || k));
         },
       },
       {
@@ -55,91 +53,43 @@ export function sceneBanksPage() {
 
 /* ---------------------------------------------------------------- 题库详情（右侧抽屉） */
 const PAGE = UI.PAGE_SIZE;
-const dView = { id: null, q: '', label: 'all', flag: 'all', page: 1 };
+const dView = { id: null, q: '', label: 'all', page: 1 };
 
 function bankBody(b) {
   const cov = store.bankLabelCoverage(b);
   const count = b.items.length || b.total;
-
-  const head = `<div class="flex mb-12">
-    ${UI.badge(b.source === 'system' ? '系统' : '自建', b.source === 'system' ? 'blue' : 'gray')}
-    <span class="num">${count} 题</span>
-    <span class="faint text-support">${UI.esc(b.code)}</span>
-  </div>`;
-
-  const covBlock = Object.keys(cov).length
-    ? `<div class="sb-cov">
-        <div class="sub-label">风险标签覆盖
-          <span class="hint" title="一条题可带多个标签，各项之和大于题目总数。标签用于结果归因，不参与任务创建">?</span>
-        </div>
-        <span class="tags">${Object.keys(cov).sort((x, y) => cov[y] - cov[x])
-      .map((k) => UI.badge(`${RISK_LABEL[k]?.label || k} ${cov[k]}`, RISK_LABEL[k]?.cls || 'gray')).join('')}</span>
-      </div>`
-    : '';
-
-  if (!b.items.length) {
-    return `${head}${covBlock}
-      <div class="empty"><strong>题目明细待导入</strong>
-      <p class="faint">运行 scripts/extract_scenebank.py 从打包结果生成</p></div>`;
-  }
+  const base = detailBlock('题库基础信息', detailFields([
+    ['题库名称', b.name], ['来源', b.source === 'system' ? '系统' : '自建'], ['题目数', count],
+    ['风险标签', Object.keys(cov).map(k => RISK_LABEL[k]?.label || k).join('、')],
+  ]));
+  if (!b.items.length) return detailContent(base + detailBlock('题目内容', '<div class="empty"><strong>题目明细待导入</strong></div>'));
 
   let items = b.items;
   if (dView.label !== 'all') items = items.filter((i) => (i.labels || []).includes(dView.label));
-  if (dView.flag !== 'all') items = items.filter((i) => store.sceneFlags(i).includes(dView.flag));
   if (dView.q.trim()) {
     const q = dView.q.trim().toLowerCase();
     items = items.filter((i) => (i.taskId + i.goal).toLowerCase().includes(q));
   }
-
   const pages = Math.max(1, Math.ceil(items.length / PAGE));
   dView.page = Math.min(dView.page, pages);
   const slice = items.slice((dView.page - 1) * PAGE, dView.page * PAGE);
 
+  /* 与模型演练题库详情同一形态：编号 / 题目 + 标签（灰色） */
   const table = UI.table(
     [
-      {
-        title: '编号 / 任务目标',
-        render: (i) => `<div class="mono faint text-support">${UI.esc(i.taskId)}
-          <span class="sb-dom">${UI.esc(i.domainOriginal || '')}</span></div>${UI.esc(i.goal || '—')}`,
-      },
-      {
-        title: '风险标签', width: '220px',
-        render: (i) => `<span class="tags">${(i.labels || [])
-          .map((k) => UI.badge(RISK_LABEL[k]?.label || k, RISK_LABEL[k]?.cls || 'gray')).join('')}</span>`,
-      },
-      {
-        title: '标记 / 资源', width: '90px', cls: 'num',
-        render: (i) => `<span class="num">${i.markerCount ?? '—'} / ${i.resourceCount ?? '—'}</span>`,
-      },
-      {
-        title: '标注', width: '130px',
-        render: (i) => {
-          const fl = store.sceneFlags(i);
-          return fl.length
-            ? `<span class="tags">${fl.map((k) => `<span class="badge ${SCENE_FLAG[k].cls}" title="${UI.esc(SCENE_FLAG[k].desc)}">${UI.esc(SCENE_FLAG[k].label)}</span>`).join('')}</span>`
-            : '<span class="faint">—</span>';
-        },
-      },
+      { title: '编号 / 任务目标', render: (i) => `<div class="mono faint text-support">${UI.esc(i.taskId)}</div>${UI.esc(i.goal || '—')}` },
+      { title: '风险标签', width: '32%', render: (i) => UI.tagList((i.labels || []).map((k) => RISK_LABEL[k]?.label || k)) },
     ],
     slice,
     '该筛选条件下暂无题目',
   );
-
-  return `${head}${covBlock}
-    ${UI.filters({
+  return detailContent(base + detailBlock('题目内容', UI.filters({
     search: { label: '搜索', id: 'sbd-q', value: dView.q, placeholder: '搜索编号或任务目标', oninput: 'App.sbdSearch(this.value)' },
-    selects: [
-      {
-        label: '风险标签', id: 'sbd-label', value: dView.label, onchange: 'App.sbdLabel(this.value)',
-        options: [['all', '全部标签'], ...Object.keys(cov).map((k) => [k, RISK_LABEL[k]?.label || k])],
-      },
-      {
-        label: '质量标注', id: 'sbd-flag', value: dView.flag, onchange: 'App.sbdFlag(this.value)',
-        options: [['all', '全部题目'], ...Object.entries(SCENE_FLAG).map(([k, v]) => [k, v.label])],
-      },
-    ],
-  })}
-    ${UI.card('', table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.sbdPage({p})'), '', true)}`;
+    selects: [{
+      label: '风险标签', id: 'sbd-label', value: dView.label, onchange: 'App.sbdLabel(this.value)',
+      options: [['all', '全部标签'], ...Object.keys(cov).map((k) => [k, RISK_LABEL[k]?.label || k])],
+    }],
+  }) + table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.sbdPage({p})')));
 }
 
 /* 抽屉内局部重绘：只换 body，保留输入焦点 */
@@ -160,13 +110,12 @@ export const actions = {
   openSceneBank(id) {
     const b = store.getSceneBank(id);
     if (!b) return;
-    Object.assign(dView, { id, q: '', label: 'all', flag: 'all', page: 1 });
-    UI.drawer(b.name, bankBody(b));
+    Object.assign(dView, { id, q: '', label: 'all', page: 1 });
+    openConfigDetail('场景题库详情', bankBody(b), UI.btn('导出', { onclick: `App.sbExport('${id}')` }) + UI.btn('关闭', { onclick: 'UI.closeDrawer()' }));
   },
 
   sbdSearch(v) { dView.q = v; dView.page = 1; redrawBank(); },
   sbdLabel(v) { dView.label = v; dView.page = 1; redrawBank(); },
-  sbdFlag(v) { dView.flag = v; dView.page = 1; redrawBank(); },
   sbdPage(p) { dView.page = p; redrawBank(); },
 
   sbExport(id) {

@@ -1,0 +1,26 @@
+/* Agent report evidence expands in the document; matrix values are question counts. */
+.report-injection { margin:10px 0 8px 16px; }
+.report-injection>summary { display:inline-flex; align-items:center; gap:6px; color:var(--primary); cursor:pointer; list-style:none; font-size:var(--t-support); }
+.report-injection>summary::-webkit-details-marker { display:none; }
+.report-injection>summary::before { content:'›'; font-size:16px; line-height:1; transition:transform .15s; }
+.report-injection[open]>summary::before { transform:rotate(90deg); }
+.report-injection>summary:hover { text-decoration:underline; }
+.report-injection-body { padding:16px 0 4px; }
+.report-question .report-injection-body p { margin:8px 0; }
+.report-injection-body .ud-field { margin-bottom:14px; }
+.agent-error-framework { margin-top:24px; }
+.agent-error-framework .rr-note { margin-bottom:12px; }
+.agent-error-framework-scroll { overflow-x:auto; }
+.agent-error-matrix { min-width:600px; }
+.agent-error-matrix th:not(:first-child),.agent-error-matrix td:not(:first-child) { text-align:center; }
+.agent-error-matrix th:first-child { width:230px; text-align:left; white-space:normal; }
+.agent-error-matrix tbody th { background:transparent; color:var(--text); font-weight:500; }
+.agent-error-matrix .error-type-description { display:block; color:var(--text-faint); font-size:var(--t-caption); line-height:1.6; margin-top:4px; max-width:230px; }
+.error-observation { display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:3px 8px; border-radius:4px; color:#875b2e; background:#fcf4e9; font-variant-numeric:tabular-nums; }
+.error-unrecorded { color:#98a4b2; }
+@media print {
+  .report-injection-body { display:block !important; }
+  .report-injection { break-inside:auto; }
+  .agent-error-framework-scroll { overflow:visible; }
+  .agent-error-matrix { min-width:0; }
+}

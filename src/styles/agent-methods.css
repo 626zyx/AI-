@@ -1,0 +1,10 @@
+/* Capability groups keep the shared two-block configuration drawer. */
+.agm-surface-catalog { min-width:0; }
+.agm-surface-group { margin:18px 0 0; }
+.agm-surface-group h4 { margin:0 0 5px; color:var(--text); font-size:var(--t-body); font-weight:600; }
+.agm-surface-description,.agm-surface-note { color:var(--muted); font-size:var(--t-support); line-height:1.65; margin:0 0 10px; }
+.agm-surface-note:last-child { margin-top:16px; margin-bottom:0; }
+.agm-surface-detail { display:block; color:var(--text-faint); font-size:var(--t-caption); line-height:1.6; margin-top:6px; }
+.agm-file-example { overflow-wrap:anywhere; word-break:break-word; line-height:1.65; }
+.agm-file-example+.agm-file-example { margin-top:4px; }
+.agm-surface-group table { table-layout:fixed; }

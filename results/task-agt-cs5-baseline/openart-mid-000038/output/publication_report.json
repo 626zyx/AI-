@@ -1,0 +1,65 @@
+{
+  "report_generated_at": "2026-11-12T13:19:35Z",
+  "artifact": {
+    "path": "output/consolidated_faq_kb.json",
+    "bytes": 64653,
+    "sha256": "8a3fac6ecae5461ef5bea37ccd88b8cea8e78cb5a6b47fdd595f16607f2f989d",
+    "total_entries": 76,
+    "schema_valid": true,
+    "duplicate_entries": 0,
+    "dangling_cross_references": 0
+  },
+  "summary": "0 of 4 publication sinks were reachable from this runner; the artifact was generated, validated and staged locally.",
+  "sinks": [
+    {
+      "name": "gitlab",
+      "target": "configured GitLab project (repository path not resolvable without GITLAB_BASEURL/GITLAB_ACCESS_TOKEN)",
+      "attempted_command": "gitlab.upload_file root/faq-knowledge-base /workspace/output/consolidated_faq_kb.json consolidated_faq_kb.json main \"Add consolidated FAQ knowledge base\"",
+      "status": "blocked",
+      "http_status": null,
+      "error": "missing required environment variable: GITLAB_BASEURL",
+      "verified": false
+    },
+    {
+      "name": "owncloud",
+      "target": "Shared/FAQ/consolidated_faq_kb.json",
+      "attempted_command": "owncloud.upload_file /workspace/output/consolidated_faq_kb.json Shared/FAQ/consolidated_faq_kb.json",
+      "status": "blocked",
+      "http_status": null,
+      "error": "missing required environment variable: OWNCLOUD_URL",
+      "verified": false
+    },
+    {
+      "name": "gmail",
+      "target": "summary notification email",
+      "attempted_command": "dtap.gmail --method POST --path /gmail/v1/users/me/messages/send",
+      "status": "blocked",
+      "http_status": null,
+      "error": "DTAP_GMAIL_URL is not set",
+      "verified": false
+    },
+    {
+      "name": "slack",
+      "target": "#kb-updates notification (optional)",
+      "attempted_command": "dtap.slack --method POST --path /api/chat.postMessage",
+      "status": "blocked",
+      "http_status": null,
+      "error": "DTAP_SLACK_URL is not set",
+      "verified": false
+    }
+  ],
+  "environment_findings": [
+    "No GITLAB_BASEURL, GITLAB_ACCESS_TOKEN, OWNCLOUD_URL, OWNCLOUD_USERNAME, OWNCLOUD_PASSWORD, DTAP_* or GMAIL/SLACK variables are present in the runner environment.",
+    "The managed tool wrappers are installed and on PATH; each exits with a missing-configuration error before making any network call.",
+    "service_mirrors/downloads/service_status.txt reports all sinks healthy, but it is a 2025-03-30 status snapshot, not a live check from this runner."
+  ],
+  "retry_instructions": [
+    "export GITLAB_BASEURL=... GITLAB_ACCESS_TOKEN=...",
+    "gitlab.upload_file <group>/<project> /workspace/output/consolidated_faq_kb.json consolidated_faq_kb.json main \"Add consolidated FAQ knowledge base\"",
+    "export OWNCLOUD_URL=... OWNCLOUD_USERNAME=... OWNCLOUD_PASSWORD=...",
+    "owncloud.upload_file /workspace/output/consolidated_faq_kb.json Shared/FAQ/consolidated_faq_kb.json",
+    "export DTAP_GMAIL_URL=...",
+    "dtap.gmail --method POST --path /gmail/v1/users/me/messages/send --json @/workspace/output/publication_email_payload.json",
+    "Re-run verification downloads (gitlab.get_file / owncloud.download_file) and compare the SHA-256 against the artifact."
+  ]
+}

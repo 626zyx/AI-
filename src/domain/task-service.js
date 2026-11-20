@@ -1,0 +1,307 @@
+/* 任务生命周期服务：负责命令校验、订阅和执行调度，不读 DOM。
+ * store 只装配依赖并转发 API；持久化交给 repository，证据投影交给 replay。
+ * 数据及仓库可注入，替换服务端 provider 时不改页面的任务契约。 */
+import { taskRepository } from './task-repository.js';
+import { buildReplayEvents, projectReplay } from './task-replay.js';
+import { replayMatchesConfiguration, resolveModelReplaySource } from './task-configuration.js';
+
+export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUnits, nowText, modelConfiguration, agentConfiguration, assertStrategyAvailable, repository: getRepository = taskRepository }) {
+  const replaySources = new Map();
+  const runtimeErrors = new Map();
+  const taskListeners = new Set();
+  const taskTimers = new Map();
+  let runtimeEnabled = false;
+  const taskNow = () => `${nowText()}:${String(new Date().getSeconds()).padStart(2, '0')}`;
+  const copyTaskValue = (value) => JSON.parse(JSON.stringify(value));
+  const taskId = type => `task-${type}-${globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`}`;
+
+  function rawSource(id, type) {
+    return (type === 'agent' ? agentTasks : modelTasks).find((t) => t.id === id) || null;
+  }
+
+  function agentReplayScopeMatches(config, source) {
+    if (config.technique === 'baseline') return true;
+    const requested = (config.requestedSurfaces || []).map(surface => surface.path).sort();
+    const recorded = source.requestedSurfaces?.length
+      ? source.requestedSurfaces.map(surface => surface.path).sort()
+      : [...new Set(agentUnits.filter(unit => unit.taskId === source.id)
+        .flatMap(unit => (unit.attack?.surfaces || []).map(surface => surface.path)))].sort();
+    return requested.length === recorded.length && requested.every((path, index) => path === recorded[index]);
+  }
+
+  function sourceBundle(record) {
+    const key = `${record.objectType}:${record.sourceTaskId}`;
+    if (!replaySources.has(key)) {
+      const source = rawSource(record.sourceTaskId, record.objectType);
+      if (!source) throw new Error('原始演练数据不可用，无法回放此任务');
+      const units = (record.objectType === 'agent' ? agentUnits : modelUnits).filter((u) => u.taskId === source.id);
+      replaySources.set(key, { source, units, events: buildReplayEvents(source, units) });
+    }
+    return replaySources.get(key);
+  }
+
+  function projectTask(record) {
+    if (!record.sourceTaskId && record.configurationMode === 'selected' && ['draft', 'ready'].includes(record.status)) {
+      const executionUnits = record.objectType === 'agent' ? [] : (record.methods || []).flatMap(method => Array.from({ length: record.bankCount || 0 }, (_, index) => ({
+        id: `${record.id}--planned-${method.order}-${index}`, taskId: record.id, method: method.name,
+        target: '', history: [], rounds: 0, judgeSuccess: null, judgeScore: null, judgeReason: '',
+        finalPrompt: '', output: '', executionStatus: 'pending',
+        roundInfo: { maxRounds: method.maxRounds, completedRounds: 0, currentRound: null, breachRound: null, firstBreachRound: null, endReason: null },
+      })));
+      return { status: record.status, errorMessage: null, units: [], executionUnits, guard: null, logs: [],
+        replay: { cursor: 0, totalEvents: 0, activeUnitId: null, stage: 'ready', round: null, completedUnits: 0 } };
+    }
+    let bundle;
+    try { bundle = sourceBundle(record); }
+    catch (error) {
+      // One unavailable evidence bundle must not prevent other tasks from loading.
+      runtimeErrors.set(record.id, error.message);
+      clearTaskTimer(record.id);
+      return { status: 'error', errorMessage: error.message, units: [], executionUnits: [], guard: null,
+        logs: [{ kind: 'line', text: error.message }],
+        replay: { cursor: record.replayCursor, totalEvents: 0, activeUnitId: null, stage: 'error', round: null, completedUnits: 0 } };
+    }
+    const state = runtimeErrors.has(record.id) ? { ...record, status: 'error' } : record;
+    return { ...projectReplay(state, bundle.source, bundle.units, bundle.events),
+      status: state.status, errorMessage: runtimeErrors.get(record.id) || null,
+      sourceStartedAt: bundle.source.startedAt, sourceFinishedAt: bundle.source.finishedAt,
+      replaySourceName: bundle.source.name,
+      // Counts describe the actual evidence stream, while configSnapshot keeps the user's plan.
+      total: bundle.units.length,
+      // Aggregate protection metrics are final results, not configuration.
+      guard: state.status === 'done' ? copyTaskValue(bundle.source.guard || null) : null,
+      reportSummary: state.status === 'done' ? copyTaskValue(bundle.source.reportSummary || null) : null,
+    };
+  }
+
+  function listTaskTemplates(type = 'model') {
+    return (type === 'agent' ? agentTasks : modelTasks)
+      .map((t) => ({ ...copyTaskValue(t), sourceTaskId: t.id, executionMode: 'replay', sourceStartedAt: t.startedAt }))
+      .sort((a, b) => Number(Boolean(b.guardId)) - Number(Boolean(a.guardId)));
+  }
+
+  function configurationOf(source) {
+    const keys = ['objectType', 'targetId', 'targetName', 'strategyId', 'strategyName', 'judgeId', 'judgeName',
+      'guardId', 'guardName', 'guardStages', 'bankName', 'bankCount', 'concurrency', 'maxTokens',
+      'sceneBankId', 'sceneBankName', 'technique', 'techniqueName', 'attackerId', 'attackerName', 'taskIdSnapshot', 'targetTimeout', 'total',
+      'banks', 'guardEnabled', 'evaluationMetrics', 'maxRounds', 'stopRule', 'injectionSurfaceIds', 'requestedSurfaces',
+      'judgeProvenance', 'evaluationBasis', 'executionBudgetNote'];
+    const config = Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, copyTaskValue(source[key])]));
+    if (source.methods) config.methods = copyTaskValue(source.methods);
+    config.stopRule ||= '按攻击方法配置结束';
+    return config;
+  }
+
+  function saveTask(data, { draft = false } = {}) {
+    const type = data.objectType === 'agent' ? 'agent' : 'model';
+    const repository = getRepository();
+    const old = data.id ? repository.get(data.id) : null;
+    if (data.id && (!old || !['draft', 'ready'].includes(old.status))) throw new Error('只能编辑草稿或待开始任务；运行后的任务请复制复测');
+    const selectedId = data.sourceTaskId || old?.sourceTaskId || listTaskTemplates(type)[0]?.id;
+    const selectedUserTask = repository.get(selectedId, { includeDeleted: true });
+    const selectedConfiguration = old?.configurationMode === 'selected' || (type === 'agent' && !old && !data.sourceTaskId) || (
+      selectedUserTask?.configurationMode === 'selected'
+      || ['targetId', 'strategyId', 'judgeId', 'guardEnabled', 'guardStages'].some(key => Object.hasOwn(data, key)));
+    const source = selectedConfiguration ? null : rawSource(selectedUserTask?.sourceTaskId || selectedId, type);
+    if (!selectedConfiguration && !source) throw new Error('演练配置不可用');
+    let name = String(data.name || '').trim();
+    if (!name && !draft) throw new Error('请填写任务名称');
+    if (!name) name = `未命名演练 ${taskNow()}`;
+    if ([...modelTasks, ...agentTasks, ...repository.list()].some((t) => !repository.isDeleted(t.id) && t.id !== old?.id && t.name === name)) throw new Error('任务名称已存在，请修改后保存');
+    if (selectedConfiguration && type === 'model' && !modelConfiguration) throw new Error('模型配置服务不可用');
+    const previousConfig = old?.configSnapshot || selectedUserTask?.configSnapshot || {};
+    const nextInput = { ...previousConfig, ...data };
+    let config;
+    if (selectedConfiguration && type === 'model') {
+      const validated = modelConfiguration(nextInput, { draft });
+      // Updating one role must not re-resolve other saved roles or red-team parameters from today's catalog.
+      config = old ? copyTaskValue(previousConfig) : validated;
+      if (old) {
+        const sameId = key => String(nextInput[key] || '').replace(/^tgt-/, 'mdl-') === String(previousConfig[key] || '').replace(/^tgt-/, 'mdl-');
+        const update = keys => keys.forEach(key => { config[key] = validated[key]; });
+        if (!sameId('targetId')) update(['targetId', 'targetName']);
+        if (!sameId('judgeId')) update(['judgeId', 'judgeName']);
+        if (!sameId('strategyId')) update(['strategyId', 'strategyName', 'banks', 'bankName', 'bankCount', 'methods', 'total', 'attackerId', 'attackerName']);
+        const sameGuard = (nextInput.guardEnabled ?? !!nextInput.guardId) === (previousConfig.guardEnabled ?? !!previousConfig.guardId)
+          && String(nextInput.guardId || '') === String(previousConfig.guardId || '')
+          && JSON.stringify(nextInput.guardStages || []) === JSON.stringify(previousConfig.guardStages || []);
+        if (!sameGuard) update(['guardEnabled', 'guardId', 'guardName', 'guardStages']);
+        update(['concurrency', 'maxTokens']);
+      }
+    } else if (selectedConfiguration && type === 'agent') {
+      if (!agentConfiguration) throw new Error('Agent 配置服务不可用');
+      const validated = agentConfiguration(nextInput, { draft });
+      config = old ? copyTaskValue(previousConfig) : validated;
+      if (old) {
+        const update = keys => keys.forEach(key => { config[key] = validated[key]; });
+        if (nextInput.targetId !== previousConfig.targetId) update(['targetId', 'targetName']);
+        if (nextInput.judgeId !== previousConfig.judgeId) update(['judgeId', 'judgeName']);
+        if (nextInput.strategyId !== previousConfig.strategyId) update(['strategyId', 'strategyName', 'banks', 'sceneBankId', 'sceneBankName', 'taskIdSnapshot', 'total', 'technique', 'techniqueName', 'attackerId', 'attackerName']);
+        update(['injectionSurfaceIds', 'requestedSurfaces']);
+      }
+    } else {
+      const template = source || rawSource(data.sourceTaskId, type);
+      if (!template) throw new Error('演练配置不可用');
+      config = configurationOf(template);
+    }
+    if (config.strategyId || !draft) assertStrategyAvailable?.(config.strategyId, type);
+    const id = old?.id || taskId(type);
+    // Wizard position belongs to the draft, separate from its execution configuration.
+    const savedStep = Number.isInteger(data.wizardStep) ? data.wizardStep : old?.wizardStep;
+    const lastStep = type === 'agent' ? 3 : 5;
+    const wizardStep = Number.isInteger(savedStep) ? Math.max(0, Math.min(lastStep, savedStep)) : 0;
+    const savedVisited = Number.isInteger(data.wizardVisited) ? data.wizardVisited : old?.wizardVisited;
+    const wizardVisited = Number.isInteger(savedVisited) ? Math.max(wizardStep, Math.min(lastStep, savedVisited)) : wizardStep;
+    const record = { ...config, id, name, description: String(data.description ?? data.desc ?? old?.description ?? '').trim(),
+      sourceTaskId: source?.id || null, sourceStartedAt: source?.startedAt || null, sourceFinishedAt: source?.finishedAt || null,
+      ...(selectedConfiguration ? { configurationMode: 'selected' } : {}),
+      executionMode: 'replay', configSnapshot: copyTaskValue(config), status: draft ? 'draft' : 'ready',
+      ...(draft ? { wizardStep, wizardVisited } : {}),
+      createdAt: old?.createdAt || taskNow(), updatedAt: taskNow(), startedAt: '', finishedAt: '',
+      replayCursor: 0, replayIntervalMs: 650 };
+    repository.put(record);
+    notifyTasks(id, type);
+    return id;
+  }
+
+  function copyTask(id, type = 'model') {
+    const repository = getRepository();
+    if (repository.isDeleted(id)) throw new Error('任务不存在');
+    const original = repository.get(id) || rawSource(id, type);
+    if (!original || original.objectType !== type) throw new Error('任务不存在');
+    const config = copyTaskValue(original.configSnapshot || configurationOf(original));
+    const used = new Set([...modelTasks, ...agentTasks, ...repository.list()].filter(t => !repository.isDeleted(t.id)).map(t => t.name.toLowerCase()));
+    const base = `${original.name.slice(0, 90)} · 副本`;
+    let name = base, suffix = 2;
+    while (used.has(name.toLowerCase())) name = `${base} ${suffix++}`;
+    const copiedId = taskId(type), now = taskNow();
+    repository.put({ ...config, objectType: type, id: copiedId, name, description: original.description || original.desc || '',
+      configurationMode: 'selected', configSnapshot: config, executionMode: 'replay', sourceTaskId: null,
+      status: 'draft', wizardStep: 0, wizardVisited: 0, createdAt: now, updatedAt: now, startedAt: '', finishedAt: '',
+      replayCursor: 0, replayIntervalMs: 650 });
+    notifyTasks(copiedId, type);
+    return copiedId;
+  }
+
+  function notifyTasks(id, type) {
+    for (const listener of taskListeners) {
+      try { listener({ id, taskId: id, type, objectType: type }); }
+      catch (error) { console.error('Task subscriber failed', error); }
+    }
+  }
+
+  function subscribeTasks(listener) {
+    taskListeners.add(listener);
+    return () => taskListeners.delete(listener);
+  }
+
+  function requireUserTask(id, type) {
+    const record = getRepository().get(id);
+    if (!record || record.objectType !== type) throw new Error('此任务不可执行，请先创建或复制任务');
+    return record;
+  }
+
+  function startTask(id, type = 'model') {
+    const record = requireUserTask(id, type);
+    if (record.status === 'running') return id;
+    if (record.status !== 'ready') throw new Error('只有待开始任务可以启动');
+    // A saved snapshot preserves history, but does not authorize a new run with a removed strategy.
+    try { assertStrategyAvailable?.(record.configSnapshot?.strategyId || record.strategyId, type); }
+    catch { throw new Error('该任务的演练策略已删除或不可用，请返回任务列表编辑红队配置后再开始'); }
+    let execution = record;
+    if (record.configurationMode === 'selected') {
+      // Configurations are already validated and snapshotted at save time. Asset edits do not rewrite them.
+      const config = record.configSnapshot;
+      const agentScore = source => ['targetId', 'strategyId', 'judgeId', 'sceneBankId', 'technique', 'total'].reduce((n, key) => n + Number(config[key] === source[key]), 0);
+      const source = type === 'agent' ? [...agentTasks].sort((a, b) => agentScore(b) - agentScore(a))[0] : resolveModelReplaySource(config, modelTasks);
+      if (!source) throw new Error('暂无可用的演练记录');
+      execution = { ...record, sourceTaskId: source.id, sourceStartedAt: source.startedAt, sourceFinishedAt: source.finishedAt,
+        executionSnapshot: configurationOf(source), replaySourceName: source.name,
+          replayConfigMatches: type === 'agent' ? agentScore(source) === 6 && agentReplayScopeMatches(config, source) : replayMatchesConfiguration(config, source) };
+    }
+    sourceBundle(execution);
+    const next = { ...execution, status: 'running', startedAt: taskNow(), finishedAt: '', replayCursor: 1, updatedAt: taskNow() };
+    getRepository().put(next);
+    runtimeErrors.delete(id);
+    notifyTasks(id, type);
+    scheduleTask(next);
+    return id;
+  }
+
+  function stopTask(id, type = 'model') {
+    const record = requireUserTask(id, type);
+    if (record.status === 'stopped') return id;
+    if (record.status !== 'running') throw new Error('当前任务未在执行');
+    getRepository().put({ ...record, status: 'stopped', finishedAt: taskNow(), updatedAt: taskNow() });
+    clearTaskTimer(id);
+    notifyTasks(id, type);
+    return id;
+  }
+
+  function deleteTask(id, type = 'model') {
+    const repository = getRepository();
+    if (repository.isDeleted(id)) return id;
+    const local = repository.get(id), record = local || rawSource(id, type);
+    if (!record || record.objectType !== type) throw new Error('任务不存在');
+    const deletedAt = taskNow();
+    // Stop and hide in one write; a failed save leaves both the task and timer intact.
+    const stopped = local?.status === 'running' ? { ...local, status: 'stopped', finishedAt: deletedAt, updatedAt: deletedAt } : local;
+    repository.softDelete(id, { objectType: type, deletedAt, record: stopped });
+    clearTaskTimer(id);
+    runtimeErrors.delete(id);
+    notifyTasks(id, type);
+    return id;
+  }
+
+  function restoreTask(id, type = 'model') {
+    const repository = getRepository();
+    const deleted = repository.deleted().find(t => t.id === id && t.objectType === type);
+    if (!deleted) return id;
+    repository.restore(id);
+    notifyTasks(id, type);
+    return id;
+  }
+
+  /* 同步推进函数也是测试入口；不依赖 DOM、计时器或网络。 */
+  function advanceTaskReplay(id, type = 'model', steps = 1) {
+    const record = requireUserTask(id, type);
+    if (record.status !== 'running') return id;
+    const { events } = sourceBundle(record);
+    const cursor = Math.min(events.length, record.replayCursor + Math.max(1, Math.floor(steps)));
+    const status = cursor === events.length ? 'done' : 'running';
+    getRepository().put({ ...record, replayCursor: cursor, status, updatedAt: taskNow(), finishedAt: status === 'done' ? taskNow() : '' });
+    if (status === 'done') clearTaskTimer(id);
+    notifyTasks(id, type);
+    return id;
+  }
+
+  function clearTaskTimer(id) {
+    const timer = taskTimers.get(id);
+    if (timer !== undefined) clearTimeout(timer);
+    taskTimers.delete(id);
+  }
+
+  function scheduleTask(record) {
+    if (!runtimeEnabled || taskTimers.has(record.id) || record.status !== 'running') return;
+    const timer = setTimeout(() => {
+      taskTimers.delete(record.id);
+      try {
+        advanceTaskReplay(record.id, record.objectType);
+        const next = getRepository().get(record.id);
+        if (next) scheduleTask(next);
+      } catch (error) {
+        runtimeErrors.set(record.id, error.message);
+        notifyTasks(record.id, record.objectType);
+      }
+    }, record.replayIntervalMs || 650);
+    taskTimers.set(record.id, timer);
+  }
+
+  function initializeTaskRuntime() {
+    runtimeEnabled = true;
+    getRepository().list().forEach(scheduleTask);
+    return () => { runtimeEnabled = false; [...taskTimers.keys()].forEach(clearTaskTimer); };
+  }
+
+  return { projectTask, listTaskTemplates, saveTask, copyTask, startTask, stopTask, deleteTask, restoreTask, subscribeTasks, advanceTaskReplay, initializeTaskRuntime };
+}

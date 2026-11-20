@@ -3,8 +3,15 @@
 import * as shell from './core/shell.js';
 import * as router from './core/router.js';
 import * as ui from './core/ui.js';
+import * as store from './domain/store.js';
+import { mountTaskConfig } from './core/task-config.js';
+import { taskWizardPage, warnOnUnsavedTask } from './pages/task-wizard.js';
+import { actions as lifecycleActions } from './pages/task-list.js';
+import { mountTaskWorkspace } from './pages/task-workspace.js';
+import { actions as reportFormatActions, mountReportDocument } from './pages/report-format.js';
 
-import { posturePage, actions as postureActions } from './pages/posture.js';
+import { posturePage, mountPosture, actions as postureActions } from './pages/posture.js';
+import { welcomePage, mountWelcome } from './pages/welcome.js';
 import { tasksPage, taskDetailPage, draftsPage, actions as taskActions } from './pages/tasks.js';
 import { resultsPage, comparePage, actions as resultActions } from './pages/results.js';
 import { reportsPage, reportDetailPage, actions as reportActions } from './pages/reports.js';
@@ -14,20 +21,24 @@ import { modelsPage, actions as assetActions } from './pages/assets.js';
 import { riskPage, actions as riskActions } from './pages/risk.js';
 import { rolesPage, riskRulePage, actions as platformActions } from './pages/platform.js';
 import { actions as editorActions } from './pages/strategy-editor.js';
-import { actions as wizardActions, bindApp as bindWizardApp } from './pages/wizard.js';
+import { actions as wizardActions } from './pages/wizard.js';
 /* Agent 演练 */
 import { agentTasksPage, agentTaskDetailPage, agentDraftsPage, actions as agTaskActions } from './pages/agent-tasks.js';
-import { agentResultsPage, agentObjectPage, agentComparePage, actions as agResultActions } from './pages/agent-results.js';
+import { agentResultsPage, actions as agResultActions } from './pages/agent-results.js';
 import { agentReportsPage, agentReportDetailPage, actions as agReportActions } from './pages/agent-reports.js';
 import { agentStrategyPage, agentStrategyDetailPage, agentStrategyDraftsPage, actions as agStrategyActions } from './pages/agent-strategy.js';
 import { sceneBanksPage, actions as sceneBankActions } from './pages/scene-banks.js';
+import { agentMethodsPage, actions as agMethodActions } from './pages/agent-methods.js';
 import { agentsPage, agentAssetDetailPage, actions as agAssetActions } from './pages/agent-assets.js';
-import { actions as agWizardActions } from './pages/agent-wizard.js';
+import { actions as noticeActions } from './pages/notices.js';
+import { actions as guideActions } from './pages/user-guide.js';
 
 router.register('posture', 'home', posturePage);
+router.register('home', 'home', welcomePage);
 router.register('exercise', 'tasks', tasksPage);
 router.register('exercise', 'task-detail', taskDetailPage);
 router.register('exercise', 'drafts', draftsPage);
+router.register('exercise', 'task-create', taskWizardPage);
 router.register('exercise', 'results', resultsPage);
 router.register('exercise', 'compare', comparePage);
 router.register('exercise', 'reports', reportsPage);
@@ -36,9 +47,8 @@ router.register('exercise', 'report-detail', reportDetailPage);
 router.register('agent', 'ag-tasks', agentTasksPage);
 router.register('agent', 'ag-task-detail', agentTaskDetailPage);
 router.register('agent', 'ag-drafts', agentDraftsPage);
+router.register('agent', 'ag-task-create', taskWizardPage);
 router.register('agent', 'ag-results', agentResultsPage);
-router.register('agent', 'ag-object', agentObjectPage);
-router.register('agent', 'ag-compare', agentComparePage);
 router.register('agent', 'ag-reports', agentReportsPage);
 router.register('agent', 'ag-report-detail', agentReportDetailPage);
 router.register('strategy', 'attack', attackStrategyPage);
@@ -48,6 +58,7 @@ router.register('strategy', 'guard', guardStrategyPage);
 router.register('strategy', 'ag-strategy', agentStrategyPage);
 router.register('strategy', 'ag-strategy-detail', agentStrategyDetailPage);
 router.register('strategy', 'ag-strategy-drafts', agentStrategyDraftsPage);
+router.register('strategy', 'ag-methods', agentMethodsPage);
 router.register('strategy', 'scenebanks', sceneBanksPage);
 router.register('assets', 'models', modelsPage);
 router.register('assets', 'agents', agentsPage);
@@ -70,6 +81,7 @@ window.App = Object.assign(
   taskActions,
   resultActions,
   reportActions,
+  reportFormatActions,
   strategyActions,
   libraryActions,
   assetActions,
@@ -83,20 +95,61 @@ window.App = Object.assign(
   agReportActions,
   agStrategyActions,
   sceneBankActions,
+  agMethodActions,
   agAssetActions,
-  agWizardActions,
+  noticeActions,
+  guideActions,
+  lifecycleActions,
 );
-bindWizardApp(window.App);
 window.UI = ui;
 window.Shell = shell.api;
 
 shell.mount();
-router.setRenderer(() => shell.render(router.state()));
+let disposePage = () => {};
+router.setRenderer(() => {
+  // A reload drops page-session tasks; their old detail links return to the list.
+  const current=router.state();
+  if(['task-detail','report-detail'].includes(current.sub)&&!store.getTask(current.param))return router.nav('exercise',current.sub==='report-detail'?'reports':'tasks',null,{replace:true});
+  if(['ag-task-detail','ag-report-detail'].includes(current.sub)&&!store.getAgentTask(current.param))return router.nav('agent',current.sub==='ag-report-detail'?'ag-reports':'ag-tasks',null,{replace:true});
+  // Drafts have no workspace or report; direct links also resume their saved configuration step.
+  if(['task-detail','report-detail'].includes(current.sub)&&store.getTask(current.param)?.status==='draft')return router.nav('exercise','task-create',current.param,{replace:true});
+  if(['ag-task-detail','ag-report-detail'].includes(current.sub)&&store.getAgentTask(current.param)?.status==='draft')return router.nav('agent','ag-task-create',current.param,{replace:true});
+  if(current.sub==='report-detail'&&store.getTask(current.param)?.status!=='done')return router.nav('exercise','task-detail',current.param,{replace:true});
+  if(current.sub==='ag-report-detail'&&store.getAgentTask(current.param)?.status!=='done')return router.nav('agent','ag-task-detail',current.param,{replace:true});
+  disposePage();
+  shell.render(router.state());
+  const host=document.getElementById('app-main');
+  const configCleanup=mountTaskConfig(host),workspaceCleanup=mountTaskWorkspace(host),postureCleanup=mountPosture(host),welcomeCleanup=mountWelcome(host),reportCleanup=mountReportDocument(host);
+  disposePage=()=>{reportCleanup();welcomeCleanup();postureCleanup();workspaceCleanup();configCleanup();};
+});
+// The runtime outlives routes. Page subscriptions are explicitly disposed.
+const stopRuntime=store.initializeTaskRuntime();
+let pendingTaskListRefresh = false;
+const taskListActive=()=>['tasks','ag-tasks','drafts','ag-drafts'].includes(router.state().sub);
+const listInteractionActive=()=>document.querySelector('.overlay.open, .dd-menu:not([hidden])');
+const refreshTaskList=()=>{
+  const cur=router.state();
+  pendingTaskListRefresh=false;
+  if(taskListActive())router.nav(cur.page,cur.sub,cur.param,{replace:true});
+};
+store.subscribeTasks(() => {
+  if(!taskListActive())return;
+  if(listInteractionActive()){pendingTaskListRefresh=true;return;}
+  refreshTaskList();
+});
+// Progress must not dismiss a delete confirmation or a row's open action menu.
+document.addEventListener('click',()=>queueMicrotask(()=>{
+  if(pendingTaskListRefresh&&!listInteractionActive())refreshTaskList();
+}));
+window.addEventListener('pagehide',()=>{disposePage();stopRuntime();});
+window.addEventListener('beforeunload', warnOnUnsavedTask);
+window.addEventListener('pageshow',e=>{if(e.persisted){store.initializeTaskRuntime();const cur=router.state();router.nav(cur.page,cur.sub,cur.param,{replace:true});}});
 /* 翻页 = 当前路由原地重绘 */
 ui.bindPageRerender(() => { const c = router.state(); router.nav(c.page, c.sub, c.param); });
 
 const initial = router.parseHash();
 router.nav(initial.page, initial.sub || undefined, initial.param, { replace: true });
+if(store.taskStorageError())ui.toast(store.taskStorageError());
 
 window.addEventListener('hashchange', () => {
   const s = router.parseHash();

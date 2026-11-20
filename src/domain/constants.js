@@ -1,6 +1,7 @@
 /* 领域常量：全站唯一的枚举定义。页面不自行造状态/标签映射。 */
 
 export const TASK_STATUS = {
+  ready: { label: '待开始', cls: 'draft', icon: 'stRunning' },
   running: { label: '进行中', cls: 'running', icon: 'stRunning' },
   done: { label: '已完成', cls: 'done', icon: 'stDone' },
   stopped: { label: '已终止', cls: 'stopped', icon: 'stStopped' },
@@ -13,12 +14,14 @@ export const MODEL_ROLE = {
   target: '靶标',
   attack: '攻击生成',
   judge: '裁判',
+  agentBase: '智能体基座',
 };
-/* 角色说明：平台管理 · 模型管理里展示 */
+/* 角色说明：平台管理 · 模型管理里展示。一个角色可同时服务模型演练与 Agent 演练 */
 export const MODEL_ROLE_DESC = {
-  靶标: '被演练的对象，新建演练任务时可选',
-  攻击生成: 'PAIR、DrAttack 等方法用来改写 / 生成攻击提示词',
-  裁判: '过程裁判与最终判定共用，策略配置和新建任务时可选',
+  靶标: '模型演练中被演练的对象，新建模型演练任务时可选',
+  攻击生成: '模型演练中 PAIR 等方法改写攻击提示词；Agent 演练中间接注入方法的攻击者',
+  裁判: '模型演练的过程裁判与最终判定；Agent 演练对产物做泄漏判读',
+  智能体基座: '接入智能体时可选为智能体背后调用的模型',
 };
 /* 接口类型：OpenRT 目前只有 OpenAI 兼容的 Chat Completions 实现 */
 export const API_TYPE = [
@@ -40,41 +43,46 @@ export const OBJECT_TYPE = {
 
 /* ---------------------------------------------------------------- Agent 演练 */
 
-/* 接入模板：只是表单的一键填充助手，不是必需项。
- * 接入智能体一律按自定义 CLI 填写，模板只省去查文档的工夫。 */
-export const AGENT_TEMPLATE = {
-  blank: {
-    label: '空白（手动填写）',
-    cmd: '', image: '', transport: 'stdin',
-    delivery: 'env', envNames: 'OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL',
-    configPath: '', configFormat: 'json',
-  },
-  qwen_code: {
-    label: 'Qwen Code',
-    cmd: 'qwen --yolo',
-    image: 'openart/qwen-code:latest',
-    transport: 'stdin',
-    delivery: 'hybrid',
-    envNames: 'OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL',
-    configPath: 'HOME/.qwen/settings.json',
-    configFormat: 'json',
-  },
-};
+/* 智能体框架：接入时只选框架，启动命令、镜像、凭据投递、攻击面由平台按框架预置。
+ * 一期只开放 Qwen Code；其余 OpenAI 兼容框架置灰（Claude Code、Gemini 接口不兼容，不展示）。 */
+export const AGENT_FRAMEWORKS = [
+  { id: 'qwen_code', label: 'Qwen Code', ok: true },
+  ...['OpenCode', 'Codex', 'Aider', 'Goose', 'Continue CLI', 'Copilot CLI', 'DeepSeek TUI', 'Kilo', 'Oh My Pi', 'OpenClaw', 'Reasonix', 'Hermes', 'Nanobot', 'Pi']
+    .map((label) => ({ id: label.toLowerCase().replace(/\s+/g, '_'), label, ok: false })),
+];
+export const frameworkLabel = (id) => AGENT_FRAMEWORKS.find((f) => f.id === id)?.label || id || '—';
 
-/* 凭据投递方式：智能体从哪里读取模型地址与密钥 */
+/* 旧接入表单仍在用的常量，接入表单简化后删除 */
+export const AGENT_TEMPLATE = {
+  blank: { label: '空白（手动填写）', cmd: '', image: '', transport: 'stdin', delivery: 'env', envNames: 'OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL', configPath: '', configFormat: 'json' },
+  qwen_code: { label: 'Qwen Code', cmd: 'qwen --yolo', image: 'openart/qwen-code:latest', transport: 'stdin', delivery: 'hybrid', envNames: 'OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL', configPath: 'HOME/.qwen/settings.json', configFormat: 'json' },
+};
 export const CRED_DELIVERY = {
   env: { label: '环境变量', desc: '把模型地址与密钥注入为容器环境变量' },
   config: { label: '配置文件', desc: '把模型配置写入容器内的指定文件' },
   hybrid: { label: '环境变量 + 配置文件', desc: '两者都提供，部分框架需要' },
 };
+export const PROMPT_TRANSPORT = { stdin: '标准输入', argv: '命令行参数', file: '写入文件', file_ref_argv: '文件路径作参数' };
 
-/* 提示词传递方式：OpenART PromptCLIRunner 支持的四种 */
-export const PROMPT_TRANSPORT = {
-  stdin: '标准输入',
-  argv: '命令行参数',
-  file: '写入文件',
-  file_ref_argv: '文件路径作参数',
+/* 攻击面类型 */
+export const SURFACE_KIND = {
+  instruction: '指令文件',
+  skill: '技能文件',
+  workspace: '工作区文件',
+  command: '命令文件',
+  rule: '规则文件',
+  configuration: '配置文件',
+  memory: '记忆与历史文件',
 };
+
+/* Agent 判读：泄漏程度与靶标失误所处环节 */
+export const AGENT_SEVERITY = {
+  none: '无',
+  low: '低',
+  medium: '中',
+  high: '高',
+};
+export const AGENT_ERROR_STAGES = ['读取', '汇总', '发布', '交付'];
 
 /* 风险标签：题库标注维度。只用于题目分类与结果归因，不是执行维度。 */
 export const RISK_LABEL = {
@@ -90,8 +98,7 @@ export const RISK_LABEL = {
 export const riskLabelText = (key) => RISK_LABEL[key]?.label || key;
 
 /* Agent 单元判定：与模型演练同一套三态。
- * 判定只看产物里有没有命中禁用标记，不评估任务完成度——
- * 题目自带的 evaluator 在检出泄漏后即返回，完成度字段不可靠。 */
+ * 判定由裁判模型对对外产物做语义判读给出；题目自带的规则判定器结果只作对照（ruleCheck）。 */
 export const AGENT_VERDICT = {
   breach: { key: 'breach', label: '已攻破', cls: 'red' },
   safe: { key: 'safe', label: '已守住', cls: 'green' },
@@ -124,6 +131,7 @@ export const VERDICT = {
 export const GUARD_NONE = '未配置';
 
 export const NAV = [
+  { id: 'home', label: '首页', icon: 'chart' },
   { id: 'exercise', label: '模型演练', icon: 'shield' },
   { id: 'agent', label: 'Agent 演练', icon: 'box' },
   { id: 'strategy', label: '策略中心', icon: 'layers' },
@@ -136,11 +144,10 @@ export const NAV = [
 export const EXTRA_PAGES = { platform: '平台管理' };
 
 export const SUB_PARENT = {
-  'task-detail': 'tasks', drafts: 'tasks', compare: 'results',
+  'task-detail': 'tasks', 'task-create': 'tasks', drafts: 'tasks', compare: 'results',
   'report-detail': 'reports',
   /* Agent 演练 */
-  'ag-task-detail': 'ag-tasks', 'ag-drafts': 'ag-tasks',
-  'ag-object': 'ag-results', 'ag-compare': 'ag-results',
+  'ag-task-detail': 'ag-tasks', 'ag-task-create': 'ag-tasks', 'ag-drafts': 'ag-tasks',
   'ag-report-detail': 'ag-reports',
   /* 策略中心 · Agent 演练策略 */
   'ag-strategy-detail': 'ag-strategy', 'ag-strategy-drafts': 'ag-strategy',
@@ -151,20 +158,21 @@ export const SUB_PARENT = {
 export const SIDE_NAV = {
   exercise: [
     { id: 'tasks', label: '演练任务', icon: 'shield' },
-    { id: 'results', label: '演练结果', icon: 'chart' },
     { id: 'reports', label: '演练报告', icon: 'file' },
+    { id: 'results', label: '模型评估', icon: 'chart' },
   ],
   agent: [
     { id: 'ag-tasks', label: '演练任务', icon: 'shield' },
-    { id: 'ag-results', label: '演练结果', icon: 'chart' },
     { id: 'ag-reports', label: '演练报告', icon: 'file' },
+    { id: 'ag-results', label: 'Agent 评估', icon: 'chart' },
   ],
   strategy: [
     { id: 'attack', label: '模型演练策略', icon: 'layers' },
     { id: 'methods', label: '攻击方法', child: true },
     { id: 'banks', label: '攻击题库', child: true },
-    { id: 'guard', label: '蓝队策略', child: true },
+    { id: 'guard', label: '防护策略', child: true },
     { id: 'ag-strategy', label: 'Agent 演练策略', icon: 'box' },
+    { id: 'ag-methods', label: '攻击方法', child: true },
     { id: 'scenebanks', label: '场景题库', child: true },
   ],
   assets: [

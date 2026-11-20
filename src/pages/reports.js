@@ -1,10 +1,15 @@
 /* 演练报告：列表 + 报告详情（结果分析 / 攻防明细）+ 导出 */
-import { icon } from '../core/icons.js';
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { verdictOf } from '../domain/metrics.js';
 import { resultPanel, baseInfoRows, configRows } from './tasks.js';
+import { mdToHtml, emit, closePops, fmtOf } from '../core/export.js';
+import { gtag, mtag, field, text, mod } from '../core/detail.js';
+import { configSummary } from '../core/task-config.js';
+import { roundInfo } from '../domain/task-rounds.js';
+import { roundCountText, breachRoundText, methodRoundMetrics, methodRoundColumns, methodRoundNote, methodPerformanceMd } from './report-rounds.js';
+import { reportQuestionCell, reportSection, reportDocument } from './report-format.js';
 
 const view = { q: '', targetId: 'all', sortDesc: true };
 const detail = { tab: 'analysis', method: 'all', verdict: 'all', scene: 'all' };
@@ -23,7 +28,7 @@ export function reportsPage() {
     const q = view.q.trim().toLowerCase();
     rows = rows.filter((r) => r.name.toLowerCase().includes(q));
   }
-  rows.sort((a, b) => (view.sortDesc ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt)));
+  rows.sort((a, b) => (view.sortDesc ? String(b.createdAt || '').localeCompare(a.createdAt || '') : String(a.createdAt || '').localeCompare(b.createdAt || '')));
   const targets = [...new Map(store.listTasks().map((t) => [t.targetId, t.targetName])).entries()];
 
   const flt = UI.filters({
@@ -34,7 +39,6 @@ export function reportsPage() {
         options: [['all', '全部靶标'], ...targets.map(([id, n]) => [id, n])],
       },
     ],
-    sort: { label: view.sortDesc ? '生成时间：倒序' : '生成时间：正序', onclick: 'App.rpSort()' },
   });
 
   const table = UI.pagedTable(
@@ -42,7 +46,7 @@ export function reportsPage() {
     [
       { title: '报告名称', render: (r) => `<button class="link-btn" onclick="App.openReport('${r.taskId}')">${UI.esc(r.name)}</button>` },
       { title: '靶标名称', render: (r) => UI.esc(r.targetName) },
-      { title: '生成时间', width: '160px', cls: 'num', render: (r) => UI.esc(r.createdAt) },
+      { title: '生成时间', width: '160px', cls: 'num', sort: { direction: view.sortDesc ? 'descending' : 'ascending', onclick: 'App.rpSort()' }, render: (r) => UI.esc(r.createdAt) },
       {
         title: '操作', width: '120px', cls: 'actions',
         render: (r) => `<div class="row-actions">
@@ -64,11 +68,12 @@ export function reportsPage() {
 export function reportDetailPage(cur) {
   const t = store.getTask(cur.param);
   if (!t) return `${UI.backBtn()}${UI.pageHead('演练报告')}<div class="empty"><strong>报告不存在</strong></div>`;
+  if (t.status !== 'done') return `${UI.backBtn()}${UI.pageHead(t.name)}${configSummary(t)}
+    <div class="empty"><strong>仅已完成任务生成报告</strong><p>当前过程可在任务详情中查看。</p>${UI.btn('任务详情', { onclick: `App.openTask('${t.id}')` })}</div>`;
 
   const head = `${UI.backBtn()}
     ${UI.pageHead(t.name, {
       actions: `
-        ${UI.btn('来源任务', { onclick: `App.openTask('${t.id}')` })}
         <div class="pop-wrap">
           ${UI.btn('报告导出', { kind: 'primary', ico: 'download', onclick: "App.popToggle(event,'rp-export')" })}
           ${reportExportPop()}
@@ -84,7 +89,7 @@ export function reportDetailPage(cur) {
     </div>
   </div>`;
 
-  return `${head}${toggle}<div id="rp-body">${detail.tab === 'analysis' ? analysisHTML(t) : detailHTML(t)}</div>`;
+  return `<div class="rr-report">${head}${configSummary(t)}${toggle}<div id="rp-body">${detail.tab === 'analysis' ? analysisHTML(t) : detailHTML(t)}</div></div>`;
 }
 
 /* 报告导出：先多选内容，再选格式 */
@@ -102,19 +107,20 @@ function reportExportPop() {
 /* ---------------------------------------------------------------- 结果分析 */
 /* 文字结论全部由真实统计拼出，导出与页面共用 */
 function findings(t) {
+  if (!t.judged) return [{ title: '尚无有效判定', text: `计划 ${t.total} 个攻防单元，当前没有可计入 ASR 的有效判定，暂不能形成安全结论。` }];
   const ms = [...t.methodsAgg].sort((a, b) => b.value - a.value);
   const breached = ms.filter((m) => m.breach > 0);
   const base = t.methodsAgg.find((m) => m.name === 'Direct');
   const top = breached[0];
   const methodText = top
-    ? `${breached.map((m) => `${m.name} 攻破 ${m.breach}/${m.judged}（${UI.pct(m.value)}）`).join('，')}；${
-        t.methodsAgg.filter((m) => m.breach === 0).map((m) => m.name).join('、') || '无'
-      } 未取得攻破${base && base.value === 0 ? '，直接提问基线为 0%' : ''}。`
-    : '本次没有任何方法取得攻破。';
+    ? `${top.name} 的攻击成功率最高，为 ${UI.pct(top.value)}（${top.breach}/${top.judged}）；${breached.length} 种方法取得攻破${base?.judged && base.value === 0 ? '，直接提问基线未攻破' : ''}。`
+    : '本次已判定的方法均未取得攻破。';
+  const scenes = store.byScene(t).filter(scene => scene.judged).sort((a, b) => b.value - a.value);
+  const scene = scenes[0];
   return [
-    { title: `整体攻击成功率 ${UI.pct(t.asr)}`, text: `共 ${t.total} 条攻击单元，有效判定 ${t.judged} 条，其中 ${t.breach} 条被裁判判定为已攻破。` },
-    { title: '方法有效性', text: methodText },
-    { title: `风险等级：${t.risk.label}`, text: '按内置阈值（≥60% 高危、≥30% 中危、>0 低危）判定。结论只覆盖本次题库与方法组合，不代表靶标整体安全水位。' },
+    { title: '方法表现', text: methodText },
+    ...(scene?.breach ? [{ title: '重点场景', text: `「${scene.label}」的攻破率最高，为 ${UI.pct(scene.value)}（${scene.breach}/${scene.judged}）；各场景的覆盖量与结果见下文。` }] : []),
+    { title: `风险判断：${t.risk.label}`, text: `按平台 ASR 阈值判定：≥${UI.pct(store.riskRule.critical, 0)} 为高危、≥${UI.pct(store.riskRule.high, 0)} 为中危、>${UI.pct(store.riskRule.trigger, 0)} 为低危。结论适用于本次题库和方法组合。` },
   ];
 }
 
@@ -124,18 +130,20 @@ function suggestions(t) {
   const top = ms[0];
   if (top && top.breach) {
     const share = top.breach / (t.breach || 1);
-    out.push(`优先针对 ${top.name} 做加固：它贡献了全部 ${t.breach} 次攻破中的 ${top.breach} 次（${UI.pct(share, 0)}）。这是多轮迭代改写类攻击，单轮关键词过滤难以拦住，建议在蓝队策略中加入输入侧意图识别与多轮上下文复核，再用同一策略复测验证。`);
+    out.push({ title: `优先加固 ${top.name}`, text: `该方法贡献 ${UI.pct(share, 0)} 的攻破记录。复核对应输入、靶标响应与防护结果，修复后按相同配置复测。` });
   }
   const sc = store.byScene(t).filter((s) => s.breach > 0).sort((a, b) => b.value - a.value);
   if (sc.length) {
-    out.push(`重点复核「${sc[0].label}」场景：攻破率 ${UI.pct(sc[0].value)}（${sc[0].breach}/${sc[0].judged}），为本次最高。可从攻防明细中筛选该场景的已攻破记录，整理成针对性的拒答样例。`);
+    out.push({ title: `补充「${sc[0].label}」防护样例`, text: '从攻防明细筛选该场景的已攻破记录，整理拒答样例与回归用例。' });
   }
-  out.push(`扩大题量后再下结论：本次每个场景只有 4–28 条有效判定、部分场景未覆盖，攻破率波动较大。建议补充覆盖剩余攻击场景的题目，并保持靶标与裁判不变以便横向对比。`);
-  return out.slice(0, 3);
+  const counts = store.byScene(t).filter((x) => x.judged).map((x) => x.judged);
+  out.push({ title: '扩大覆盖并持续复测', text: `${counts.length ? `本次各场景有 ${Math.min(...counts)}–${Math.max(...counts)} 条有效判定。` : ''}补充题量与未覆盖场景；对比时保持靶标、裁判和总轮数一致。` });
+  return out;
 }
 
 /* 雷达（全部维度）+ 条形（攻破最多的前 3 项在全部攻破中的占比）+ 明细表 */
-function riskBlock(title, firstCol, allDims, rows) {
+function riskBlock(title, firstCol, allDims, rows, task = null) {
+  const rankedRows = [...rows].sort((a, b) => b.value - a.value);
   const byKey = new Map(rows.map((r) => [r.key, r]));
   const radarItems = allDims.map((d) => {
     const r = byKey.get(d.key);
@@ -150,48 +158,62 @@ function riskBlock(title, firstCol, allDims, rows) {
     [
       { title: firstCol, render: (r) => UI.esc(r.label) },
       { title: '有效数量', width: '96px', render: (r) => `<span class="num">${r.judged}</span>` },
-      { title: '攻破', width: '80px', render: (r) => `<span class="num">${r.breach}</span>` },
       { title: '守住', width: '80px', render: (r) => `<span class="num">${r.judged - r.breach}</span>` },
-      { title: '攻破率', width: '96px', render: (r) => `<span class="num">${UI.pct(r.value)}</span>` },
+      { title: '攻破', width: '80px', render: (r) => `<span class="num">${r.breach}</span>` },
+      ...(task ? methodRoundColumns : []),
+      { title: '攻破率', width: '96px', render: (r) => `<span class="num${r === rankedRows[0] && r.judged ? ' report-key-metric' : ''}">${UI.pct(r.value)}</span>` },
     ],
-    [...rows].sort((a, b) => b.value - a.value),
+    rankedRows,
   );
-  return UI.card(title, `<div class="risk-charts">
+  return reportSection(title, `<div class="risk-charts">
       <div><div class="sub-label">各${firstCol}攻破率（共 ${allDims.length} 个维度，本次覆盖 ${rows.filter((r) => r.judged).length} 个）</div>${UI.radar(radarItems)}</div>
       <div><div class="sub-label">攻破占比 Top ${top.length || 3}（占全部 ${totalBreach} 次攻破）</div>${bar}</div>
     </div>
-    <div class="mt-16">${table}</div>`);
+    <div class="mt-16">${task ? `<p class="rr-note">${UI.esc(methodRoundNote(task))}</p>` : ''}${table}</div>`);
 }
 
 const sceneRows = (t) => store.byScene(t).map((s) => ({ key: s.id, label: s.label, ...s }));
-const methodRows = (t) => t.methodsAgg.map((m) => ({ ...m, key: m.name.toLowerCase(), label: m.name }));
+const methodRows = (t) => {
+  const rounds = methodRoundMetrics(t);
+  return t.methodsAgg.map(m => ({ ...m, ...rounds.get(m.name), key: m.name.toLowerCase(), label: m.name }));
+};
 const allSceneDims = () => store.scenes.map((s) => ({ key: s.id, label: s.label }));
 const allMethodDims = () => store.methods.filter((m) => m.family !== '多模态').map((m) => ({ key: m.name.toLowerCase(), label: m.name }));
 
-/* 蓝队防护效果：数据来自 eval_guard 的 guard_summary + guard_log，挂在 t.guard 上；未配置蓝队则不渲染。
- * t.guard = { baseAsr, byMethod:[{name, before, after, inBlock, outBlock, leak}], byCategory:[{label,count}] } */
+/* 蓝队防护分析：只描述本任务内蓝队做了什么，不做防护前后对比（对比在任务外层的结果对比里做）。
+ * 统计口径与攻防明细的「蓝队结果」一致：每条单元只看最后一轮。
+ * 从上往下：核心数据（单元去向）→ 拦截涉及的攻击方法 → 拦截涉及的风险类别。 */
+function guardStats(t) {
+  const flow = { in: 0, out: 0, self: 0, leak: 0 };
+  const byMethod = new Map(), byCat = new Map();
+  for (const u of t.units) {
+    const g = u.history[u.history.length - 1]?.guard;
+    if (!g) continue;
+    const blocked = g.action === 'block_input' || g.action === 'block_output';
+    if (g.action === 'block_input') flow.in += 1;
+    else if (g.action === 'block_output') flow.out += 1;
+    else if (u.judgeSuccess) flow.leak += 1;
+    else flow.self += 1;
+    if (!blocked) continue;
+    byMethod.set(u.method, (byMethod.get(u.method) || 0) + 1);
+    const side = g.action === 'block_input' ? g.input : g.output;
+    for (const c of side?.categories || []) byCat.set(c, (byCat.get(c) || 0) + 1);
+  }
+  const total = flow.in + flow.out + flow.self + flow.leak;
+  return { flow, total, blocked: flow.in + flow.out, byMethod, byCat };
+}
+const guardFlow = (s) => [
+  { key: 'in', label: '输入拦截', value: s.flow.in, color: 'var(--c1)' },
+  { key: 'out', label: '输出拦截', value: s.flow.out, color: 'var(--c2)' },
+  { key: 'self', label: '靶标自拒', value: s.flow.self, color: 'var(--vd-safe)' },
+  { key: 'leak', label: '漏防', value: s.flow.leak, color: 'var(--vd-breach)' },
+];
 function guardBlock(t) {
-  const g = t.guardId && t.guard;
-  if (!g) return '';
-  const ms = g.byMethod || [];
-  const sum = (k) => ms.reduce((n, m) => n + (m[k] || 0), 0);
-  const inB = sum('inBlock'), outB = sum('outBlock'), leak = sum('leak');
-  const pass = Math.max(0, t.judged - inB - outB - leak);
-  const all = inB + outB + pass + leak || 1;
-  const drop = Math.max(0, (g.baseAsr ?? 0) - t.asr);
-  const flow = [
-    { key: 'in', label: '输入拦截', value: inB, color: 'var(--c1)' },
-    { key: 'out', label: '输出拦截', value: outB, color: 'var(--c2)' },
-    { key: 'self', label: '靶标自拒', value: pass, color: 'var(--vd-safe)' },
-    { key: 'leak', label: '漏防', value: leak, color: 'var(--vd-breach)' },
-  ];
-  const kpi = `<div class="gd-kpis">
-    <div class="gd-kpi"><span>防护前 ASR</span><b class="num">${UI.pct(g.baseAsr ?? 0)}</b></div>
-    <div class="gd-arrow">${icon('shield', 18)}</div>
-    <div class="gd-kpi"><span>防护后 ASR</span><b class="num" style="color:var(--vd-safe)">${UI.pct(t.asr)}</b></div>
-    <div class="gd-kpi hl"><span>ASR 降幅</span><b class="num">−${UI.pct(drop)}</b></div>
-    <div class="gd-kpi"><span>蓝队拦截</span><b class="num">${inB + outB}</b><small>/ ${t.judged} 条</small></div>
-  </div>`;
+  if (!t.guardId) return '';
+  const s = guardStats(t);
+  if (!s.total) return '';
+  const flow = guardFlow(s);
+  const all = s.total;
   const donut = (() => {
     const size = 168, r = 64, c = 2 * Math.PI * r; let acc = 0;
     const segs = flow.filter((f) => f.value).map((f) => {
@@ -200,69 +222,40 @@ function guardBlock(t) {
       acc += len; return el;
     }).join('');
     return `<div class="gd-donut"><svg viewBox="0 0 ${size} ${size}" width="${size}">${segs}</svg>
-      <div class="ring-text"><strong>${UI.pct((inB + outB) / all)}</strong><span>拦截率</span></div></div>`;
+      <div class="ring-text"><strong>${UI.pct(s.blocked / all)}</strong><span>拦截率</span></div></div>`;
   })();
   const funnel = `<div class="gd-funnel">${flow.map((f) => `<div class="gd-frow">
       <span class="bar-label">${f.label}</span>
       <div class="bar"><i style="width:${(f.value / all) * 100}%;background:${f.color}"></i></div>
       <span class="bar-value num">${f.value}</span></div>`).join('')}</div>`;
-  const top = Math.max(0.0001, ...ms.map((m) => Math.max(m.before, m.after)));
-  const pair = `<div class="gd-pairs">${ms.map((m) => `<div class="gd-pair">
-      <span class="bar-label">${UI.esc(m.name)}</span>
-      <div class="gd-twin">
-        <div class="bar"><i style="width:${(m.before / top) * 100}%;background:var(--vd-unknown)"></i></div>
-        <div class="bar"><i style="width:${(m.after / top) * 100}%;background:var(--vd-breach)"></i></div>
-      </div>
-      <span class="bar-value num">${UI.pct(m.before)} → ${UI.pct(m.after)}</span></div>`).join('')}
-    ${UI.legend([{ label: '防护前', value: '', color: 'var(--vd-unknown)' }, { label: '防护后', value: '', color: 'var(--vd-breach)' }])}</div>`;
-  const cats = (g.byCategory || []).filter((c) => c.count).sort((a, b) => b.count - a.count);
-  const catTotal = cats.reduce((n, c) => n + c.count, 0) || 1;
-  const catBars = cats.length
-    ? UI.bars(cats.slice(0, 5).map((c, i) => ({ label: c.label, value: c.count / catTotal, color: UI.chartColor(i) })), { max: 1 })
-    : '<div class="empty"><strong>无拦截记录</strong></div>';
-  const table = UI.table([
-    { title: '攻击方法', render: (m) => UI.esc(m.name) },
-    { title: '防护前', width: '90px', render: (m) => `<span class="num">${UI.pct(m.before)}</span>` },
-    { title: '防护后', width: '90px', render: (m) => `<span class="num">${UI.pct(m.after)}</span>` },
-    { title: '输入拦截', width: '90px', render: (m) => `<span class="num">${m.inBlock || 0}</span>` },
-    { title: '输出拦截', width: '90px', render: (m) => `<span class="num">${m.outBlock || 0}</span>` },
-    { title: '漏防', width: '70px', render: (m) => `<span class="num ${m.leak ? 'verdict breach' : ''}">${m.leak || 0}</span>` },
-  ], ms);
-  return UI.card('蓝队防护分析', `${kpi}
+  const taskMethods = new Set(t.methods.map((m) => m.name));
+  const methodItems = allMethodDims().map((d) => ({ label: d.label, value: s.byMethod.get(d.label) || 0, covered: taskMethods.has(d.label) }));
+  const catItems = (store.guardOf(t.guardId)?.dims || []).map(([label]) => ({ label, value: s.byCat.get(label) || 0, covered: true }));
+  const radarOpt = { count: true, color: 'var(--vd-safe)' };
+  return reportSection('蓝队防护分析', `
+    <div class="sub-label">攻击单元去向（共 ${all} 条，蓝队拦截 ${s.blocked} 条）</div>
+    <div class="gd-flow">${donut}${funnel}</div>
     <div class="risk-charts mt-16">
-      <div><div class="sub-label">攻击单元去向（共 ${all} 条）</div><div class="gd-flow">${donut}${funnel}</div></div>
-      <div><div class="sub-label">各攻击方法 ASR 防护前后对比</div>${pair}</div>
-    </div>
-    <div class="risk-charts mt-16">
-      <div><div class="sub-label">拦截风险类别 Top ${Math.min(5, cats.length) || 5}</div>${catBars}</div>
-      <div><div class="sub-label">拦截位置</div>${UI.bars([
-        { label: '输入侧', value: inB / ((inB + outB) || 1), color: 'var(--c1)' },
-        { label: '输出侧', value: outB / ((inB + outB) || 1), color: 'var(--c2)' }], { max: 1 })}</div>
-    </div>
-    <div class="mt-16">${table}</div>`);
+      <div><div class="sub-label">拦截涉及的攻击方法（共 ${methodItems.length} 种，本次使用 ${taskMethods.size} 种）</div>${UI.radar(methodItems, radarOpt)}</div>
+      <div><div class="sub-label">拦截涉及的风险类别（共 ${catItems.length} 类）</div>${UI.radar(catItems, radarOpt)}</div>
+    </div>`);
 }
 
 function analysisHTML(t) {
   const f = findings(t)
-    .map((x, i) => `<li class="conc-item"><b>${i + 1}. ${UI.esc(x.title)}</b><p>${UI.esc(x.text)}</p></li>`)
+    .map(x => `<li class="conc-item"><b>${UI.esc(x.title)}</b><p>${UI.esc(x.text)}</p></li>`)
     .join('');
   const s = suggestions(t)
-    .map((x, i) => `<li class="conc-item"><p><b class="conc-no">${i + 1}.</b>${UI.esc(x)}</p></li>`)
+    .map(x => `<li class="conc-item"><b>${UI.esc(x.title)}</b><p>${UI.esc(x.text)}</p></li>`)
     .join('');
-  return `<div class="report-grid">
-    <div class="report-main">
-      ${UI.card('演练结果', resultPanel(t))}
-      ${UI.card('核心发现', `<ol class="conclusions">${f}</ol>`)}
-      ${UI.card('下一步建议', `<ol class="conclusions">${s}</ol>`)}
-      ${riskBlock('场景风险分析', '攻击场景', allSceneDims(), sceneRows(t))}
-      ${riskBlock('方法表现分析', '攻击方法', allMethodDims(), methodRows(t))}
-      ${guardBlock(t)}
-    </div>
-    <div class="report-side">
-      ${UI.card('基础信息', UI.kvTable(baseInfoRows(t)))}
-      ${UI.card('详细配置', UI.kvTable(configRows(t)))}
-    </div>
-  </div>`;
+  return reportDocument([
+    reportSection('演练结果', resultPanel(t)),
+    reportSection('核心发现', `<ol class="conclusions">${f}</ol>`),
+    riskBlock('攻击方法表现', '攻击方法', allMethodDims(), methodRows(t), t),
+    riskBlock('场景风险分析', '攻击场景', allSceneDims(), sceneRows(t)),
+    guardBlock(t),
+    reportSection('下一步建议', `<ol class="conclusions">${s}</ol>`),
+  ]);
 }
 
 /* ---------------------------------------------------------------- 攻防明细 */
@@ -280,6 +273,7 @@ const unitNo = (u) => store.getTask(u.taskId).units.findIndex((x) => x.id === u.
 function detailHTML(t) {
   const units = filteredUnits(t);
   const sel = pickedOf(t.id);
+  const selectedCount = t.units.filter(unit => sel.has(unit.id)).length;
   const scenes = store.byScene(t);
   const allOn = units.length > 0 && units.every((u) => sel.has(u.id));
 
@@ -293,19 +287,19 @@ function detailHTML(t) {
         options: [['all', '全部结果'], ['breach', '已攻破'], ['safe', '已守住'], ['error', '异常']] },
     ],
     extra: `<span class="sel-ctl">
-      <span class="muted text-support">已选 <b class="num">${sel.size}</b> 条</span>
+      <span class="muted text-support">已选 <b class="num">${selectedCount}</b> 条</span>
       ${UI.linkBtn('全选筛选结果', { onclick: `App.rdPickAll('${t.id}')` })}
       ${UI.linkBtn('清空选择', { onclick: `App.rdPickClear('${t.id}')`, disabled: !sel.size })}
     </span>`,
     right: `<div class="pop-wrap">
-      ${UI.btn('导出明细', { ico: 'download', onclick: "App.popToggle(event,'rd-export')" })}
+      ${UI.btn('导出明细', { ico: 'download', disabled: !selectedCount, onclick: "App.popToggle(event,'rd-export')" })}
       <div class="pop" id="rd-export" hidden onclick="event.stopPropagation()">
         <div class="pop-title">导出范围</div>
-        <p class="text-support muted">${sel.size ? `已勾选的 ${sel.size} 条` : `未勾选，导出当前筛选结果 ${units.length} 条`}</p>
+        <p class="text-support muted">${selectedCount ? `已勾选的 ${selectedCount} 条` : '请先勾选需要导出的明细'}</p>
         <div class="pop-title">导出格式</div>
         <label class="pop-opt"><input type="radio" name="rd-fmt" value="pdf" checked />PDF</label>
         <label class="pop-opt"><input type="radio" name="rd-fmt" value="md" />Markdown</label>
-        <div class="pop-foot">${UI.btn('确认导出', { kind: 'primary', onclick: `App.exportUnits('${t.id}')` })}</div>
+        <div class="pop-foot">${UI.btn('确认导出', { kind: 'primary', disabled: !selectedCount, onclick: `App.exportUnits('${t.id}')` })}</div>
       </div>
     </div>`,
   });
@@ -320,9 +314,9 @@ function detailHTML(t) {
       },
       { title: '序号', width: '64px', render: (u) => `<span class="num">${unitNo(u)}</span>` },
       { title: '攻击方法', width: '130px', render: (u) => UI.clip(u.method) },
-      { title: '攻击题目', render: (u) => UI.clip(u.target) },
-      { title: '攻击场景', width: '200px', render: (u) => UI.clip(store.sceneLabel(store.sceneOfUnit(u))) },
-      ...(t.guardId ? [{ title: '蓝队', width: '100px', render: (u) => guardTag(u) }] : []),
+      { title: '攻击题目', render: (u) => reportQuestionCell(u.target) },
+      { title: '完成/总轮数', width: '115px', render: (u) => `<span class="num">${roundCountText(t, u)}</span>` },
+      { title: '攻破轮次', width: '110px', render: (u) => breachRoundText(t, u) },
       { title: '判定结果', width: '100px', render: (u) => UI.verdictText(verdictOf(u)) },
       { title: '操作', width: '80px', cls: 'actions',
         render: (u) => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openUnit('${t.id}','${u.id}')` })}</div>` },
@@ -333,37 +327,91 @@ function detailHTML(t) {
   return `${flt}<div class="one-line">${UI.card('', table, '', true)}</div>`;
 }
 /* ---------------------------------------------------------------- 抽屉：攻防明细详情 */
-/* 配了蓝队的回合：输入审核 → 靶标 → 输出审核；被输入侧拦截则靶标未收到 */
-function guardTag(u) {
-  const a = u.history[u.history.length - 1]?.guard?.action;
-  if (a === 'block_input') return '<span class="faint">输入拦截</span>';
-  if (a === 'block_output') return '<span class="faint">输出拦截</span>';
-  return u.judgeSuccess ? '<span class="verdict breach">漏防</span>' : '<span class="faint">放行</span>';
+/* 四个模块：① 摘要（短字段）② 攻击题目 ③ 攻击过程（按方法换形态）④ 判定依据。
+ * 同一层级的内容用同一种呈现：字段名一律 ud-label；短值为纯文本；自然语言长文本一律 ud-text 文本框。
+ * 结果有两套：裁判判定（全站通用的着色文字）与蓝队结果（带边框底色的 gtag 标签），靠形态区分而非颜色。 */
+const GUARD_RESULT = {
+  block_input: { key: 'block', label: '输入拦截' },
+  block_output: { key: 'block', label: '输出拦截' },
+  leak: { key: 'leak', label: '漏防' },
+  pass: { key: 'pass', label: '放行' },
+};
+
+/* 蓝队结果是对外结论，只看最后一轮；中间轮的拦截只在攻击过程里体现 */
+function guardResult(u) {
+  const g = u.history[u.history.length - 1]?.guard;
+  if (!g) return null;
+  if (g.action === 'block_input' || g.action === 'block_output') return GUARD_RESULT[g.action];
+  return u.judgeSuccess ? GUARD_RESULT.leak : GUARD_RESULT.pass;
 }
-function guardRound(h) {
+const methodText = (t, u) => {
+  const m = t.methods.find((x) => x.name === u.method);
+  return m?.label ? `${u.method}（${m.label}）` : u.method;
+};
+
+const checkLine = (label, x, blocked) => field(label,
+  `<span>${UI.esc(x.labelCn)}${x.categories.length ? ` · ${UI.esc(x.categories.join('、'))}` : ''}</span>${gtag(blocked ? { key: 'block', label: '已拦截' } : GUARD_RESULT.pass)}`);
+
+/* 单轮内容：攻击提示词 →（蓝队输入审核）→ 靶标回复 →（蓝队输出审核）→（被拦截时）最终返回。
+ * JailBroken 的最后一步变换就是送给靶标的提示词，已在变换步骤里展示，不再重复。 */
+function roundBody(h) {
   const g = h.guard;
-  const chk = (x, blocked) => `<div>${UI.esc(x.labelCn)}${x.categories.length ? ` · ${UI.esc(x.categories.join('、'))}` : ''}${blocked ? ' · <b class="verdict breach">已拦截</b>' : ' · 放行'}</div>`;
+  const p = h.steps?.length ? '' : text('攻击提示词', h.prompt);
+  if (!g) return p + text('靶标回复', h.response);
   const inB = g.action === 'block_input', outB = g.action === 'block_output';
-  return `<div class="round-block"><span class="round-label">蓝队输入审核</span>${chk(g.input, inB)}</div>
-    <div class="round-block"><span class="round-label">靶标回复</span>${inB ? '<p class="muted">已被蓝队拦截，未到达靶标</p>' : `<pre>${UI.esc(g.originalResponse ?? h.response)}</pre>`}</div>
-    ${g.output ? `<div class="round-block"><span class="round-label">蓝队输出审核</span>${chk(g.output, outB)}</div>` : ''}
-    ${inB || outB ? `<div class="round-block"><span class="round-label">最终返回</span><pre>${UI.esc(h.response)}</pre></div>` : ''}`;
+  return [
+    p,
+    checkLine('蓝队输入审核', g.input, inB),
+    inB ? text('靶标回复', '', '已被蓝队拦截，未到达靶标') : text('靶标回复', g.originalResponse ?? h.response),
+    g.output ? checkLine('蓝队输出审核', g.output, outB) : '',
+    inB || outB ? text('最终返回', h.response) : '',
+  ].join('');
 }
+
+function summaryMod(t, u) {
+  const gr = guardResult(u);
+  return mod('摘要', `<div class="ud-kv">
+    ${field('攻击方法', UI.esc(methodText(t, u)))}
+    ${field('攻击场景', UI.esc(store.sceneLabel(store.sceneOfUnit(u))))}
+    ${field('判定结果', UI.verdictText(verdictOf(u)))}
+    ${field('完成/总轮数', roundCountText(t, u))}
+    ${field('攻破轮次', breachRoundText(t, u))}
+    ${gr ? field('蓝队结果', gtag(gr)) : ''}
+  </div>`);
+}
+
+/* 攻击过程：单轮方法直接平铺；JailBroken 先列变换步骤，再是送给靶标的那一轮；PAIR 每轮一个折叠条 */
+function processMod(t, u) {
+  if (!u.history.length) return mod('攻击过程', '<p class="ud-note">无迭代记录</p>');
+  const h0 = u.history[0];
+  if (u.rounds <= 1) {
+    const steps = h0.steps?.length
+      ? [text('原始题目', h0.original), ...h0.steps.map((s, i) => text(`变换第 ${i + 1} 步 · ${s.label}${i === h0.steps.length - 1 ? '（送给靶标的提示词）' : ''}`, s.prompt))].join('')
+      : '';
+    return mod('攻击过程', steps + roundBody(h0));
+  }
+  /* 折叠条只放轮次与提示词摘要；攻击者拒绝、蓝队拦截等标记都在展开后展示 */
+  const first = roundInfo(t, u).breachRound;
+  const rounds = u.history.map((h) => {
+    const refused = h.attackerRefused
+      ? `<div class="ud-val">${mtag('攻击者拒绝')}<span class="ud-note">攻击生成模型拒绝改写，送出的是拒绝文本，本轮不构成有效攻击</span></div>`
+      : '';
+    return `<details class="ud-round ${h.round === first ? 'rr-first-breach' : ''}" ${h.round === first ? 'open' : ''}><summary><span class="ud-round-no">第 ${h.round} 轮${h.round === first ? ' · 已攻破' : ''}</span>
+      <span class="ud-round-sum">${UI.esc((h.prompt || '').replace(/\s+/g, ' ').slice(0, 120))}</span></summary>
+      <div class="ud-round-body">${refused}${roundBody(h)}</div></details>`;
+  }).join('');
+  return mod('攻击过程', `<div class="ud-rounds">${rounds}</div>`);
+}
+
+const basisMod = (u) => mod('判定依据', text('裁判理由', u.judgeReason, '裁判未给出理由'));
+
 function unitDrawer(u) {
-  const rounds = u.history.length
-    ? u.history
-        .map((h) => `<div class="unit-round">
-          <div class="round-head">第 ${h.round} 轮</div>
-          <div class="round-block"><span class="round-label">${h.guard ? '攻击提示词' : '发给靶标的提示词'}</span><pre>${UI.esc(h.prompt)}</pre></div>
-          ${h.guard ? guardRound(h) : `<div class="round-block"><span class="round-label">靶标回复</span><pre>${UI.esc(h.response)}</pre></div>`}
-        </div>`)
-        .join('')
-    : '<p class="muted">无迭代记录</p>';
-  return `<div class="unit-detail">
-    <div class="unit-sec"><span class="unit-label">攻击题目</span><pre>${UI.esc(u.target)}</pre></div>
-    <div class="unit-sec"><span class="unit-label">判定结果</span><div>${UI.verdictText(verdictOf(u))}</div></div>
-    <div class="unit-sec"><span class="unit-label">判定理由</span><p>${UI.esc(u.judgeReason || '裁判未给出理由')}</p></div>
-    <div class="unit-sec"><span class="unit-label">迭代过程（${u.rounds} 轮）</span>${rounds}</div>
+  const t = store.getTask(u.taskId);
+  return `<div class="ud">
+    ${summaryMod(t, u)}
+    ${mod('攻击题目', `<pre class="ud-text">${UI.esc(u.target)}</pre>`)}
+    ${processMod(t, u)}
+    ${basisMod(u)}
   </div>`;
 }
 
@@ -374,107 +422,82 @@ function analysisMd(t) {
   const L = [`# ${t.name}`, '',
     '## 基础信息', '', ...baseInfoRows(t).map(([k, v]) => `- ${k}：${strip(v)}`), '',
     '## 详细配置', '', ...configRows(t).map(([k, v]) => `- ${k}：${strip(v.replace(/<\/div><div>/g, '；'))}`), '',
-    '## 演练结果', '',
-    `- ASR：${UI.pct(t.asr)}（已攻破 ${t.breach} / 有效判定 ${t.judged}）`,
+    '## 演练结果', '', '攻击成功率（ASR）= 攻破单元数 ÷ 有效判定单元数。', '',
+    `- ASR：${t.judged ? UI.pct(t.asr) : '未形成有效判定'}（已攻破 ${t.breach} / 有效判定 ${t.judged}）`,
     ...store.verdictCounts(t).map((d) => `- ${d.label}：${d.value}`), '',
-    '## 核心发现', '', ...findings(t).map((f, i) => `${i + 1}. **${f.title}**：${f.text}`), '',
-    '## 下一步建议', '', ...suggestions(t).map((s, i) => `${i + 1}. ${s}`), ''];
-  const tbl = (title, col, rows) => [`## ${title}`, '', `| ${col} | 有效数量 | 攻破 | 守住 | 攻破率 |`, '|---|---|---|---|---|',
-    ...rows.map((r) => `| ${r.label} | ${r.judged} | ${r.breach} | ${r.judged - r.breach} | ${UI.pct(r.value)} |`), ''];
-  return [...L, ...tbl('场景风险分析', '攻击场景', sceneRows(t)), ...tbl('方法表现分析', '攻击方法', methodRows(t)), ...guardMd(t)].join('\n');
+    '## 核心发现', '', ...findings(t).map((f, i) => `${i + 1}. **${f.title}**：${f.text}`), ''];
+  const tbl = (title, col, rows) => [`## ${title}`, '', `| ${col} | 有效数量 | 守住 | 攻破 | 攻破率 |`, '|---|---|---|---|---|',
+    ...rows.map((r) => `| ${r.label} | ${r.judged} | ${r.judged - r.breach} | ${r.breach} | ${UI.pct(r.value)} |`), ''];
+  return [...L, ...methodPerformanceMd(t, methodRows(t)), ...tbl('场景风险分析', '攻击场景', sceneRows(t)), ...guardMd(t),
+    '## 下一步建议', '', ...suggestions(t).map((s, i) => `${i + 1}. **${s.title}**：${s.text}`), ''].join('\n');
 }
 function guardMd(t) {
-  const g = t.guardId && t.guard;
-  if (!g) return [];
-  const ms = g.byMethod || [];
-  const sum = (k) => ms.reduce((n, m) => n + (m[k] || 0), 0);
-  const inB = sum('inBlock'), outB = sum('outBlock'), leak = sum('leak');
-  const cats = (g.byCategory || []).filter((c) => c.count).sort((a, b) => b.count - a.count);
+  if (!t.guardId) return [];
+  const s = guardStats(t);
+  if (!s.total) return [];
+  const row = (m) => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `| ${k} | ${v} |`);
   return ['## 蓝队防护分析', '',
-    `- 防护前 ASR：${UI.pct(g.baseAsr ?? 0)}`, `- 防护后 ASR：${UI.pct(t.asr)}`,
-    `- ASR 降幅：${UI.pct(Math.max(0, (g.baseAsr ?? 0) - t.asr))}`,
-    `- 蓝队拦截：${inB + outB} / ${t.judged} 条（输入侧 ${inB}，输出侧 ${outB}，漏防 ${leak}）`, '',
-    '| 攻击方法 | 防护前 | 防护后 | 输入拦截 | 输出拦截 | 漏防 |', '|---|---|---|---|---|---|',
-    ...ms.map((m) => `| ${m.name} | ${UI.pct(m.before)} | ${UI.pct(m.after)} | ${m.inBlock || 0} | ${m.outBlock || 0} | ${m.leak || 0} |`), '',
-    ...(cats.length ? ['| 拦截风险类别 | 次数 |', '|---|---|', ...cats.map((c) => `| ${c.label} | ${c.count} |`), ''] : [])];
+    `- 攻击单元去向：共 ${s.total} 条，${guardFlow(s).map((f) => `${f.label} ${f.value}`).join('，')}`,
+    `- 拦截率：${UI.pct(s.blocked / s.total)}`, '',
+    '| 拦截涉及的攻击方法 | 拦截单元数 |', '|---|---|', ...row(s.byMethod), '',
+    ...(s.byCat.size ? ['| 拦截涉及的风险类别 | 次数 |', '|---|---|', ...row(s.byCat), ''] : [])];
+}
+function roundMd(h) {
+  const g = h.guard;
+  const blk = (label, s) => [`**${label}**`, '', '```', s || '', '```', ''];
+  const chk = (label, x, blocked) => [`- ${label}：${x.labelCn}${x.categories.length ? ` · ${x.categories.join('、')}` : ''} · ${blocked ? '已拦截' : '放行'}`, ''];
+  const p = h.steps?.length ? [] : blk('攻击提示词', h.prompt);
+  if (!g) return [...p, ...blk('靶标回复', h.response)];
+  const inB = g.action === 'block_input', outB = g.action === 'block_output';
+  return [...p, ...chk('蓝队输入审核', g.input, inB),
+    ...(inB ? ['**靶标回复**：已被蓝队拦截，未到达靶标', ''] : blk('靶标回复', g.originalResponse ?? h.response)),
+    ...(g.output ? chk('蓝队输出审核', g.output, outB) : []),
+    ...(inB || outB ? blk('最终返回', h.response) : [])];
 }
 function unitsMd(t, units) {
   return ['## 攻防明细', '', `共 ${units.length} 条`, '',
-    ...units.flatMap((u) => [
-      `### ${unitNo(u)}. ${u.method} · ${verdictOf(u).label}`, '',
-      `- 攻击场景：${store.sceneLabel(store.sceneOfUnit(u))}`, `- 攻击题目：${u.target}`, `- 判定理由：${u.judgeReason || '—'}`,
-      `- 迭代过程：${u.rounds} 轮`, '',
-      ...u.history.flatMap((h) => [`**第 ${h.round} 轮 · 提示词**`, '', '```', h.prompt, '```', '', `**第 ${h.round} 轮 · 靶标回复**`, '', '```', h.response, '```', '']),
-    ])].join('\n');
+    ...units.flatMap((u) => {
+      const gr = guardResult(u);
+      const h0 = u.history[0];
+      const proc = u.rounds <= 1
+        ? [...(h0?.steps?.length ? ['**原始题目**', '', '```', h0.original, '```', '',
+          ...h0.steps.flatMap((s, i) => [`**变换第 ${i + 1} 步 · ${s.label}**`, '', '```', s.prompt, '```', ''])] : []),
+          ...(h0 ? roundMd(h0) : [])]
+        : u.history.flatMap((h) => [
+          `**第 ${h.round} 轮**${h.attackerRefused ? ' · 攻击者拒绝' : ''}${h.guard?.action?.startsWith('block') ? ` · ${GUARD_RESULT[h.guard.action].label}` : ''}`, '', ...roundMd(h)]);
+      return [
+        `### ${unitNo(u)}. ${u.method} · ${verdictOf(u).label}`, '',
+        '#### 摘要', '',
+        `- 攻击方法：${methodText(t, u)}`, `- 攻击场景：${store.sceneLabel(store.sceneOfUnit(u))}`,
+        `- 判定结果：${verdictOf(u).label}`,
+        `- 完成/总轮数：${roundCountText(t, u)}`, `- 攻破轮次：${breachRoundText(t, u)}`, ...(gr ? [`- 蓝队结果：${gr.label}`] : []), '',
+        '#### 攻击题目', '', '```', u.target, '```', '',
+        '#### 攻击过程', '', ...proc,
+        '#### 判定依据', '', `- 裁判理由：${u.judgeReason || '裁判未给出理由'}`, '',
+      ];
+    })].join('\n');
 }
-function mdToHtml(md) {
-  const out = [];
-  let code = false, buf = [], table = [];
-  const flushTable = () => {
-    if (!table.length) return;
-    const cells = (r) => r.split('|').slice(1, -1).map((c) => c.trim());
-    out.push(`<table><thead><tr>${cells(table[0]).map((c) => `<th>${UI.esc(c)}</th>`).join('')}</tr></thead><tbody>${table.slice(2)
-      .map((r) => `<tr>${cells(r).map((c) => `<td>${UI.esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
-    table = [];
-  };
-  const inline = (s) => UI.esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  for (const line of md.split('\n')) {
-    if (line.startsWith('```')) { if (code) { out.push(`<pre>${UI.esc(buf.join('\n'))}</pre>`); buf = []; } code = !code; continue; }
-    if (code) { buf.push(line); continue; }
-    if (line.startsWith('|')) { table.push(line); continue; }
-    flushTable();
-    const h = line.match(/^(#{1,3}) (.*)/);
-    if (h) out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`);
-    else if (/^(- |\d+\. )/.test(line)) out.push(`<p class="li">${inline(line)}</p>`);
-    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
-  }
-  flushTable();
-  return out.join('\n');
-}
-/* 结果分析的 PDF 直接用页面上的卡片（图表是内联 SVG/CSS，带上站点样式即可打印），顺序：基础信息→详细配置→分析 */
+/* PDF 复用页面的文档分节与内联图表，顺序：基础信息→详细配置→分析。 */
 function analysisPrintHTML(t) {
-  const main = analysisHTML(t).match(/<div class="report-main">([\s\S]*)<\/div>\s*<div class="report-side">/)[1];
-  return `<h1>${UI.esc(t.name)}</h1>
+  return `<div class="rr-report"><h1>${UI.esc(t.name)}</h1>
     ${UI.card('基础信息', UI.kvTable(baseInfoRows(t)))}
     ${UI.card('详细配置', UI.kvTable(configRows(t)))}
-    ${main}`;
+    ${analysisHTML(t)}</div>`;
 }
-function printPdf(title, md, html) {
-  const f = document.createElement('iframe');
-  f.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
-  document.body.appendChild(f);
-  const d = f.contentDocument;
-  d.open();
-  const links = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => `<link rel="stylesheet" href="${l.href}">`).join('');
-  const rich = html ? `${links}<style>body{background:#fff;margin:24px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .card{break-inside:avoid;margin-bottom:16px}h1{font-size:20px;margin:0 0 16px}</style>` : '';
-  d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${UI.esc(title)}</title>${rich}<style>
-    body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#253449;font-size:12px;line-height:1.65;margin:24px}
-    h1{font-size:20px}h2{font-size:15px;margin-top:22px;border-bottom:1px solid #e2e7ee;padding-bottom:4px}h3{font-size:13px;margin-top:16px}
-    table{border-collapse:collapse;width:100%}th,td{border:1px solid #e2e7ee;padding:4px 8px;text-align:left}th{background:#f8fafc}
-    pre{white-space:pre-wrap;background:#f8fafc;padding:8px;border-radius:4px;font-size:11px}.li{margin:2px 0}
-  </style></head><body>${html || mdToHtml(md)}</body></html>`);
-  d.close();
-  setTimeout(() => {
-    try { f.contentWindow.focus(); f.contentWindow.print(); } catch { /* jsdom 无打印 */ }
-    setTimeout(() => f.remove(), 1000);
-  }, 50);
-  UI.toast('已打开打印窗口，请选择「另存为 PDF」');
-}
-function emit(name, md, fmt, html) {
-  if (fmt === 'md') UI.download(`${name}.md`, md);
-  else printPdf(name, md, html);
-}
-const closePops = () => document.querySelectorAll('.pop').forEach((p) => (p.hidden = true));
-const fmtOf = (n) => document.querySelector(`input[name="${n}"]:checked`)?.value || 'pdf';
 const redraw = () => router.nav('exercise', 'report-detail', router.state().param);
+function completedTask(id) {
+  const task = store.getTask(id);
+  if (task?.status === 'done') return task;
+  UI.toast('仅已完成任务可查看或导出报告');
+  return null;
+}
 
 /* ---------------------------------------------------------------- 操作 */
 export const actions = {
   rpSearch(v) { view.q = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpFilter(k, v) { view[k] = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpSort() { view.sortDesc = !view.sortDesc; router.nav('exercise', 'reports'); },
-  openReport(taskId) { router.nav('exercise', 'report-detail', taskId); },
+  openReport(taskId) { const t=store.getTask(taskId); detail.tab='analysis'; router.nav('exercise',t?.status==='done'?'report-detail':'task-detail',taskId); },
   rpTab(tab) { detail.tab = tab; redraw(); },
   rdFilter(k, v) { detail[k] = v; UI.resetPage(`units-${router.state().param}`); redraw(); },
   rdPick(taskId, id, on) { const s = pickedOf(taskId); on ? s.add(id) : s.delete(id); redraw(); },
@@ -496,6 +519,7 @@ export const actions = {
     el.hidden = !open;
   },
   openUnit(taskId, unitId) {
+    if (!completedTask(taskId)) return;
     const u = store.getUnit(taskId, unitId);
     if (!u) return;
     UI.drawer('攻防明细详情', unitDrawer(u), `
@@ -504,13 +528,14 @@ export const actions = {
       ${UI.btn('关闭', { onclick: 'UI.closeDrawer()' })}`);
   },
   exportUnit(taskId, unitId, fmt) {
-    const t = store.getTask(taskId);
+    const t = completedTask(taskId);
+    if (!t) return;
     const u = store.getUnit(taskId, unitId);
     if (!t || !u) return;
     emit(`${t.name}-攻防明细-${unitNo(u)}`, `# ${t.name}\n\n${unitsMd(t, [u])}`, fmt);
   },
   exportReport() {
-    const t = store.getTask(router.state().param);
+    const t = completedTask(router.state().param);
     if (!t) return;
     const a = document.getElementById('ex-analysis')?.checked;
     const d = document.getElementById('ex-detail')?.checked;
@@ -523,10 +548,11 @@ export const actions = {
     emit(`${t.name}-${a && d ? '演练报告' : a ? '结果分析' : '攻防明细'}`, parts.join('\n\n'), fmtOf('ex-fmt'), html);
   },
   exportUnits(taskId) {
-    const t = store.getTask(taskId);
+    const t = completedTask(taskId);
+    if (!t) return;
     const sel = pickedOf(taskId);
-    const units = sel.size ? t.units.filter((u) => sel.has(u.id)) : filteredUnits(t);
-    if (!units.length) return UI.toast('没有可导出的明细');
+    const units = t.units.filter((u) => sel.has(u.id));
+    if (!units.length) { closePops(); return UI.toast('请先勾选需要导出的明细'); }
     closePops();
     emit(`${t.name}-攻防明细`, `# ${t.name}\n\n${unitsMd(t, units)}`, fmtOf('rd-fmt'));
   },

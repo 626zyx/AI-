@@ -4,6 +4,7 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
+import { CONFIGURE_MODEL_VALUE, configureModelsOption, configureMoreModels } from '../core/model-config-navigation.js';
 
 const st = {
   id: null, name: '', desc: '',
@@ -68,10 +69,10 @@ function methodConfigs() {
       ? `<div class="se-sec">基本参数</div><div class="form-row">${m.params.map((p) => paramInput(i, p, sm.params[p.label])).join('')}</div>`
       : '<div class="faint text-support">该方法无可配置参数</div>';
     const sel = (key, label, list) => `<div class="field"><label>${label}${req}</label>
-      <select onchange="if(this.value==='__cfg'){this.value='';App.gotoRoles()}else App.seAux(${i},'${key}',this.value)"><option value="">${list.length ? `请选择${label}` : `暂无可用的${label}模型`}</option>
+      <select onchange="App.seAux(${i},'${key}',this.value)"><option value="">${list.length ? `请选择${label}` : `暂无可用的${label}模型`}</option>
       ${list.map((x) => `<option value="${x.id}" ${sm[key] === x.id ? 'selected' : ''}>${UI.esc(x.name)}</option>`).join('')}
-      <option value="__cfg">+ 配置其他模型</option></select>
-      ${list.length ? '' : `<span class="faint text-support">需先在平台管理中为模型配置「${label === '过程裁判' ? '裁判' : '攻击生成'}」角色，${UI.linkBtn('去配置', { onclick: 'App.gotoRoles()' })}</span>`}</div>`;
+      ${configureModelsOption}</select>
+      ${list.length ? '' : `<span class="faint text-support">需先在平台管理中为模型配置「${label === '过程裁判' ? '裁判' : '攻击生成'}」角色，${UI.linkBtn('去配置', { onclick: 'App.seConfigureModels()' })}</span>`}</div>`;
     const aux = m.generator || m.process
       ? `<div class="se-sec mt-16">辅助模型</div><div class="form-row">
           ${m.generator ? sel('generator', '攻击生成模型', genModels()) : ''}${m.process ? sel('process', '过程裁判', procModels()) : ''}</div>`
@@ -213,7 +214,8 @@ export const actions = {
     render();
   },
   seParam(i, label, v) { st.methods[i].params[label] = v; },
-  seAux(i, k, v) { st.methods[i][k] = v; },
+  seConfigureModels() { configureMoreModels(render, '返回策略配置'); },
+  seAux(i, k, v) { if (v === CONFIGURE_MODEL_VALUE) return actions.seConfigureModels(); st.methods[i][k] = v; },
   seToggle(kind, i) { st[kind][i].open = !st[kind][i].open; render(); },
   seBank(id, on) {
     st.banks = st.banks.filter((b) => b.bankId !== id);

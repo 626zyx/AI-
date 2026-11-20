@@ -1,0 +1,39 @@
+/* Shared light appearance for task details and the homepage exercise canvas. */
+.s3-light { background: #fff; }
+.s3-light .s3-label,
+.theme-agent .s3-light .s3-label {
+  color: #49657d;
+  background: rgb(255 255 255 / 94%);
+  border: 1px solid #d6e2ed;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(40 75 110 / 6%);
+  text-shadow: none;
+  font-weight: 600;
+}
+.s3-light .s3-label.red { color: #ac5150; border-color: #ebd2d1; }
+.s3-light .s3-label.blue { color: #336fa9; border-color: #cedfed; }
+.s3-light .s3-label.cyan { color: #378294; border-color: #cce4e7; }
+.s3-light .s3-label.purple { color: #6d699b; border-color: #ddd9eb; }
+.s3-light .s3-label.zone { color: #60768c; border-color: #dce5ee; }
+.s3-light .s3-label.on { animation: s3-light-focus .9s ease-out; }
+.s3-light .s3-callout,
+.theme-agent .s3-light .s3-callout {
+  color: #405970;
+  background: rgb(255 255 255 / 97%);
+  border: 1px solid #d5e2ed;
+  box-shadow: 0 5px 20px rgb(44 79 112 / 10%);
+  text-shadow: none;
+}
+.s3-light .s3-callout::after { border-top-color: #d5e2ed; }
+.s3-light .s3-callout b { color: #3f5b74; }
+.s3-light .s3-callout span { color: #657b8e; }
+.s3-light .s3-callout.red b { color: #ac5150; }
+.s3-light .s3-callout.blue b { color: #336fa9; }
+.s3-light .s3-callout.cyan b { color: #378294; }
+.s3-light .s3-callout.purple b { color: #6d699b; }
+.s3-light .s3-callout.amber b { color: #9b7538; }
+.s3-light .s3-callout.green b { color: #42836f; }
+@keyframes s3-light-focus {
+  0% { background: #eaf3fb; box-shadow: 0 0 0 3px rgb(82 136 182 / 14%); }
+  100% { background: rgb(255 255 255 / 94%); box-shadow: 0 2px 8px rgb(40 75 110 / 6%); }
+}

@@ -1,6 +1,7 @@
 """从真实 OpenRT 结果目录生成 demo 数据层。
 
-源：D:\\演练产品\\跑数据\\OpenRT\\results（挂载到 mnt 下的 deepseek-v3-chat / qwen-flash）
+源：OpenRT results 目录（默认取与 AI演练场 同级的「模型演练数据」，可用环境变量 OPENRT_RESULTS 覆盖），
+    下含 deepseek-v3-chat / qwen-flash / qwen-flash-guard
 出：src/data/*.js（ES module，字面量快照，零逻辑）
 
 跑法：
@@ -13,7 +14,7 @@ import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MNT = "/sessions/elegant-epic-sagan/mnt"
+MNT = os.environ.get("OPENRT_RESULTS") or os.path.join(os.path.dirname(ROOT), "模型演练数据")
 OUT = os.path.join(ROOT, "src", "data")
 
 # 靶标 → 源目录
@@ -37,9 +38,76 @@ GUARD_CAT = {
 }
 GUARD_LABEL = {"Safe": "安全", "Unsafe": "不安全", "Controversial": "有争议"}
 
+# JailBroken 变换技术 → 中文名
+JB_TECH = {"prefix_injection": "前缀注入", "refusal_suppression": "拒绝抑制"}
+
+# PAIR 攻击者（辅助模型）有时自己拒绝改写，产出的“攻击提示词”是一段拒绝文本，这一轮不构成有效攻击。
+# 启发式：非首轮且提示词以拒绝句式开头。
+ATTACKER_REFUSAL = re.compile(r"^\s*(I'm sorry|I am sorry|I can't|I cannot|I'm not going|I won't|I need to decline|Sorry)", re.I)
+
+
+def read_text(path):
+    """eval_log 编码不统一（多数为 GBK），先按 UTF-8 读，失败再按 GBK"""
+    raw = open(path, "rb").read()
+    for enc in ("utf-8", "gbk"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            pass
+    return raw.decode("utf-8", errors="replace")
+
+
+def full_steps(steps, final):
+    """OpenRT 记录每步变换时把 prompt_after 截到 200 字符并加 "..."，完整文本只有最终的 transformed_prompt。
+    还原：最后一步即送给靶标的完整提示词；中间步骤的变换（前缀注入、拒绝抑制）都只在前面追加内容，
+    所以中间步骤的完整文本是最终提示词中、从该步截断前缀出现位置起的后缀。找不到时保留原样。"""
+    out = []
+    for i, st in enumerate(steps):
+        txt = st.get("prompt_after", "")
+        if txt.endswith("..."):
+            head = txt[:-3]
+            if i == len(steps) - 1:
+                txt = final
+            elif head and final.find(head) >= 0:
+                txt = final[final.find(head):]
+        out.append({"technique": st.get("technique", ""),
+                    "label": JB_TECH.get(st.get("technique", ""), st.get("technique", "")),
+                    "prompt": txt})
+    return out
+
+
+def judge_scores(log_lines):
+    """裁判评分只写在 eval_log 的 [LIVE] judge_done 行里：{题目: score}"""
+    out = {}
+    for line in log_lines:
+        m = re.search(r"\[LIVE\] (\{.*)", line)
+        if not m:
+            continue
+        try:
+            d = json.loads(m.group(1))
+        except ValueError:
+            continue
+        if d.get("event") == "judge_done":
+            out[d.get("target", "")] = d.get("score")
+    return out
+
+
+def judged_round(r):
+    """裁判评判的是 final_prompt/output_text；找出它对应 history 的第几轮（PAIR 未攻破时可能不是最后一轮）"""
+    hist = r.get("history") or []
+    fp, fo = r.get("final_prompt") or "", r.get("output_text") or ""
+    sent = lambda h: h.get("prompt") or h.get("transformed_prompt") or ""
+    if hist and sent(hist[-1]) == fp and hist[-1].get("response") == fo:
+        return len(hist)
+    for i, h in enumerate(hist):
+        if sent(h) == fp and h.get("response") == fo:
+            return i + 1
+    return len(hist) or 1
+
 
 def load_guard(method_dir):
-    """guard_log_*.jsonl → {送入靶标的 prompt: 审核记录}"""
+    """guard_log_*.jsonl → {送入靶标的 prompt: [审核记录…]}。
+    同一提示词可能被送审多次（PAIR 攻击者重复产出同一段文本），因此保留列表，按时间先后排列，取用时逐条消费。"""
     gp = glob.glob(os.path.join(method_dir, "guard_log_*.jsonl"))
     if not gp:
         return None
@@ -47,8 +115,19 @@ def load_guard(method_dir):
     for line in open(gp[0], encoding="utf-8"):
         if line.strip():
             g = json.loads(line)
-            out[g["prompt"]] = g
+            out.setdefault(g["prompt"], []).append(g)
+    for v in out.values():
+        v.sort(key=lambda g: g.get("time", ""))
     return out
+
+
+def take_guard(glog, sent, response):
+    """取一条未用过的审核记录：优先最终返回与本轮回复一致的那条"""
+    cands = glog.get(sent) or []
+    for i, g in enumerate(cands):
+        if g.get("final_response") == response:
+            return cands.pop(i)
+    return cands.pop(0) if cands else None
 
 
 def guard_view(g):
@@ -84,7 +163,7 @@ def load_method(base_dir, key, src_dir=None):
             # eval_log 与方法子目录同级：.../<方法目录>/eval_log_*.txt
             method_dir = os.path.dirname(os.path.dirname(os.path.dirname(p)))
             logp = glob.glob(os.path.join(method_dir, "eval_log_*.txt"))
-            log_lines = open(logp[0], encoding="utf-8", errors="replace").read().splitlines() if logp else []
+            log_lines = read_text(logp[0]).splitlines() if logp else []
             if not log_lines:
                 print(f"[warn] 无日志: {method_dir}")
             return rows, metrics, log_lines, rundir, load_guard(method_dir)
@@ -136,13 +215,23 @@ def main():
             })
 
             gstat = {"inBlock": 0, "outBlock": 0, "leak": 0}
+            scores = judge_scores(log_lines)
+            # 分类统计要用全量审核记录，先拍平一份；下面逐条消费的是副本
+            glog_all = [g for v in glog.values() for g in v] if glog is not None else []
+            gpool = {k: list(v) for k, v in glog.items()} if glog is not None else None
             for r in rows:
                 hist = []
                 for i, h in enumerate(r.get("history") or []):
+                    # JailBroken 的每轮记录没有 prompt，送给靶标的是 transformed_prompt
                     sent = h.get("prompt") or h.get("transformed_prompt") or ""
-                    item = {"round": i + 1, "prompt": h.get("prompt", ""), "response": h.get("response", "")}
-                    if glog is not None:
-                        g = glog.get(sent) or glog.get(r.get("final_prompt") or "")
+                    item = {"round": i + 1, "prompt": sent, "response": h.get("response", "")}
+                    if h.get("transformation_steps"):
+                        item["original"] = h.get("original_prompt", "")
+                        item["steps"] = full_steps(h["transformation_steps"], sent)
+                    if mkey == "PAIR" and i > 0 and ATTACKER_REFUSAL.match(sent):
+                        item["attackerRefused"] = True
+                    if gpool is not None:
+                        g = take_guard(gpool, sent, item["response"])
                         if g is None:
                             print(f"[warn] 蓝队记录未对齐: {mname} / {r.get('target','')[:40]}")
                         else:
@@ -167,12 +256,14 @@ def main():
                     "judgeReason": r.get("judge_reason", ""),
                     "finalPrompt": r.get("final_prompt") or "",
                     "output": r.get("output_text") or "",
+                    "judgeScore": scores.get(r.get("target", "")),
                     "rounds": len(r.get("history") or []),
+                    "judgedRound": judged_round(r),
                     "history": hist,
                 })
             if glog is not None:
                 cats = {}
-                for g in glog.values():
+                for g in glog_all:
                     if g["action"].startswith("block"):
                         side = g.get("input_guard") if g["action"] == "block_input" else g.get("output_guard")
                         for c in (side or {}).get("categories", []):

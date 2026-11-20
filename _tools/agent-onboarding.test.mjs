@@ -1,0 +1,139 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { JSDOM } from 'jsdom';
+import { validateAgentSubmission, normalizeAgentCommand, normalizeImageReference } from '../src/domain/agent-onboarding.js';
+import { selectedAgentSurfaces, normalizeSurfaceDeclarations } from '../src/domain/agent-surfaces.js';
+import { buildAgentConfiguration } from '../src/domain/agent-configuration.js';
+import * as store from '../src/domain/store.js';
+
+const catalog = { models: store.models, existing: store.agents };
+test('onboarding validates native delivery fields without claiming a successful runtime check', () => {
+  const custom = { name: 'Custom agent', baseModelId: 'mdl-deepseek-flash', image: 'registry/agent:1.0', executable: 'agent-cli', argumentsText: '--format\njson', taskInput: 'argv', promptFlag: '-p', surfaceDeclarations: [{ kind:'instruction', path:'AGENTS.md' }] };
+  assert.equal(validateAgentSubmission(custom, catalog).framework, 'custom');
+  assert.throws(() => validateAgentSubmission({ ...custom, image: 'registry/agent' }, catalog), /版本/);
+  assert.throws(() => validateAgentSubmission({ ...custom, promptFlag: '-p receives the task' }, catalog), /单个参数名/);
+  assert.throws(() => validateAgentSubmission({ ...custom, argumentsText: '-p' }, catalog), /重复/);
+  assert.throws(() => validateAgentSubmission(custom, {...catalog, models: catalog.models.map(model=>({...model,status:'error'}))}), /已接入/);
+  assert.throws(() => validateAgentSubmission({ ...custom, name: store.agents[0].name }, catalog), /已存在/);
+  const saved = validateAgentSubmission(custom, catalog);
+  assert.deepEqual(saved.command, ['agent-cli','--format','json']);
+  assert.deepEqual(saved.inputContract, {content:'task_text',transport:'argv',flag:'-p'});
+  assert.deepEqual(saved.modelConnection, {source:'model_asset',modelId:custom.baseModelId,adapter:'openai_env_v1'});
+  assert.equal('modelBinding' in saved, false);
+  assert.deepEqual(validateAgentSubmission({...custom,taskInput:'file',promptFlag:'--prompt-file'},catalog).inputContract,{content:'task_text',transport:'file',flag:'--prompt-file'});
+  assert.deepEqual(validateAgentSubmission({...custom,taskInput:'stdin'},catalog).inputContract,{content:'task_text',transport:'stdin'});
+  assert.equal(validateAgentSubmission({...custom,promptFlag:''},catalog).inputContract.flag,null);
+  assert.deepEqual(saved.surfaces, []); assert.equal(saved.surfaceDeclarations[0].path, 'AGENTS.md'); assert.equal(saved.status, 'planned');
+});
+
+test('asset form collects a user image and structured file declarations without fake verification', async () => {
+  const dom = new JSDOM('<div id="modal"></div><div id="drawer"></div><div id="toast"></div>', { url: 'http://localhost/' });
+  globalThis.window = dom.window; globalThis.document = dom.window.document;
+  const { actions } = await import('../src/pages/agent-assets.js');
+  try {
+    actions.editAgent();
+    assert.equal(document.querySelector('#agf-mode'), null);
+    assert.ok(document.querySelector('#agf-image'));
+    assert.ok(document.querySelector('#agf-executable'));
+    assert.equal(document.querySelector('#agf-modelBinding'),null);
+    assert.equal(document.querySelector('#agf-dependencies'),null);
+    actions.agaSet('name','QA custom');actions.agaSet('baseModelId','mdl-deepseek-flash');
+    actions.agaSet('image','registry/qa:1');actions.agaSet('executable','agent-cli');
+    const modalBody=document.querySelector('.modal-body'); modalBody.scrollTop=420;
+    actions.agaAddSurface();
+    assert.equal(document.querySelector('.modal-body'),modalBody);
+    assert.equal(modalBody.scrollTop,420);
+    assert.ok(document.querySelector('[aria-label="注入面 1 文件路径"]'));
+    const select = () => document.querySelector('[aria-label="注入面 1 分类"]');
+    assert.deepEqual([...select().querySelectorAll('optgroup')].map(group=>group.label),['指令与约束','技能与命令','记忆与历史','运行配置']);
+    assert.deepEqual([...select().options].map(option=>option.value),['instruction','rule','skill','command','memory:long_term','memory:conversation','memory:task_state','configuration']);
+    assert.doesNotMatch(document.querySelector('.ag-surface-editor').textContent,/工作区文件/);
+    assert.match(document.querySelector('.ag-surface-help').textContent,/类别说明|非当前镜像的核验结论/);
+    const nameInput = document.querySelector('#agf-name');
+    actions.agaSurface(0,'kind','memory:conversation');
+    assert.equal(select().value,'memory:conversation');
+    assert.equal(document.querySelector('.modal-body'),modalBody);
+    assert.equal(document.querySelector('#agf-name'),nameInput);
+    assert.equal(modalBody.scrollTop,420);
+    actions.agaSurface(0,'kind','instruction');
+    assert.equal(select().value,'instruction');
+    actions.agaSurface(0,'kind','memory:conversation');
+    actions.agaSurface(0,'path','AGENTS.md');
+    actions.agaAddSurface(); actions.agaSurface(1,'path','RULES.md'); actions.agaRemoveSurface(1);
+    assert.equal(document.querySelector('[aria-label="注入面 1 文件路径"]').value,'AGENTS.md');
+    assert.equal(select().value,'memory:conversation');
+    assert.equal(modalBody.scrollTop,420);
+    actions.agaSet('taskInput','argv',true);
+    assert.equal(document.querySelector('.modal-body').scrollTop,420);
+    actions.agaSet('promptFlag','-p');
+    actions.agaTest();
+    assert.match(document.querySelector('#agf-check').textContent,/尚待验证/);
+    actions.agaSave();
+    const saved = store.agents.find(agent=>agent.name==='QA custom');
+    assert.equal(saved.status,'planned');
+    assert.equal(saved.surfaceDeclarations[0].path,'AGENTS.md'); assert.deepEqual(saved.surfaces,[]);
+    assert.equal(saved.surfaceDeclarations[0].kind,'memory');
+    assert.equal(saved.surfaceDeclarations[0].subtype,'conversation');
+    assert.ok(!store.connectedAgents().some(agent=>agent.id===saved.id));
+    actions.editAgent(saved.id);
+    assert.equal(select().value,'memory:conversation');
+    assert.equal(document.querySelector('#agf-name').value,'QA custom');
+    assert.equal(document.querySelector('#agf-image').value,'registry/qa:1');
+    assert.equal(document.querySelector('[aria-label="注入面 1 文件路径"]').value,'AGENTS.md');
+    actions.openAgentAsset(saved.id);
+    assert.match(document.querySelector('#drawer').textContent,/记忆与历史/);
+    assert.match(document.querySelector('#drawer').textContent,/会话历史/);
+    assert.doesNotMatch(document.querySelector('#drawer').textContent,/指令文件/);
+
+    const legacy = store.saveAgent({...saved,id:null,name:'QA legacy memory',surfaceDeclarations:[{kind:'memory',path:'HOME/AGENTS.md'}]});
+    actions.editAgent(legacy.id || legacy);
+    assert.match(select().selectedOptions[0].textContent,/记忆文件（未细分）/);
+    actions.agaSave();
+    const unchanged = store.agents.find(agent=>agent.name==='QA legacy memory');
+    assert.equal(unchanged.surfaceDeclarations[0].kind,'memory');
+    assert.equal(unchanged.surfaceDeclarations[0].subtype,undefined);
+    for (const subtype of ['long_term','task_state']) {
+      actions.editAgent(saved.id);
+      actions.agaSurface(0,'kind',`memory:${subtype}`);
+      actions.agaSave();
+      assert.equal(store.agentOf(saved.id).surfaceDeclarations[0].subtype,subtype);
+      actions.editAgent(saved.id);
+      assert.equal(select().value,`memory:${subtype}`);
+    }
+    actions.agaSurface(0,'kind','instruction');
+    actions.agaSave();
+    assert.deepEqual(store.agentOf(saved.id).surfaceDeclarations[0],{kind:'instruction',path:'AGENTS.md'});
+    store.deleteAgent(saved.id); store.deleteAgent(unchanged.id);
+  } finally { dom.window.close(); }
+});
+
+test('surface selection is exact, target-scoped and independent of unverified declarations', () => {
+  assert.equal(store.agents.length >= 4, true);
+  assert.ok(store.agents.every(agent => agent.integrationMode === 'custom' && agent.image));
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'instruction',path:'../AGENTS.md'}]), /具体文件/);
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'workspace',path:'guide.md'}]), /分类/);
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'skill',path:'.qwen/skills/<name>/SKILL.md'}]), /具体文件/);
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'instruction',path:'AGENTS.md'},{kind:'rule',path:'AGENTS.md'}]), /重复/);
+  for (const subtype of ['long_term','conversation','task_state']) assert.deepEqual(normalizeSurfaceDeclarations([{kind:'memory',subtype,path:'HOME/context.md'}]),[{kind:'memory',subtype,path:'HOME/context.md'}]);
+  assert.deepEqual(normalizeSurfaceDeclarations([{kind:'memory',path:'HOME/context.md'}]),[{kind:'memory',path:'HOME/context.md'}]);
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'memory',subtype:'invented',path:'HOME/context.md'}]), /分类|细分/);
+  assert.throws(() => normalizeSurfaceDeclarations([{kind:'instruction',subtype:'long_term',path:'AGENTS.md'}]), /分类|细分/);
+  assert.equal(selectedAgentSurfaces(store.agentOf('agt-deepagents-code-0210'),['dcode-user'])[0].subtype,'long_term');
+  const target = store.agentOf('agt-qwen-ds-flash');
+  assert.deepEqual(selectedAgentSurfaces(target,['qwen-project','qwen-project']).map(item=>item.path),['QWEN.md']);
+  assert.throws(() => selectedAgentSurfaces(target,['dcode-user']), /当前靶标/);
+  const fullCatalog = {agents:store.agents,models:store.models,agentStrategies:store.agentStrategies,agentMethods:store.agentMethods,sceneBanks:store.sceneBanks};
+  const data={targetId:target.id,strategyId:'agstg-cs-universal',judgeId:'mdl-deepseek-v4-pro'};
+  assert.throws(()=>buildAgentConfiguration(data,fullCatalog),/至少选择/);
+  const config=buildAgentConfiguration({...data,injectionSurfaceIds:['qwen-project','qwen-agents']},fullCatalog);
+  assert.deepEqual(config.requestedSurfaces.map(item=>item.path),['QWEN.md','AGENTS.md']);
+  assert.deepEqual(buildAgentConfiguration({...data,strategyId:'agstg-cs-baseline',injectionSurfaceIds:['qwen-project']},fullCatalog).requestedSurfaces,[]);
+});
+
+test('command and image input have unambiguous machine-readable boundaries', () => {
+  assert.deepEqual(normalizeAgentCommand('/app/run-agent','--label\ncustomer support\n--json'),['/app/run-agent','--label','customer support','--json']);
+  assert.throws(()=>normalizeAgentCommand('agent --run'),/参数请逐行/);
+  assert.equal(normalizeImageReference('registry.example.com:5000/team/agent:1.2.0'),'registry.example.com:5000/team/agent:1.2.0');
+  assert.equal(normalizeImageReference(`team/agent@sha256:${'a'.repeat(64)}`),`team/agent@sha256:${'a'.repeat(64)}`);
+  for (const value of ['https://host/agent:1','agent.tar','registry:5000/team/agent','agent@sha256:short']) assert.throws(()=>normalizeImageReference(value),/完整镜像/);
+});

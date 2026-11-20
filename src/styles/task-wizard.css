@@ -1,0 +1,73 @@
+/* 创建页：与公共表单原语组合，布局样式只作用于 tw-*。 */
+.tw-root { width: 100%; min-width: 0; margin: 0 auto; }
+.tw-steps { display: grid; grid-template-columns: repeat(var(--step-count, 5), minmax(0, 1fr)); list-style: none; margin: 0 0 24px; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.tw-steps li { min-width: 0; border-right: 1px solid var(--line); }
+.tw-steps li:last-child { border-right: 0; }
+.tw-steps button { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 66px; padding: 10px; background: transparent; border: 0; color: var(--muted); font-size: var(--t-body); font-weight: var(--w-medium); }
+.tw-steps button:disabled { cursor: default; }
+.tw-steps .current { background: var(--primary-bg); }
+.tw-steps .current button { color: var(--primary); }
+.tw-step-number { display: inline-grid; place-items: center; width: 25px; height: 25px; flex-shrink: 0; border-radius: 50%; background: var(--subtle); border: 1px solid var(--line); font-size: var(--t-support); }
+.tw-steps .current .tw-step-number { color: var(--on-primary); background: var(--primary); border-color: var(--primary); }
+.tw-steps .complete .tw-step-number { color: var(--primary); background: var(--primary-bg); border-color: var(--primary-line); }
+.tw-layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(260px, 21vw, 440px); gap: var(--gap); align-items: start; }
+.tw-form { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.tw-content { padding: 26px 28px; min-height: 390px; }
+.tw-section { display: flex; flex-direction: column; gap: 22px; }
+.tw-section h2 { margin: 0; font-size: var(--t-block); font-weight: var(--w-strong); }
+.tw-section > .tw-note { margin-top: -12px; }
+.tw-note { margin: 0; color: var(--muted); font-size: var(--t-support); line-height: var(--lh-body); }
+.tw-fields { display: flex; flex-direction: column; gap: 22px; }
+.tw-fields input, .tw-fields textarea, .tw-fields select { width: 100%; min-width: 0; }
+.tw-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 30px; }
+.tw-read-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tw-read-field > span { color: var(--muted); font-size: var(--t-support); }
+.tw-read-field > strong { color: var(--text); font-weight: var(--w-medium); font-size: var(--t-body); overflow-wrap: anywhere; }
+.tw-read-field > small { color: var(--text-faint); font-size: var(--t-support); }
+.tw-rule { border-left: 3px solid var(--primary-line); background: var(--subtle); padding: 12px 14px; color: var(--muted); font-size: var(--t-support); line-height: var(--lh-body); }
+.tw-strategy { display: flex; flex-direction: column; gap: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.tw-strategy header { display: flex; align-items: center; gap: 12px; }
+.tw-strategy h3 { margin: 0; font-size: var(--t-section); font-weight: var(--w-medium); }
+.tw-strategy .table-wrap { overflow-x: auto; }
+.tw-methods { display: grid; gap: 10px; min-width: 0; }
+.tw-methods h4 { margin: 0; color: var(--muted); font-size: var(--t-support); font-weight: var(--w-body); }
+.tw-execution-fields { max-width: 720px; }
+.tw-execution-fields .input-unit { width: 100%; }
+.tw-choice-group { border: 0; padding: 0; margin: 0; min-width: 0; }
+.tw-choice-group legend { padding: 0; margin-bottom: 12px; font-size: var(--t-body); color: var(--text); }
+.tw-choice-group .tw-note { margin-top: 12px; }
+.tw-choices { display: flex; align-items: center; flex-wrap: wrap; gap: 18px 30px; }
+.tw-choices label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: var(--t-body); }
+.tw-choices input { accent-color: var(--primary); }
+.tw-confirm-name { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.tw-confirm-name strong { font-size: var(--t-section); font-weight: var(--w-medium); overflow-wrap: anywhere; }
+.tw-summary { display: flex; flex-direction: column; gap: 18px; margin: 0; }
+.tw-summary > div { display: flex; flex-direction: column; gap: 5px; }
+.tw-summary dt { color: var(--muted); font-size: var(--t-support); }
+.tw-summary dd { margin: 0; color: var(--text); font-size: var(--t-body); line-height: var(--lh-body); overflow-wrap: anywhere; }
+.tw-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--line); }
+.tw-footer-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+.tw-error { color: var(--vd-breach); font-size: var(--t-support); }
+.tw-error[hidden] { display: none; }
+.tw-save-error { margin: 20px 0 0; }
+.tw-steps button:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+@media (min-width: 1800px) {
+  .tw-root { --t-body: 15px; --t-support: 13px; --t-section: 18px; --t-block: 18px; --gap: clamp(24px, 1.3vw, 34px); }
+  .tw-steps { margin-bottom: 28px; }
+  .tw-steps button { min-height: clamp(74px, 6.4vh, 88px); }
+  .tw-content { min-height: clamp(480px, calc(100dvh - 370px), 980px); padding: clamp(30px, 2vw, 50px); }
+  .tw-section, .tw-fields, .tw-strategy { gap: clamp(26px, 2.2vh, 34px); }
+  .tw-fields input, .tw-fields select { min-height: 44px; font-size: var(--t-body); }
+  .tw-fields textarea { min-height: clamp(96px, 10vh, 144px); font-size: var(--t-body); }
+  .tw-footer { padding: 22px clamp(30px, 2vw, 50px); }
+  .tw-summary { gap: 24px; }
+}
+@media (max-width: 1100px) { .tw-layout { grid-template-columns: minmax(0, 1fr) 250px; } .tw-content { padding: 22px; } .tw-steps button { gap: 6px; font-size: var(--t-support); } }
+@media (max-width: 850px) { .tw-layout { grid-template-columns: 1fr; } .tw-aside { order: 2; } .tw-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .tw-steps button { flex-direction: column; min-height: 76px; } .tw-content { min-height: 0; } }
+@media (max-width: 520px) { .tw-steps { grid-template-columns: 1fr; } .tw-steps li { border-right: 0; border-bottom: 1px solid var(--line); } .tw-steps li:last-child { border-bottom: 0; } .tw-steps button { flex-direction: row; justify-content: flex-start; min-height: 44px; padding-left: 16px; } .tw-content, .tw-footer { padding: 18px; } .tw-field-grid, .tw-summary { grid-template-columns: 1fr; } }
+
+.tw-surfaces { display:grid; gap:12px; }
+.tw-surface-group { border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px; display:grid; gap:8px; }
+.tw-surface-group h3 { margin:0 0 2px; font-size:var(--t-support); color:var(--muted); }
+.tw-surface-group label { display:flex; align-items:flex-start; gap:8px; font-size:var(--t-support); overflow-wrap:anywhere; }
+.tw-fields .tw-surface-group input { width:auto; margin-top:3px; }

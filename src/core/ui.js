@@ -22,16 +22,16 @@ export const btn = (label, { kind = '', onclick = '', ico = '', disabled = false
 export const linkBtn = (label, { onclick = '', danger = false, disabled = false } = {}) =>
   `<button class="link-btn ${danger ? 'danger' : ''}" ${onclick ? `onclick="${onclick}"` : ''} ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
 
-/* 行内「更多」：点开为下拉菜单，items = [[文案, onclick], ...] */
+/* 行内「更多」：items = [[文案, onclick, { danger?: boolean }], ...]。 */
 export function moreMenu(items, label = '更多') {
   return `<span class="dd">
-    <button class="link-btn" onclick="UI.toggleMenu(event,this)">${esc(label)}</button>
+    <button class="link-btn" aria-expanded="false" onclick="UI.toggleMenu(event,this)">${esc(label)}</button>
     <span class="dd-menu" hidden>${items
-      .map(([l, fn]) => `<button onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
+      .map(([l, fn, options = {}]) => `<button${options.danger ? ' class="danger"' : ''} onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
       .join('')}</span></span>`;
 }
 export function closeMenus() {
-  document.querySelectorAll('.dd-menu').forEach((m) => (m.hidden = true));
+  document.querySelectorAll('.dd-menu').forEach(m => { m.hidden = true; m.previousElementSibling?.setAttribute('aria-expanded', 'false'); });
 }
 /* 下拉用 position:fixed 浮在视口上，不占表格高度、不被滚动容器裁切；
  * 下方空间不够时向上展开。滚动或缩放时直接收起，避免菜单与触发按钮错位。 */
@@ -42,6 +42,7 @@ export function toggleMenu(e, el) {
   closeMenus();
   if (!open) return;
   m.hidden = false;
+  el.setAttribute('aria-expanded', 'true');
   const r = el.getBoundingClientRect();
   const h = m.offsetHeight;
   const w = m.offsetWidth;
@@ -68,7 +69,7 @@ export const backBtn = () =>
   `<button class="back-btn" onclick="App.back()" title="返回" aria-label="返回">${icon('back', 18)}</button>`;
 
 /* ---------------------------------------------------------------- 筛选器 */
-export function filters({ search = null, selects = [], sort = null, extra = '', right = '' } = {}) {
+export function filters({ search = null, selects = [], extra = '', right = '' } = {}) {
   const parts = [];
   if (search) {
     parts.push(`<label class="filter search"><span>${esc(search.label)}</span>
@@ -82,10 +83,6 @@ export function filters({ search = null, selects = [], sort = null, extra = '', 
         ${s.options.map(([v, l]) => `<option value="${esc(v)}" ${v === s.value ? 'selected' : ''}>${esc(l)}</option>`).join('')}
       </select></label>`);
   }
-  /* 排序紧跟在筛选器之后，不居右：右侧是页面主操作的对齐线 */
-  if (sort) {
-    parts.push(`<button class="sort-btn" onclick="${sort.onclick}">${icon('arrowUpDown', 14)}${esc(sort.label)}</button>`);
-  }
   /* extra：跟在筛选器后的行内操作（如多选控制）；right：本行唯一靠右的操作（如导出） */
   if (extra) parts.push(extra);
   if (right) parts.push(`<div class="filters-right">${right}</div>`);
@@ -93,8 +90,21 @@ export function filters({ search = null, selects = [], sort = null, extra = '', 
 }
 
 /* ---------------------------------------------------------------- 表格 */
+/* 排序状态和数据仍由页面负责；列声明 sort 后只在对应表头添加统一入口。 */
+function tableHeading(column) {
+  const title = column.raw ? column.title : esc(column.title);
+  if (!column.sort) return title;
+  const { direction, onclick } = column.sort;
+  const descending = direction === 'descending';
+  const label = direction === 'none'
+    ? `${column.title}：点击按此列降序排序`
+    : `${column.title}：当前${descending ? '降序' : '升序'}，点击切换为${descending ? '升序' : '降序'}`;
+  return `<span class="table-heading">${title}<button type="button" class="table-sort" aria-label="${esc(label)}" title="${esc(label)}" onclick="${esc(onclick)}">
+    <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true" focusable="false"><path class="sort-up" d="M5 1 9 7H1Z"/><path class="sort-down" d="M1 9H9L5 15Z"/></svg>
+  </button></span>`;
+}
 export function table(columns, rows, emptyText = '暂无数据') {
-  const head = columns.map((c) => `<th ${c.width ? `style="width:${c.width}"` : ''}>${c.raw ? c.title : esc(c.title)}</th>`).join('');
+  const head = columns.map((c) => `<th scope="col" ${c.width ? `style="width:${c.width}"` : ''}${c.sort ? ` aria-sort="${c.sort.direction === 'none' ? 'none' : c.sort.direction === 'descending' ? 'descending' : 'ascending'}"` : ''}>${tableHeading(c)}</th>`).join('');
   const body = rows.length
     ? rows.map((r) => `<tr>${columns.map((c) => `<td class="${c.cls || ''}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join('')}</tr>`).join('')
     : `<tr><td class="empty-cell" colspan="${columns.length}">${esc(emptyText)}</td></tr>`;
@@ -168,6 +178,13 @@ export function statusIcon(status) {
 }
 
 export const badge = (text, tone = 'gray') => `<span class="badge ${tone}">${esc(text)}</span>`;
+/* 多标签单元格：最多显示 3 个，其余折成「…」，悬停显示全部 */
+export function tagList(labels, tone = 'gray', max = 3) {
+  const list = (labels || []).filter(Boolean);
+  if (!list.length) return '<span class="faint">—</span>';
+  const more = list.length > max ? `<span class="badge ${tone} tag-more">…</span>` : '';
+  return `<span class="tags" title="${esc(list.join('、'))}">${list.slice(0, max).map((l) => badge(l, tone)).join('')}${more}</span>`;
+}
 export const riskBadge = (risk) => `<span class="badge ${risk.cls}">${esc(risk.label)}</span>`;
 /* 判定纯文字：无底色无边框，颜色与演练结果色块一致 */
 export const verdictText = (v) => `<span class="verdict ${v.key}">${esc(v.label)}</span>`;
@@ -187,16 +204,17 @@ export const chartColor = (i) => CHART_COLORS[i % CHART_COLORS.length];
 export function ring(value, { size = 132, label = '', sub = '', color = null, track = 'var(--line)' } = {}) {
   const r = size / 2 - 10;
   const c = 2 * Math.PI * r;
-  const on = c * Math.max(0, Math.min(1, value));
+  const hasValue = Number.isFinite(value);
+  const on = hasValue ? c * Math.max(0, Math.min(1, value)) : 0;
   color ||= value >= 0.6 ? 'var(--rk-critical)' : value >= 0.3 ? 'var(--rk-high)' : value > 0 ? 'var(--primary)' : 'var(--vd-safe)';
   return `<div class="ring" style="width:${size}px;height:${size}px">
     <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="9"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="9"
+      ${on > 0 ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="9"
         stroke-linecap="round" stroke-dasharray="${on} ${c}"
-        transform="rotate(-90 ${size / 2} ${size / 2})"/>
+        transform="rotate(-90 ${size / 2} ${size / 2})"/>` : ''}
     </svg>
-    <div class="ring-text"><strong>${pct(value)}</strong>${label ? `<span>${esc(label)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
+    <div class="ring-text"><strong>${hasValue ? pct(value) : '—'}</strong>${label ? `<span>${esc(label)}</span>` : ''}${sub ? `<small>${esc(sub)}</small>` : ''}</div>
   </div>`;
 }
 
@@ -214,39 +232,52 @@ export function bars(items, { max = null } = {}) {
     .join('')}</div>`;
 }
 
-/* 雷达图：items = [{label, value(0–1), covered}]。未覆盖的维度轴名置灰、数值按 0 画，
- * 让用户看到「全部维度」中本次覆盖了哪些。 */
-export function radar(items, { size = 300, color = 'var(--vd-breach)' } = {}) {
+/* 雷达图：items = [{label, value, covered}]。未覆盖的维度轴名置灰、数值按 0 画，
+ * 让用户看到「全部维度」中本次覆盖了哪些。
+ * 默认 value 为 0–1 比例；count: true 时 value 为条数，刻度取最大值向上取整。
+ * 轴名完整展示：按每行 LINE 个字折行，四周留足边距；悬停轴名可看完整名称与数值。 */
+export function radar(items, { size = 300, color = 'var(--vd-breach)', count = false } = {}) {
   const n = items.length;
   if (n < 3) return '';
-  const cx = size / 2, cy = size / 2, R = size / 2 - 64;
+  const LINE = 6, LH = 12;
+  const lines = (s) => (s.match(new RegExp(`.{1,${LINE}}`, 'gu')) || [s]);
+  const maxLines = Math.max(...items.map((i) => lines(i.label).length));
+  const R = size / 2 - 24;
+  const pad = 14 + LINE * 11; // 侧边轴名最长一行的宽度
+  const padY = 14 + maxLines * LH;
+  const cx = size / 2, cy = size / 2;
   const pt = (i, r) => {
     const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   };
   const top = Math.max(0.0001, ...items.map((i) => i.value));
-  const scale = Math.min(1, Math.ceil(top * 10) / 10 || 0.1);
+  const scale = count ? Math.max(1, Math.ceil(top)) : Math.min(1, Math.ceil(top * 10) / 10 || 0.1);
+  const fmt = (v) => (count ? `${v} 条` : pct(v));
   const rings = [0.25, 0.5, 0.75, 1]
     .map((k) => `<polygon points="${items.map((_, i) => pt(i, R * k).join(',')).join(' ')}" fill="none" stroke="var(--line)"/>`)
     .join('');
   const axes = items
     .map((it, i) => {
       const [x, y] = pt(i, R);
-      const [lx, ly] = pt(i, R + 14);
+      const [lx, ly] = pt(i, R + 10);
       const anchor = Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end';
-      const short = it.label.length > 7 ? it.label.slice(0, 7) + '…' : it.label;
+      const ls = lines(it.label);
+      // 上半圈的轴名整体向上排，下半圈向下排，水平方向两侧居中
+      const dy0 = Math.abs(ly - cy) < 4 ? -((ls.length - 1) * LH) / 2 : ly < cy ? -(ls.length - 1) * LH : 0;
+      const tspans = ls.map((l, k) => `<tspan x="${lx}" dy="${k === 0 ? dy0 : LH}">${esc(l)}</tspan>`).join('');
       return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/>
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" class="${it.covered ? '' : 'off'}"><title>${esc(it.label)}${it.covered ? ` ${pct(it.value)}` : '（本次未覆盖）'}</title>${esc(short)}</text>`;
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" class="${it.covered ? '' : 'off'}"><title>${esc(it.label)}${it.covered ? ` ${fmt(it.value)}` : '（本次未覆盖）'}</title>${tspans}</text>`;
     })
     .join('');
   const poly = items.map((it, i) => pt(i, (R * it.value) / scale).join(',')).join(' ');
   const dots = items
-    .map((it, i) => (it.covered ? `<circle cx="${pt(i, (R * it.value) / scale)[0]}" cy="${pt(i, (R * it.value) / scale)[1]}" r="3" fill="${color}"/>` : ''))
+    .map((it, i) => (it.covered ? `<circle cx="${pt(i, (R * it.value) / scale)[0]}" cy="${pt(i, (R * it.value) / scale)[1]}" r="3" fill="${color}"><title>${esc(it.label)} ${fmt(it.value)}</title></circle>` : ''))
     .join('');
-  return `<div class="radar"><svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size + 40}px">
+  const vw = size + pad * 2, vh = size + padY * 2;
+  return `<div class="radar"><svg viewBox="${-pad} ${-padY} ${vw} ${vh}" width="100%" style="max-width:${vw}px">
     ${rings}${axes}
     <polygon points="${poly}" fill="${color}" fill-opacity="0.14" stroke="${color}" stroke-width="1.5"/>${dots}
-  </svg><div class="radar-note faint text-support">刻度上限 ${pct(scale, 0)} · 灰色维度为本次未覆盖</div></div>`;
+  </svg><div class="radar-note faint text-support">刻度上限 ${count ? `${scale} 条` : pct(scale, 0)}${items.some((i) => !i.covered) ? ' · 灰色维度为本次未覆盖' : ''} · 悬停可查看完整名称与数值</div></div>`;
 }
 
 export function legend(items) {

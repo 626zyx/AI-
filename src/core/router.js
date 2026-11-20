@@ -4,7 +4,7 @@ import { SIDE_NAV, SUB_PARENT } from '../domain/constants.js';
 const routes = new Map();
 /* 无侧栏栏目的默认子页 */
 const DEFAULT_SUB = { risk: 'events' };
-let current = { page: 'posture', sub: 'home', param: null };
+let current = { page: 'home', sub: 'home', param: null };
 
 export function register(page, sub, render) {
   routes.set(`${page}/${sub}`, render);
@@ -26,23 +26,55 @@ export function state() {
  * 返回键只做一件事：回到上一步所在的页面。 */
 const stack = [];
 const keyOf = (r) => `${r.page}/${r.sub}/${r.param || ''}`;
+const navigationGuards = new Set();
 
-export function nav(page, sub = null, param = null, { replace = false } = {}) {
+/* Guards may defer a route change and later resume that exact destination once.
+ * History and rendering are updated only after the transition is accepted. */
+export function beforeNavigate(guard) {
+  navigationGuards.add(guard);
+  return () => navigationGuards.delete(guard);
+}
+
+function navigate(next, options = {}, consumeHistory = false) {
+  const from = current;
+  let committed = false;
+  const proceed = () => {
+    if (committed || keyOf(current) !== keyOf(from)) return false;
+    committed = true;
+    if (consumeHistory) stack.pop();
+    else if (!options.replace && keyOf(next) !== keyOf(current)) {
+      stack.push(current);
+      if (stack.length > 50) stack.shift();
+    }
+    current = next;
+    options.onCommit?.();
+    render();
+    return true;
+  };
+  if (keyOf(next) !== keyOf(from)) {
+    const transition = { from: { ...from }, to: { ...next }, options, proceed };
+    for (const guard of navigationGuards) {
+      if (guard(transition) === false) {
+        // Hash navigation already changed the address; keep it aligned with the visible form.
+        if (!committed && typeof location !== 'undefined' && typeof history !== 'undefined') pushHash(from.page, from.sub, from.param);
+        return committed;
+      }
+    }
+  }
+  return proceed();
+}
+
+export function nav(page, sub = null, param = null, options = {}) {
   const side = SIDE_NAV[page];
   const target = sub || (side && side.length ? side[0].id : DEFAULT_SUB[page] || 'home');
   const next = { page, sub: target, param };
-  if (!replace && keyOf(next) !== keyOf(current)) {
-    stack.push(current);
-    if (stack.length > 50) stack.shift();
-  }
-  current = next;
-  render();
+  return navigate(next, options);
 }
 
 /* 直接打开详情链接时没有历史，退回所属列表页 */
 export function back() {
-  const prev = stack.pop();
-  if (prev) return nav(prev.page, prev.sub, prev.param, { replace: true });
+  const prev = stack.at(-1);
+  if (prev) return navigate(prev, { replace: true }, true);
   const parent = SUB_PARENT[current.sub];
   nav(current.page, parent || null, null, { replace: true });
 }
@@ -60,9 +92,9 @@ function render() {
  * 详情类页面用 sub 带 /detail 后缀，id 放第三段。 */
 export function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
-  if (!raw) return { page: 'posture', sub: 'home', param: null };
+  if (!raw) return { page: 'home', sub: 'home', param: null };
   const parts = raw.split('/').filter(Boolean);
-  const page = parts[0] || 'posture';
+  const page = parts[0] || 'home';
   const sub = parts[1] || null;
   const param = parts[2] || null;
   return { page, sub, param };

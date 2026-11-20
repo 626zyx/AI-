@@ -1,0 +1,15 @@
+.ag-image-ref { overflow-wrap:anywhere; }
+.ag-surface-editor { display:grid; gap:10px; }
+.ag-surface-editor table { table-layout:fixed; }
+.ag-surface-editor input,.ag-surface-editor select { width:100%; min-width:0; }
+.ag-surface-editor select { padding-right:28px; text-overflow:clip; }
+.ag-surface-editor optgroup,.ag-surface-editor option { white-space:normal; }
+.ag-surface-help { margin:6px 0 0; color:var(--muted); font-size:var(--t-caption); overflow-wrap:anywhere; }
+.ag-surface-group { display:block; margin-bottom:4px; color:var(--muted); font-size:var(--t-caption); }
+.ag-surface-editor input { padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text); font:inherit; }
+.ag-surface-editor .link-btn { white-space:nowrap; }
+.ag-surface-editor td { vertical-align:top; }
+.agent-onboarding-modal .form-secs>section { display:grid; gap:12px; }
+.agent-onboarding-modal .field p { margin:5px 0 0; }
+.agent-onboarding-modal .form-secs p { line-height:1.65; }
+.ag-contract-note { padding:10px 12px; border-radius:6px; background:var(--primary-bg); color:var(--muted); font-size:var(--t-support); overflow-wrap:anywhere; }
