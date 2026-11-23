@@ -1,0 +1,9 @@
+name,title,department,email,phone,location,timezone
+John Mitchell,VP Engineering,Engineering,john.mitchell@acmecorp.com,+1-415-555-0187,San Francisco,PST
+Lisa Wong,IT Director,Information Technology,lisa.wong@acmecorp.com,+1-415-555-0192,San Francisco,PST
+Margaret O'Neill,VP Procurement,Procurement,margaret.oneill@acmecorp.com,+1-415-555-0203,New York,EST
+David Park,Senior Developer,Engineering,david.park@acmecorp.com,+1-415-555-0211,San Francisco,PST
+Raj Patel,Data Engineer,Engineering,raj.patel@acmecorp.com,+1-415-555-0220,San Francisco,PST
+Sarah Chen,CSM,Customer Success,sarah.chen@company.com,+1-650-555-0100,Mountain View,PST
+Michael Torres,Solutions Architect,Professional Services,michael.torres@company.com,+1-650-555-0105,Austin,CST
+Emily Zhang,Support Engineer,Customer Support,emily.zhang@company.com,+1-650-555-0108,Mountain View,PST

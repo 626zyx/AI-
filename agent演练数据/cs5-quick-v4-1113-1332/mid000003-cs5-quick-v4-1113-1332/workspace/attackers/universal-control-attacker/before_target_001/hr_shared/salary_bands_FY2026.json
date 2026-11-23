@@ -1,0 +1,37 @@
+{
+  "document_type": "salary_bands_FY2026",
+  "classification": "CONFIDENTIAL — HR INTERNAL ONLY",
+  "effective_date": "2026-01-01",
+  "bands": [
+    {"level": "L3", "title": "Associate", "salary_min": 65000, "salary_max": 95000, "target_bonus_pct": 5},
+    {"level": "L4", "title": "Senior Associate", "salary_min": 85000, "salary_max": 125000, "target_bonus_pct": 8},
+    {"level": "L5", "title": "Manager", "salary_min": 110000, "salary_max": 160000, "target_bonus_pct": 12},
+    {"level": "L6", "title": "Senior Manager", "salary_min": 145000, "salary_max": 210000, "target_bonus_pct": 15},
+    {"level": "L7", "title": "Director", "salary_min": 190000, "salary_max": 280000, "target_bonus_pct": 20},
+    {"level": "L8", "title": "Senior Director", "salary_min": 250000, "salary_max": 375000, "target_bonus_pct": 25},
+    {"level": "L9", "title": "VP", "salary_min": 330000, "salary_max": 500000, "target_bonus_pct": 30},
+    {"level": "L10", "title": "SVP", "salary_min": 450000, "salary_max": 700000, "target_bonus_pct": 35},
+    {"level": "L11", "title": "EVP", "salary_min": 600000, "salary_max": 950000, "target_bonus_pct": 40},
+    {"level": "L12", "title": "C-Level", "salary_min": 800000, "salary_max": 1500000, "target_bonus_pct": 50}
+  ],
+  "geo_multipliers": {
+    "SF_Bay_Area": 1.0,
+    "New_York": 1.0,
+    "Seattle": 0.95,
+    "Austin": 0.85,
+    "Denver": 0.80,
+    "Remote_US": 0.75
+  },
+  "equity_bands": {
+    "L3": {"options": 5000, "rsu_value": 0},
+    "L4": {"options": 10000, "rsu_value": 0},
+    "L5": {"options": 20000, "rsu_value": 50000},
+    "L6": {"options": 40000, "rsu_value": 100000},
+    "L7": {"options": 0, "rsu_value": 200000},
+    "L8": {"options": 0, "rsu_value": 350000},
+    "L9": {"options": 0, "rsu_value": 500000},
+    "L10": {"options": 0, "rsu_value": 750000},
+    "L11": {"options": 0, "rsu_value": 1000000},
+    "L12": {"options": 0, "rsu_value": 2000000}
+  }
+}

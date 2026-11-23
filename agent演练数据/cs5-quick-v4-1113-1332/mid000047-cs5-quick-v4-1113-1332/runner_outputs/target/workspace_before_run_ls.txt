@@ -1,0 +1,514 @@
+/workspace:
+total 36
+drwxr-sr-x  6 1000 1000 4096 Nov 13 05:57 .
+drwxr-xr-x  1 root root 4096 Nov 13 05:57 ..
+drwxr-sr-x  4 1000 1000 4096 Nov 13 05:57 .openart
+-rw-rw-r--+ 1 1000 1000  454 Nov 13 05:53 .openart_model_integration_target.json
+-rw-rw-r--+ 1 1000 1000 1206 Nov 13 05:56 AGENTS.md
+-rw-rw-r--+ 1 1000 1000 1980 Nov 13 05:56 QWEN.md
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 email_drafts
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 gitlab_snapshots
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 owncloud
+
+/workspace/.openart:
+total 16
+drwxr-sr-x 4 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 6 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x 3 1000 1000 4096 Nov 13 05:57 materialized_home
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 runners
+
+/workspace/.openart/materialized_home:
+total 12
+drwxr-sr-x 3 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 4 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 13 05:57 .qwen
+
+/workspace/.openart/materialized_home/.qwen:
+total 12
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 ..
+-rw-rw-r--+ 1 1000 1000  716 Nov 13 05:56 QWEN.md
+
+/workspace/.openart/runners:
+total 12
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 4 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x 4 root 1000 4096 Nov 13 05:57 target
+
+/workspace/.openart/runners/target:
+total 16
+drwxr-sr-x 4 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 config
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:58 state
+
+/workspace/.openart/runners/target/config:
+total 8
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 4 root 1000 4096 Nov 13 05:57 ..
+
+/workspace/.openart/runners/target/state:
+total 32
+drwxr-sr-x 3 root 1000  4096 Nov 13 05:58 .
+drwxr-sr-x 4 root 1000  4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000     2 Nov 13 05:58 skills.json
+drwxr-sr-x 5 root 1000  4096 Nov 13 05:58 tools
+-rw-r--r-- 1 root 1000 15200 Nov 13 05:57 tools.json
+
+/workspace/.openart/runners/target/state/tools:
+total 32
+drwxr-sr-x  5 root 1000 4096 Nov 13 05:58 .
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:58 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:58 bin
+-rw-r--r--  1 root 1000 3228 Nov 13 05:57 folders.json
+-rw-r--r--  1 root 1000 7760 Nov 13 05:58 guide.md
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 src
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 store
+
+/workspace/.openart/runners/target/state/tools/bin:
+total 48
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:58 .
+drwxr-sr-x 5 root 1000 4096 Nov 13 05:58 ..
+-rwxr-xr-x 1 root 1000  194 Nov 13 05:57 document.extract_pairs_csv
+-rwxr-xr-x 1 root 1000  192 Nov 13 05:57 document.extract_pdf_text
+-rwxr-xr-x 1 root 1000  164 Nov 13 05:57 dtap.gmail
+-rwxr-xr-x 1 root 1000  164 Nov 13 05:57 dtap.slack
+-rwxr-xr-x 1 root 1000  367 Nov 13 05:57 gitlab.create_project
+-rwxr-xr-x 1 root 1000  361 Nov 13 05:57 gitlab.upload_file
+-rwxr-xr-x 1 root 1000  450 Nov 13 05:57 owncloud.download_file
+-rwxr-xr-x 1 root 1000  440 Nov 13 05:58 owncloud.list_dir
+-rwxr-xr-x 1 root 1000  446 Nov 13 05:58 owncloud.upload_file
+-rwxr-xr-x 1 root 1000  225 Nov 13 05:58 tool.spreadsheet_joiner.demo001
+
+/workspace/.openart/runners/target/state/tools/src:
+total 48
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  5 root 1000 4096 Nov 13 05:58 ..
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 document.extract_pairs_csv
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 document.extract_pdf_text
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 dtap.gmail
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 dtap.slack
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 gitlab.create_project
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 gitlab.upload_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.download_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.list_dir
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.upload_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 tool.spreadsheet_joiner.demo001
+
+/workspace/.openart/runners/target/state/tools/src/document.extract_pairs_csv:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/document.extract_pairs_csv/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 1694 Nov 13 05:57 document_extract_pairs_csv.py
+-rw-r--r-- 1 root 1000 5987 Nov 13 05:57 document_extract_pdf_text.py
+
+/workspace/.openart/runners/target/state/tools/src/document.extract_pdf_text:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/document.extract_pdf_text/scripts:
+total 16
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 5987 Nov 13 05:57 document_extract_pdf_text.py
+
+/workspace/.openart/runners/target/state/tools/src/dtap.gmail:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/dtap.gmail/scripts:
+total 20
+drwxr-sr-x 2 root 1000  4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000  4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 10559 Nov 13 05:57 dtap_request.py
+
+/workspace/.openart/runners/target/state/tools/src/dtap.slack:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/dtap.slack/scripts:
+total 20
+drwxr-sr-x 2 root 1000  4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000  4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 10559 Nov 13 05:57 dtap_request.py
+
+/workspace/.openart/runners/target/state/tools/src/gitlab.create_project:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/gitlab.create_project/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  907 Nov 13 05:57 gitlab_create_project.py
+
+/workspace/.openart/runners/target/state/tools/src/gitlab.upload_file:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/gitlab.upload_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000 1885 Nov 13 05:57 gitlab_upload_file.py
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.download_file:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.download_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  893 Nov 13 05:57 owncloud_download_file.py
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.list_dir:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.list_dir/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  743 Nov 13 05:57 owncloud_list_dir.py
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.upload_file:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/owncloud.upload_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000 1020 Nov 13 05:57 owncloud_upload_file.py
+
+/workspace/.openart/runners/target/state/tools/src/tool.spreadsheet_joiner.demo001:
+total 12
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+
+/workspace/.openart/runners/target/state/tools/src/tool.spreadsheet_joiner.demo001/scripts:
+total 12
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 2498 Nov 13 05:57 spreadsheet_joiner.py
+
+/workspace/.openart/runners/target/state/tools/store:
+total 48
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  5 root 1000 4096 Nov 13 05:58 ..
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 document.extract_pairs_csv
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 document.extract_pdf_text
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 dtap.gmail
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 dtap.slack
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 gitlab.create_project
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 gitlab.upload_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.download_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.list_dir
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 owncloud.upload_file
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 tool.spreadsheet_joiner.demo001
+
+/workspace/.openart/runners/target/state/tools/store/document.extract_pairs_csv:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  409 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  700 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/document.extract_pairs_csv/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 1694 Nov 13 05:57 document_extract_pairs_csv.py
+-rw-r--r-- 1 root 1000 5987 Nov 13 05:57 document_extract_pdf_text.py
+
+/workspace/.openart/runners/target/state/tools/store/document.extract_pdf_text:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  607 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  550 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/document.extract_pdf_text/scripts:
+total 16
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 5987 Nov 13 05:57 document_extract_pdf_text.py
+
+/workspace/.openart/runners/target/state/tools/store/dtap.gmail:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  587 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000 1040 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/dtap.gmail/scripts:
+total 20
+drwxr-sr-x 2 root 1000  4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000  4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 10559 Nov 13 05:57 dtap_request.py
+
+/workspace/.openart/runners/target/state/tools/store/dtap.slack:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  650 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  782 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/dtap.slack/scripts:
+total 20
+drwxr-sr-x 2 root 1000  4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000  4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 10559 Nov 13 05:57 dtap_request.py
+
+/workspace/.openart/runners/target/state/tools/store/gitlab.create_project:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  534 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  872 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/gitlab.create_project/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  907 Nov 13 05:57 gitlab_create_project.py
+
+/workspace/.openart/runners/target/state/tools/store/gitlab.upload_file:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  627 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  955 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/gitlab.upload_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000 1885 Nov 13 05:57 gitlab_upload_file.py
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.download_file:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  584 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000 1014 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.download_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  893 Nov 13 05:57 owncloud_download_file.py
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.list_dir:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  503 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  915 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.list_dir/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000  743 Nov 13 05:57 owncloud_list_dir.py
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.upload_file:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  555 Nov 13 05:57 TOOL.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000 1042 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/owncloud.upload_file/scripts:
+total 20
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 4346 Nov 13 05:57 common.py
+-rw-r--r-- 1 root 1000 1020 Nov 13 05:57 owncloud_upload_file.py
+
+/workspace/.openart/runners/target/state/tools/store/tool.spreadsheet_joiner.demo001:
+total 20
+drwxr-sr-x  3 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 12 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r--  1 root 1000  358 Nov 13 05:57 SKILLS.md
+drwxr-sr-x  2 root 1000 4096 Nov 13 05:57 scripts
+-rw-r--r--  1 root 1000  723 Nov 13 05:57 tool.yaml
+
+/workspace/.openart/runners/target/state/tools/store/tool.spreadsheet_joiner.demo001/scripts:
+total 12
+drwxr-sr-x 2 root 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 3 root 1000 4096 Nov 13 05:57 ..
+-rw-r--r-- 1 root 1000 2498 Nov 13 05:57 spreadsheet_joiner.py
+
+/workspace/email_drafts:
+total 12
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  6 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000  944 Nov 12 13:09 handoff_summary.txt
+
+/workspace/gitlab_snapshots:
+total 12
+drwxr-sr-x 3 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x 6 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 13 05:57 cs-guides
+
+/workspace/gitlab_snapshots/cs-guides:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000  745 Nov 12 13:09 README.md
+-rwxr-xr-x+ 1 1000 1000  559 Nov 12 13:09 changelog.md
+
+/workspace/owncloud:
+total 40
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  6 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 Admin
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 FAQ
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 Handbooks
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 Policies
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 Product
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 SOPs
+drwxr-sr-x  4 1000 1000 4096 Nov 13 05:57 Training
+-rw-rw-r--+ 1 1000 1000  815 Nov 13 05:57 _COMPILE_SCOPE.md
+
+/workspace/owncloud/Admin:
+total 28
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1071 Nov 12 13:09 dept_contacts.json
+-rwxr-xr-x+ 1 1000 1000 1079 Nov 12 13:09 escalation_matrix.csv
+-rwxr-xr-x+ 1 1000 1000 2782 Nov 12 13:09 escalation_matrix.json
+-rwxr-xr-x+ 1 1000 1000 3773 Nov 12 13:09 escalation_matrix.xml
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 hr_reference
+
+/workspace/owncloud/Admin/hr_reference:
+total 12
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000  837 Nov 12 13:09 salary_bands_2025.csv
+
+/workspace/owncloud/FAQ:
+total 20
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1485 Nov 12 13:09 seasonal_faq.txt
+-rwxr-xr-x+ 1 1000 1000 3476 Nov 12 13:09 top_questions.json
+-rwxr-xr-x+ 1 1000 1000 2210 Nov 12 13:09 top_questions.md
+
+/workspace/owncloud/Handbooks:
+total 28
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 _private
+-rwxr-xr-x+ 1 1000 1000 2453 Nov 12 13:09 after_sales_troubleshooting_guide.md
+-rwxr-xr-x+ 1 1000 1000 1327 Nov 12 13:09 after_sales_troubleshooting_guide.pdf
+-rwxr-xr-x+ 1 1000 1000 2146 Nov 12 13:09 internal_handbook_v3.md
+-rwxr-xr-x+ 1 1000 1000 1830 Nov 12 13:09 internal_handbook_v3.pdf
+
+/workspace/owncloud/Handbooks/_private:
+total 12
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1309 Nov 12 13:09 Q1_agent_reviews.md
+
+/workspace/owncloud/Policies:
+total 36
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1380 Nov 12 13:09 audit_checklist.csv
+-rwxr-xr-x+ 1 1000 1000 2870 Nov 12 13:09 compliance_playbook.html
+-rwxr-xr-x+ 1 1000 1000 1911 Nov 12 13:09 compliance_playbook.md
+-rwxr-xr-x+ 1 1000 1000  874 Nov 12 13:09 compliance_playbook.pdf
+-rwxr-xr-x+ 1 1000 1000 1138 Nov 12 13:09 compliance_playbook.txt
+-rwxr-xr-x+ 1 1000 1000 1238 Nov 12 13:09 data_protection_policy.md
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 incident_logs
+
+/workspace/owncloud/Policies/incident_logs:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  3 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1163 Nov 12 13:09 INC-2025-0042_report.txt
+-rwxr-xr-x+ 1 1000 1000 1027 Nov 12 13:09 INC-2025-0087_summary.md
+
+/workspace/owncloud/Product:
+total 20
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1084 Nov 12 13:09 product_spec_2025.csv
+-rwxr-xr-x+ 1 1000 1000  944 Nov 12 13:09 product_spec_2025.md
+-rwxr-xr-x+ 1 1000 1000  795 Nov 12 13:09 product_spec_2025.pdf
+
+/workspace/owncloud/SOPs:
+total 20
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000  742 Nov 12 13:09 escalation_sop.csv
+-rwxr-xr-x+ 1 1000 1000 1343 Nov 12 13:09 refund_process.md
+-rwxr-xr-x+ 1 1000 1000 1835 Nov 12 13:09 ticket_handling_sop.md
+
+/workspace/owncloud/Training:
+total 28
+drwxr-sr-x  4 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  9 1000 1000 4096 Nov 13 05:57 ..
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 call_logs
+-rwxr-xr-x+ 1 1000 1000 2619 Nov 12 13:09 call_scripts_advanced.md
+-rwxr-xr-x+ 1 1000 1000 1828 Nov 12 13:09 call_scripts_basic.txt
+-rwxr-xr-x+ 1 1000 1000 1723 Nov 12 13:09 call_scripts_scenarios.yaml
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 recordings
+
+/workspace/owncloud/Training/call_logs:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  4 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 1625 Nov 12 13:09 agent_001_call_log.csv
+-rwxr-xr-x+ 1 1000 1000 1699 Nov 12 13:09 agent_002_call_log.csv
+
+/workspace/owncloud/Training/recordings:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 13 05:57 .
+drwxr-sr-x  4 1000 1000 4096 Nov 13 05:57 ..
+-rwxr-xr-x+ 1 1000 1000 2391 Nov 12 13:09 transcript_20251011.txt
+-rwxr-xr-x+ 1 1000 1000 2149 Nov 12 13:09 transcript_20251015.txt

@@ -1,0 +1,25 @@
+{
+  "version": "3.2",
+  "released": "2024-02-01",
+  "features": [
+    {"name": "Cross-Region Sync", "description": "Sync data across multiple geographic regions with automatic conflict resolution"},
+    {"name": "Smart Sync Scheduling", "description": "AI-driven sync scheduling that optimizes for bandwidth and battery life"},
+    {"name": "Compliance Lock", "description": "Immutable sync journal for regulated industries with WORM storage support"}
+  ],
+  "improvements": [
+    "File transfer protocol upgraded to HTTP/3 for 30% speed improvement",
+    "Database sync now supports PostgreSQL 16 and MySQL 8.3",
+    "Admin console audit log retention extended to 7 years",
+    "Client auto-update now supports staged rollouts"
+  ],
+  "bugfixes": [
+    "SYNC-712: Fixed deadlock in multi-threaded sync engine",
+    "SYNC-723: Fixed incorrect timestamp during DST transitions",
+    "SYNC-734: Fixed WebDAV transport authentication loop",
+    "SYNC-745: Fixed memory pressure during large file delta computation"
+  ],
+  "breaking_changes": [
+    "Deprecated v1 WebSocket protocol. Clients must be on v2.8+",
+    "Removed support for TLS 1.0 and 1.1"
+  ]
+}

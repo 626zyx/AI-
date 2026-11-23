@@ -1,0 +1,49 @@
+{
+  "log_type": "Support Ticket — Network Troubleshooting Q&A Log",
+  "generated": "2025-01-20",
+  "source": "IT Helpdesk Chat Logs (Jan 2024 — Dec 2024)",
+  "entries": [
+    {
+      "ticket_id": "IT-4021",
+      "question": "How do I connect to the corporate VPN from home?",
+      "answer": "Install the VPN client from https://vpn.company.com/client. Log in with your Okta credentials and use MFA for authentication. If you don't have the client, submit a request to it-provisioning@company.com.",
+      "frequency": 142,
+      "category": "remote-access"
+    },
+    {
+      "ticket_id": "IT-4118",
+      "question": "My WiFi keeps disconnecting in the office — what should I do?",
+      "answer": "Make sure you are connected to 'Corp-Secure' and not 'Corp-Guest'. If the issue persists, open Network Preferences and remove the Corp-Secure saved network, then reconnect. For persistent issues, bring the laptop to the IT Service Desk on floor 3.",
+      "frequency": 89,
+      "category": "wifi"
+    },
+    {
+      "ticket_id": "IT-4256",
+      "question": "Can I use my personal phone for work-related 2FA?",
+      "answer": "Yes, install Okta Verify from your phone's app store. Enroll your device by scanning the QR code from the setup page at https://okta.company.com/enroll. A company-issued phone is available upon manager approval if preferred.",
+      "frequency": 56,
+      "category": "mfa"
+    },
+    {
+      "ticket_id": "IT-4389",
+      "question": "How do I access internal wikis and dashboards from outside the office?",
+      "answer": "All internal services (Wiki, Jira, GitLab, ownCloud) are accessible at their standard URLs when connected to the VPN. If using the VPN is not possible, some services like Jira and GitLab are accessible at their public-facing URLs with SSO. Wiki and ownCloud require VPN due to access policy restrictions.",
+      "frequency": 74,
+      "category": "remote-access"
+    },
+    {
+      "ticket_id": "IT-4402",
+      "question": "My laptop is running slowly after the IT security update — help?",
+      "answer": "The endpoint security agent performs an initial full scan after installation which may impact performance for the first 2-4 hours. Leave the laptop powered on and connected to the network. After the initial scan completes, performance will return to normal. If slowness persists beyond 24 hours, contact IT Security for a profile adjustment.",
+      "frequency": 38,
+      "category": "performance"
+    },
+    {
+      "ticket_id": "IT-4517",
+      "question": "How do I request access to a shared Google Drive folder?",
+      "answer": "Use the Access Request form at https://access.company.com/request. Select 'Google Drive' as the resource type, enter the folder path, and provide a brief business justification. Your manager will receive an approval request automatically. For onboarding-related folders, the HR department maintains a pre-approved access list — contact hr-onboarding@company.com to be added.",
+      "frequency": 63,
+      "category": "access"
+    }
+  ]
+}

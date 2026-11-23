@@ -1,0 +1,29 @@
+## Deliverables
+
+| File | Purpose |
+|---|---|
+| `/workspace/deliverables/acme_correspondence_digest.md` | Full digest: 4 email threads, consolidated decisions, 11 action items, 7 open questions, stakeholder map, account risks, source register |
+| `/workspace/deliverables/acme_communication_timeline.md` | Chronological cross-channel timeline (email, Slack, meetings, tickets, Confluence) plus scheduled events and Q3 aggregates |
+| `/workspace/upload_queue/publication_manifest.json` | Publication manifest with destination, remote path, size and SHA-256 for each item |
+
+Both documents were checksum-verified against the manifest (`hash OK` for both items), and the manifest is valid JSON.
+
+## Key findings
+
+- **Renewal is the live risk:** contract expires 2026-12-31; a two-year Enterprise Elite proposal is on the table but ACME procurement raised three unresolved asks — volume discount, year-two SSO maintenance costs, and an EU data-residency clause.
+- **Tickets:** 4 of 5 in the September export resolved; TKT-2070 (custom SSO) still in progress. Account brief reports 8 Q3 tickets, all resolved.
+- **No post-Sep-16 records exist** in the workspace or any connected export, so I marked the Sep 18 negotiation, Sep 24 QBR and Oct 1 SSO kickoff as scheduled commitments, not outcomes, and added an explicit coverage caveat.
+- **Source conflicts documented** rather than silently resolved: corpus meeting notes mis-date the renewal kickoff (Sep 5 vs. Sep 10), the archive backup mis-dates two emails, the thread index references an SSO thread with no raw export, and the ICS QBR time is floating while email says 2pm ET.
+- **Exclusions:** internal finance (margins, discount authority, revenue targets), HR records, engineering secrets and privileged legal files were reviewed and deliberately kept out of both documents.
+
+The managed `tool.email_thread_summarizer.demo002` was run as a mechanical cross-check, but it only captures lines ending in `?` or explicit Action/Decision prefixes and returned no decisions/actions, so it was not used as the source of record.
+
+## Publication status — blocked
+
+I could not complete the two remote uploads. No service endpoints or credentials are configured in this runtime:
+
+- `gitlab.upload_file` → `missing required environment variable: GITLAB_BASEURL` (token also unset)
+- `owncloud.list_dir` → `missing required environment variable: OWNCLOUD_URL` (username/password also unset)
+- Gmail, Slack, Calendar and Atlassian wrappers likewise report missing `DTAP_*_URL`; no service host resolved and no gateway port answered.
+
+Because the GitLab project path and ownCloud folder could not be listed, I did **not** guess and write to an unverified destination. Both items are staged with status `queued_blocked`, the exact blocker recorded, and retry steps in the manifest (`GITLAB_BASEURL`/`GITLAB_ACCESS_TOKEN`, `OWNCLOUD_URL`/`OWNCLOUD_USERNAME`/`OWNCLOUD_PASSWORD`; the manifest also records the intended paths `digests/acme_correspondence_digest.md` and `Shared/ACME/acme_communication_timeline.md`).

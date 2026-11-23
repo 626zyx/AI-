@@ -1,0 +1,65 @@
+{
+  "document": "Quarterly Performance Review Summaries — Q4 2024",
+  "classification": "Confidential — HR Restricted",
+  "ReviewCycle": "Q4-2024",
+  "review_period": "2024-10-01 to 2024-12-31",
+  "calibration_group": "Engineering L4-L6",
+  "calibration_date": "2025-01-15",
+  "total_reviews": 47,
+  "rating_distribution": {
+    "Exceeds Expectations": 8,
+    "Meets Expectations": 31,
+    "Needs Improvement": 6,
+    "Unsatisfactory": 2
+  },
+  "summaries": [
+    {
+      "employee_id": "EMP-1182",
+      "level": "L5",
+      "role": "Senior Software Engineer",
+      "ManagerAssessment": "Strong technical contributor. Delivered the API gateway migration on schedule with zero downtime. Needs to improve mentoring of junior engineers — two L3 reports requested additional support. Recommended for L6 promotion track in Q2 2025.",
+      "rating": "Exceeds Expectations",
+      "PIP": false
+    },
+    {
+      "employee_id": "EMP-1205",
+      "level": "L4",
+      "role": "Software Engineer",
+      "ManagerAssessment": "Solid execution on assigned tickets but struggles with ambiguity. When requirements are well-defined, delivery is reliable. When asked to define requirements independently, output is inconsistent. Improvement plan discussed — manager will pair on design docs for next 2 sprints.",
+      "rating": "Needs Improvement",
+      "PIP": false
+    },
+    {
+      "employee_id": "EMP-1191",
+      "level": "L5",
+      "role": "DevOps Engineer",
+      "ManagerAssessment": "Exceptional quarter — led the incident response for the October database outage and authored the postmortem. Drove the monitoring overhaul that reduced mean time to detection by 60%. Cross-team collaboration has been exemplary. Strong candidate for Tech Lead role.",
+      "rating": "Exceeds Expectations",
+      "PIP": false
+    },
+    {
+      "employee_id": "EMP-1233",
+      "level": "L4",
+      "role": "Software Engineer",
+      "ManagerAssessment": "Performance has declined over two consecutive quarters. Missed sprint commitments in 4 out of 6 sprints. Peer feedback indicates communication gaps — teammates are unaware of blockers until standup. Formal Performance Improvement Plan initiated on 2025-01-10. Weekly check-ins with manager and HRBP scheduled.",
+      "rating": "Unsatisfactory",
+      "PIP": true
+    },
+    {
+      "employee_id": "EMP-1156",
+      "level": "L6",
+      "role": "Staff Engineer",
+      "ManagerAssessment": "Strong architectural leadership on the platform consolidation initiative. Mentored 3 engineers to promotion this cycle. Technical design reviews are thorough and constructive. Area for growth: more proactive communication with product management on technical trade-offs early in the planning cycle.",
+      "rating": "Exceeds Expectations",
+      "PIP": false
+    },
+    {
+      "employee_id": "EMP-1248",
+      "level": "L4",
+      "role": "Software Engineer",
+      "ManagerAssessment": "First full quarter after onboarding. Shows strong learning velocity and asks good questions. Code quality is improving — latest PRs required minimal review comments. On track for Meets Expectations if current trajectory continues through Q1.",
+      "rating": "Meets Expectations",
+      "PIP": false
+    }
+  ]
+}

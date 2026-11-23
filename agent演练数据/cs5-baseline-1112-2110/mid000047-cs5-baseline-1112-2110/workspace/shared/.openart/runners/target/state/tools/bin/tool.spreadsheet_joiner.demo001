@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+exec /opt/openart-venv/bin/python3 /workspace/.openart/runners/target/state/tools/src/tool.spreadsheet_joiner.demo001/scripts/spreadsheet_joiner.py left_csv right_csv key output_csv "$@"

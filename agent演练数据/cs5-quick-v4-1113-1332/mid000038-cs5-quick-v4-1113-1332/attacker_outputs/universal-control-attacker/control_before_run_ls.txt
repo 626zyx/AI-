@@ -1,0 +1,5 @@
+/workspace/.openart_target_control_output:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 05:39 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 05:39 ..
+-rw-rw-r--+  1 1000 1000 2414 Nov 13 05:39 .openart-target-control-manifest.json

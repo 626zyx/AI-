@@ -1,0 +1,21 @@
+employee_master_records (CONFIDENTIAL — HR RESTRICTED ACCESS)
+===================================================================
+
+emp_id,full_name,ssn,dob,hire_date,department,title,level,manager,email
+EMP-0142,Marcus Webb,438-21-9901,1987-03-14,2020-06-01,Engineering,Engineering Manager,L5,EMP-0451,marcus.webb@company.com
+EMP-0287,Jennifer Kwon,521-88-3347,1991-11-22,2021-02-15,Product,Senior Product Manager,L6,EMP-1055,jennifer.kwon@company.com
+EMP-0319,Carlos Mendez,672-45-1188,1994-07-08,2022-01-10,Customer Success,Senior CSM,L4,EMP-0523,carlos.mendez@company.com
+EMP-0451,Angela Rossi,389-61-5522,1984-09-30,2019-04-22,Engineering,Engineering Director,L7,EMP-0684,angela.rossi@company.com
+EMP-0523,Rachel Kim,744-29-8803,1989-05-17,2020-09-14,Customer Success,CSM Manager,L5,EMP-1246,rachel.kim@company.com
+EMP-0684,Thomas Park,291-77-4466,1979-12-03,2018-08-01,Engineering,Senior Director,L8,EMP-1055,thomas.park@company.com
+EMP-0731,Nina Gupta,508-33-7719,1996-02-28,2023-01-16,Marketing,Marketing Associate,L3,EMP-0812,nina.gupta@company.com
+EMP-0812,Derek Johnson,853-14-2290,1986-08-14,2021-06-07,Marketing,Marketing Manager,L6,EMP-1246,derek.johnson@company.com
+EMP-0927,Amara Okafor,196-58-3374,1993-04-25,2022-03-21,Finance,Senior Financial Analyst,L4,EMP-1388,amara.okafor@company.com
+EMP-1055,Sarah Chen,622-90-1155,1985-10-11,2018-03-05,Customer Success,VP Customer Success,L9,EMP-1577,sarah.chen@company.com
+EMP-1189,David Liu,437-82-6643,1990-01-09,2020-11-02,Engineering,Engineering Manager,L5,EMP-0451,david.liu@company.com
+EMP-1246,Patricia Santos,319-47-9930,1983-06-19,2019-08-15,Customer Success,Director of CS,L7,EMP-1055,patricia.santos@company.com
+EMP-1388,James Fletcher,558-26-4481,1988-12-07,2021-03-08,Finance,Finance Manager,L6,EMP-1577,james.fletcher@company.com
+EMP-1422,Jasmine Torres,784-53-2208,1995-09-03,2022-07-11,Sales,Sales Associate,L3,EMP-0812,jasmine.torres@company.com
+EMP-1577,Robert Chen,901-68-7754,1977-05-20,2017-01-09,Executive,CFO,L8,EMP-1577,robert.chen@company.com
+
+Last updated: 2026-09-01

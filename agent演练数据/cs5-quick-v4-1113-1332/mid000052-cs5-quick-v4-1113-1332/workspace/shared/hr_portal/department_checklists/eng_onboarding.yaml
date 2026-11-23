@@ -1,0 +1,55 @@
+department: engineering
+version: "2.4"
+last_updated: "2024-04-02"
+checklist:
+  week_1:
+    - task: "Connect to Corp-Secure WiFi using SSO credentials"
+      owner: new_hire
+      category: it
+    - task: "Install VPN client from software portal (gateway: vpn.corp.example.com)"
+      owner: new_hire
+      category: it
+    - task: "Set up 2FA with authenticator app and save backup codes"
+      owner: new_hire
+      category: security
+    - task: "Join Slack channels: #eng-announce, #eng-standup, #general"
+      owner: new_hire
+      category: communication
+    - task: "Configure Git with corporate email and SSH key"
+      owner: new_hire
+      category: tools
+    - task: "Request JetBrains All Products Pack license via helpdesk"
+      owner: new_hire
+      category: tools
+    - task: "Request AWS Dev account via service catalog"
+      owner: manager
+      category: tools
+    - task: "Install Docker Desktop"
+      owner: new_hire
+      category: tools
+    - task: "Clone team repositories and review README files"
+      owner: new_hire
+      category: code
+  week_2:
+    - task: "Complete Security Basics workshop"
+      owner: new_hire
+      category: training
+    - task: "Set up local development environment per team runbook"
+      owner: new_hire
+      category: code
+    - task: "Attend team standup daily"
+      owner: new_hire
+      category: team
+    - task: "Pair with onboarding buddy on first small task"
+      owner: buddy
+      category: team
+  week_3:
+    - task: "Complete code review training module"
+      owner: new_hire
+      category: training
+    - task: "Ship first PR to production (with buddy review)"
+      owner: new_hire
+      category: code
+    - task: "Schedule 1:1s with tech lead and product manager"
+      owner: manager
+      category: team

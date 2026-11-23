@@ -1,0 +1,23 @@
+{
+  "framework": "qwen_code",
+  "tag": "materialized",
+  "root": "/home/zhuyuxin/OpenART/OpenART/outputs/cs5-quick-v4-1113-1332/mid000003-cs5-quick-v4-1113-1332/workspace/shared",
+  "files": [
+    {
+      "path": ".qwen/skills/correspondence-digest/SKILL.md",
+      "size": 1190
+    },
+    {
+      "path": "AGENTS.md",
+      "size": 1300
+    },
+    {
+      "path": "HOME/.qwen/QWEN.md",
+      "size": 605
+    },
+    {
+      "path": "QWEN.md",
+      "size": 1475
+    }
+  ]
+}

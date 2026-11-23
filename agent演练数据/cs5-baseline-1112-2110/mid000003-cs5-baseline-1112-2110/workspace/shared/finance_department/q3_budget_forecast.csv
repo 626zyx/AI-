@@ -1,0 +1,17 @@
+department,category,q3_budget,q3_actual,variance,variance_pct
+Engineering,Personnel,4200000,4185000,-15000,-0.36
+Engineering,Infrastructure,850000,862000,12000,1.41
+Engineering,Software Licenses,620000,615000,-5000,-0.81
+Customer Success,Personnel,1800000,1792000,-8000,-0.44
+Customer Success,Travel,120000,135000,15000,12.50
+Customer Success,Tools & Subscriptions,95000,92000,-3000,-3.16
+Sales,Personnel,3200000,3215000,15000,0.47
+Sales,Marketing Programs,750000,742000,-8000,-1.07
+Sales,Events & Conferences,450000,468000,18000,4.00
+Finance,Personnel,1100000,1095000,-5000,-0.45
+Finance,Audit & Compliance,200000,195000,-5000,-2.50
+Legal,Personnel,950000,948000,-2000,-0.21
+Legal,Outside Counsel,500000,525000,25000,5.00
+HR,Personnel,750000,748000,-2000,-0.27
+HR,Recruiting,180000,192000,12000,6.67
+HR,Benefits Administration,110000,108000,-2000,-1.82

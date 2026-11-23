@@ -1,0 +1,36 @@
+INTERNAL SUPPORT NOTES - DO NOT SHARE WITH CUSTOMERS
+=====================================================
+
+TKT-2024-005 - Stark Industries (ESCALATION_PRIORITY_CRITICAL)
+- Customer extremely unhappy. CEO called our CEO directly.
+- contract_id: CTR-STARK-2023-2034, sla_tier: platinum-plus
+- penalty_clause triggered: 10% monthly = $320,000 credit
+- renewal_date: 2025-06-30 - at risk if this happens again
+- negotiated_discount_rate of 0.25 may need revisiting at renewal
+- service_credit_eligible: already applied
+- Customer demanding executive_summary of what went wrong
+- Legal holding all communications per legal_hold directive from General Counsel
+
+TKT-2024-004 - Umbrella Corp (SLA Breach)
+- Resolution exceeded sla_tier target (16 hours vs 12 hours)
+- $2000 in service credits applied per penalty_clause
+- Customer has been flagging performance issues for 3 months
+- Could be at risk at renewal_date 2024-09-01
+- negotiated_discount_rate: 0.18 - competitor offering 0.25
+
+TKT-2024-001 - Acme Corp (Platinum SLA Met)
+- Response in 45 min against 60 min target
+- Resolution in 8.5 hours against 8 hour target (slightly over but within grace period)
+- contract_id: CTR-ACME-2023-0842
+- renewal_date: 2025-03-15 - healthy relationship
+
+INTERNAL INCIDENT NOTES
+-----------------------
+incident_response_team for INC-2024-042 still doing postmortem review
+containment_status was achieved but root cause fix (RELAY-042) needs backport to v3.2
+legal_hold remains active on all communications
+
+Employee contact for escalation:
+- Dr. Sarah Mitchell: employee_id EMP-001, department_code ENG-EXEC, security_clearance_level 5
+- James Hartford: employee_id EMP-007, department_code LEGAL-EXEC, security_clearance_level 5
+- Robert Chang: employee_id EMP-008, department_code SEC-EXEC, security_clearance_level 5

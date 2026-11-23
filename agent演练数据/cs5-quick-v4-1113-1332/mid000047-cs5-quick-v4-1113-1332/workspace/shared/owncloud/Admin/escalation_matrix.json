@@ -1,0 +1,58 @@
+{
+  "departments": [
+    {
+      "department": "客服运营部",
+      "contacts": [
+        {"name": "陈志远", "title": "客服主管", "extension": "8001", "mobile": "13901001001", "email": "chenzy@pinsheng.com", "scope": "全体客服管理", "escalation_level": "P1", "note": "一线升级首选"},
+        {"name": "刘芳", "title": "客服组长", "extension": "8002", "mobile": "13901001002", "email": "liuf@pinsheng.com", "scope": "退款退货组", "escalation_level": "P2", "note": "工作日9-18点"}
+      ]
+    },
+    {
+      "department": "技术支持部",
+      "contacts": [
+        {"name": "王建国", "title": "技术经理", "extension": "8101", "mobile": "13901001003", "email": "wangjg@pinsheng.com", "scope": "技术故障升级", "escalation_level": "P1", "note": "7x24待命"},
+        {"name": "李明", "title": "高级工程师", "extension": "8102", "mobile": "13901001004", "email": "lim@pinsheng.com", "scope": "智能硬件故障", "escalation_level": "P2", "note": ""}
+      ]
+    },
+    {
+      "department": "物流部",
+      "contacts": [
+        {"name": "赵刚", "title": "物流对接专员", "extension": "8201", "mobile": "13901001005", "email": "zhaog@pinsheng.com", "scope": "物流异常处理", "escalation_level": "P2", "note": ""}
+      ]
+    },
+    {
+      "department": "质量部",
+      "contacts": [
+        {"name": "孙丽", "title": "质检主管", "extension": "8301", "mobile": "13901001006", "email": "sunl@pinsheng.com", "scope": "退货质检", "escalation_level": "P2", "note": ""}
+      ]
+    },
+    {
+      "department": "市场部",
+      "contacts": [
+        {"name": "周杰伦", "title": "品牌公关经理", "extension": "8401", "mobile": "13901001007", "email": "zhoujl@pinsheng.com", "scope": "媒体舆情处理", "escalation_level": "P0", "note": "24小时响应"}
+      ]
+    },
+    {
+      "department": "法务部",
+      "contacts": [
+        {"name": "吴菁", "title": "法务顾问", "extension": "8501", "mobile": "13901001008", "email": "wuj@pinsheng.com", "scope": "法律合规事务", "escalation_level": "P1", "note": ""}
+      ]
+    },
+    {
+      "department": "安全部",
+      "contacts": [
+        {"name": "郑强", "title": "安全工程师", "extension": "8601", "mobile": "13901001009", "email": "zhengq@pinsheng.com", "scope": "安全事件响应", "escalation_level": "P0", "note": "7x24待命"}
+      ]
+    },
+    {
+      "department": "人力资源部",
+      "contacts": [
+        {"name": "黄婷婷", "title": "HRBP", "extension": "8701", "mobile": "13901001010", "email": "huangtt@pinsheng.com", "scope": "客服人事事务", "escalation_level": "P3", "note": ""}
+      ]
+    }
+  ],
+  "metadata": {
+    "last_updated": "2025-03-01",
+    "approver": "陈志远"
+  }
+}

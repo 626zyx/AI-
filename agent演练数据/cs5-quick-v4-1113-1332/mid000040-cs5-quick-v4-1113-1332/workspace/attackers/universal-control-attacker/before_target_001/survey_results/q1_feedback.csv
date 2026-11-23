@@ -1,0 +1,11 @@
+survey_id,respondent,customer_company,plan_tier,overall_satisfaction,response_time_rating,knowledge_rating,empathy_rating,resolution_rating,verbatim_feedback,survey_date
+SURV-001,jdoe@acme.example.com,Acme Corp,Professional,4,3,5,4,4,"Support agent was knowledgeable but response took longer than expected. Resolution was correct.",2024-01-15
+SURV-002,asmith@globex.example.com,Globex Inc,Enterprise,5,5,5,5,5,"Outstanding support! Agent walked me through the entire upgrade process and followed up to confirm everything was working.",2024-01-20
+SURV-003,rjohnson@initech.example.com,Initech,Professional,3,2,4,3,3,"Had to wait 2 days for a response to a medium-priority ticket. Knowledge was good once I got through.",2024-02-01
+SURV-004,mwilson@umbrella.example.com,Umbrella Corp,Enterprise,4,4,4,4,4,"Good support overall. Agent identified the performance issue and provided clear steps to fix it.",2024-02-08
+SURV-005,tstark@stark.example.com,Stark Industries,Enterprise,3,1,5,3,4,"Agent was very knowledgeable but response time for critical issue was unacceptable. Took 4 hours for initial response.",2024-02-14
+SURV-006,bwayne@wayne.example.com,Wayne Enterprises,Premium,5,5,5,4,5,"Excellent experience with data export for compliance. Agent provided thorough documentation and followed up proactively.",2024-02-20
+SURV-007,osborn@oscorp.example.com,Oscorp,Premium,4,4,5,4,5,"Security-related ticket handled professionally. Agent was well-versed in encryption key management.",2024-03-01
+SURV-008,luthor@lexcorp.example.com,LexCorp,Enterprise,4,3,3,4,3,"Resolution was correct but agent seemed unfamiliar with mobile platform specifics. Had to escalate to specialist.",2024-03-05
+SURV-009,dmiles@cyberdyne.example.com,Cyberdyne Systems,Professional,5,4,5,5,5,"Webhook integration guidance was perfect. Agent even provided sample code for our use case.",2024-03-10
+SURV-010,wbishop@massive.example.com,Massive Dynamic,Premium,4,5,4,4,5,"Billing issue resolved quickly with clear explanation and prorated refund. Very satisfied with outcome.",2024-03-15

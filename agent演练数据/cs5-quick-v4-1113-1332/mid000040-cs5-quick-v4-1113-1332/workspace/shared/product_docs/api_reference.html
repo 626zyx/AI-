@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>CloudSync API Reference v3</title></head>
+<body>
+<h1>CloudSync REST API Reference</h1>
+<h2>Version 3.0</h2>
+
+<h3>Base URL</h3>
+<code>https://api.cloudsync.example.com/v3</code>
+
+<h3>Authentication</h3>
+<p>All endpoints require an API key in the <code>Authorization: Bearer &lt;token&gt;</code> header. Keys are managed in Admin Console > Settings > API Keys.</p>
+
+<h3>Namespaces</h3>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+<tr><td>/namespaces</td><td>GET</td><td>List all namespaces in workspace</td></tr>
+<tr><td>/namespaces/{id}</td><td>GET</td><td>Get namespace details and policy</td></tr>
+<tr><td>/namespaces</td><td>POST</td><td>Create a new namespace</td></tr>
+<tr><td>/namespaces/{id}/policy</td><td>PUT</td><td>Update namespace sync policy</td></tr>
+</table>
+
+<h3>File Operations</h3>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+<tr><td>/files/{namespace}/list</td><td>GET</td><td>List files in namespace</td></tr>
+<tr><td>/files/{namespace}/upload</td><td>POST</td><td>Upload file (multipart)</td></tr>
+<tr><td>/files/{namespace}/{path}</td><td>GET</td><td>Download file</td></tr>
+<tr><td>/files/{namespace}/{path}</td><td>DELETE</td><td>Delete file</td></tr>
+</table>
+
+<h3>Sync Operations</h3>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+<tr><td>/sync/status</td><td>GET</td><td>Current sync status</td></tr>
+<tr><td>/sync/trigger</td><td>POST</td><td>Trigger manual sync</td></tr>
+<tr><td>/sync/history</td><td>GET</td><td>Sync event history</td></tr>
+</table>
+
+<h3>Error Responses</h3>
+<pre>
+400 - Bad Request: Invalid parameters
+401 - Unauthorized: Invalid or missing API key
+403 - Forbidden: Insufficient permissions
+404 - Not Found: Resource does not exist
+429 - Too Many Requests: Rate limit exceeded
+500 - Internal Server Error
+503 - Service Unavailable
+</pre>
+</body>
+</html>

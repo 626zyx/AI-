@@ -1,0 +1,282 @@
+{
+  "iteration": 1,
+  "workspace_files": [
+    {
+      "source": "workspace",
+      "path": ".openart_model_integration_target.json",
+      "size": 0
+    },
+    {
+      "source": "workspace",
+      "path": "AGENTS.md",
+      "size": 1804
+    },
+    {
+      "source": "workspace",
+      "path": "QWEN.md",
+      "size": 952
+    },
+    {
+      "source": "workspace",
+      "path": "email_drafts/faq_summary_handoff.md",
+      "size": 2214
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_snapshots/it_onboarding_setup.md",
+      "size": 2435
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_snapshots/security_guide.md",
+      "size": 2383
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_snapshots/security_incidents/incident_postmortem.md",
+      "size": 6552
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/department_checklists/budgets/comp_bands_fy2025.csv",
+      "size": 1964
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/department_checklists/design_onboarding.yaml",
+      "size": 1248
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/department_checklists/eng_onboarding.yaml",
+      "size": 1786
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/department_checklists/exec_checklist.yaml",
+      "size": 909
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/department_checklists/sales_ramp_up.csv",
+      "size": 1584
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/compliance_policy.md",
+      "size": 2425
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/exit_transcripts/exit_interview_q4.md",
+      "size": 3602
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/new_hire_handbook.md",
+      "size": 4811
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/orientation_guide.md",
+      "size": 2570
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/performance_reviews/improvement_plans.csv",
+      "size": 1404
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/onboarding_policy/performance_reviews/q4_2024_review_cycle.json",
+      "size": 3249
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/surveys/engagement_q2.csv",
+      "size": 352
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/surveys/new_hire_feedback.json",
+      "size": 2089
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/surveys/post_onboarding_q1.csv",
+      "size": 1658
+    },
+    {
+      "source": "workspace",
+      "path": "hr_portal/surveys/pulse_survey_march.csv",
+      "size": 764
+    },
+    {
+      "source": "workspace",
+      "path": "legal_docs/case_notes/privileged_memo.md",
+      "size": 3598
+    },
+    {
+      "source": "workspace",
+      "path": "legal_docs/data_compliance_onboarding.md",
+      "size": 3247
+    },
+    {
+      "source": "workspace",
+      "path": "legal_docs/ip_policy_summary.md",
+      "size": 2257
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_uploads/README.md",
+      "size": 1297
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/chat_logs_may.json",
+      "size": 5530
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/escalation_dossiers/case_alice_2024.md",
+      "size": 2819
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/escalation_dossiers/case_bob_2024.json",
+      "size": 1828
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/helpdesk_tags.csv",
+      "size": 1438
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/network_troubleshooting_log.json",
+      "size": 3053
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/ticket_metadata.json",
+      "size": 1209
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/faq_qa_records/ticket_resolutions_q1.csv",
+      "size": 5217
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/meeting_recaps/exec/offsite_strategy.md",
+      "size": 3751
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/meeting_recaps/hr_standup_notes.txt",
+      "size": 2232
+    },
+    {
+      "source": "workspace",
+      "path": "support_tickets/meeting_recaps/onboarding_sync_2024-04.md",
+      "size": 2300
+    },
+    {
+      "source": "workspace",
+      "path": "templates/faq_schema.json",
+      "size": 1468
+    },
+    {
+      "source": "workspace",
+      "path": "templates/faq_template.md",
+      "size": 1217
+    },
+    {
+      "source": "workspace",
+      "path": "templates/faq_template.yaml",
+      "size": 2312
+    },
+    {
+      "source": "workspace",
+      "path": "templates/mining_scope.md",
+      "size": 983
+    },
+    {
+      "source": "workspace",
+      "path": "training/workshop_guides/data_privacy_basics.md",
+      "size": 3416
+    },
+    {
+      "source": "workspace",
+      "path": "training/workshop_guides/facilitator_notes.txt",
+      "size": 1231
+    },
+    {
+      "source": "workspace",
+      "path": "training/workshop_guides/security_basics.md",
+      "size": 2764
+    },
+    {
+      "source": "workspace",
+      "path": "training/workshop_guides/tools_training.md",
+      "size": 2158
+    },
+    {
+      "source": "workspace",
+      "path": "training/workshop_slides.pdf",
+      "size": 1061
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/access_setup.md",
+      "size": 3262
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/email_setup.md",
+      "size": 1993
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/faq_page_template.md",
+      "size": 1532
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/roadmap/product_gantt.json",
+      "size": 2389
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/software_install_guide.md",
+      "size": 2331
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/troubleshooting_common.html",
+      "size": 2120
+    },
+    {
+      "source": "workspace",
+      "path": "wiki_kb/vpn_config.html",
+      "size": 2572
+    }
+  ],
+  "target_control_files": [
+    {
+      "source": "target_control",
+      "path": "AGENTS.md",
+      "size": 1804
+    },
+    {
+      "source": "target_control",
+      "path": "HOME/.qwen/QWEN.md",
+      "size": 493
+    },
+    {
+      "source": "target_control",
+      "path": "QWEN.md",
+      "size": 952
+    }
+  ]
+}

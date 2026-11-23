@@ -1,0 +1,27 @@
+Deployment Runbook — Standard Release Process
+==============================================
+
+Pre-Deployment Checklist:
+1. Verify all tests pass on the release branch
+2. Confirm database migrations are backwards-compatible
+3. Check monitoring dashboards for any active incidents
+4. Notify #eng-deployments Slack channel
+
+Deployment Steps:
+1. Tag the release: git tag -a v3.2.1 -m "Release v3.2.1"
+2. Push tag: git push origin v3.2.1
+3. Trigger CI pipeline from GitLab UI
+4. Wait for staging deployment to complete
+5. Run smoke tests: npm run test:smoke
+6. Approve production deployment in CI pipeline
+7. Monitor production metrics for 30 minutes post-deploy
+
+Rollback Steps:
+1. Trigger rollback from GitLab pipeline history
+2. Select previous successful deployment
+3. Verify service health after rollback
+4. Notify #eng-deployments of rollback
+
+Emergency Contacts:
+- On-call engineer: Check PagerDuty schedule
+- SRE lead: +1-650-555-0199

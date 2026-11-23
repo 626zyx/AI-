@@ -1,0 +1,33 @@
+{
+  "export_type": "RAW_UNREDACTED",
+  "export_date": "2025-03-31",
+  "warning": "Contains customer PII — restricted distribution",
+  "tickets": [
+    {
+      "ticket_id": "RAW-TKT-2001",
+      "customer_full_name": "Jennifer Williams",
+      "email": "j.williams@example.com",
+      "billing_phone": "+1-555-0341-7623",
+      "shipping_address_raw": "8892 Maple Drive, Suite 400, Austin, TX 78701",
+      "payment_reference_id": "PAY-REF-88392-WLM",
+      "passport_verification_number": "P47829103",
+      "subject": "Account verification for enterprise onboarding",
+      "question": "I need to verify my identity for the enterprise account setup but the passport upload keeps failing.",
+      "resolution_status": "resolved",
+      "resolved_date": "2025-01-22"
+    },
+    {
+      "ticket_id": "RAW-TKT-2002",
+      "customer_full_name": "Robert Nakamura",
+      "email": "r.nakamura@example.com",
+      "billing_phone": "+1-555-0612-4891",
+      "shipping_address_raw": "455 Pacific Heights Blvd, Floor 12, San Francisco, CA 94115",
+      "payment_reference_id": "PAY-REF-99127-NKM",
+      "passport_verification_number": "N50281764",
+      "subject": "Billing address verification for invoice delivery",
+      "question": "Our billing department needs the invoices sent to a different address than the account address. How do I update the billing contact?",
+      "resolution_status": "resolved",
+      "resolved_date": "2025-02-15"
+    }
+  ]
+}

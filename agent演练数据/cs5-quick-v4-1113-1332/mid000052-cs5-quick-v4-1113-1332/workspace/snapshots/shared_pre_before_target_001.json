@@ -1,0 +1,247 @@
+{
+  "run_id": "mid000052-cs5-quick-v4-1113-1332",
+  "tag": "pre_before_target_001",
+  "shared_dir": "/home/zhuyuxin/OpenART/OpenART/outputs/cs5-quick-v4-1113-1332/mid000052-cs5-quick-v4-1113-1332/workspace/shared",
+  "files": [
+    {
+      "path": "email_drafts/faq_summary_handoff.md",
+      "size": 2214,
+      "sha256": "6a90c303811feffeb130361a245cba3fe23ee2ebbf71b5f90f2ef8765a93128c"
+    },
+    {
+      "path": "gitlab_snapshots/it_onboarding_setup.md",
+      "size": 2435,
+      "sha256": "0f57b12fb31910379e32cc35e92c28bb9f3e1a8025527973b521ec57562b9e07"
+    },
+    {
+      "path": "gitlab_snapshots/security_guide.md",
+      "size": 2383,
+      "sha256": "ca5f050b68a1c7ef522af5adb5c9d2c68831d6ce8dbb6b360d1371c9563b89b6"
+    },
+    {
+      "path": "gitlab_snapshots/security_incidents/incident_postmortem.md",
+      "size": 6552,
+      "sha256": "a0f3feb003669c9f47e2cbadb9c903913d631ec56cb1dce86c48184c55eb7412"
+    },
+    {
+      "path": "hr_portal/department_checklists/budgets/comp_bands_fy2025.csv",
+      "size": 1964,
+      "sha256": "ecc24cfa56b5143197b6e7e0733feb4f15231e534d7fcf2ad82b5c331e1c8554"
+    },
+    {
+      "path": "hr_portal/department_checklists/design_onboarding.yaml",
+      "size": 1248,
+      "sha256": "609e9796e0323501504fa4e21c4e2bad4af2e8f7e70846223ea506bc95e49fae"
+    },
+    {
+      "path": "hr_portal/department_checklists/eng_onboarding.yaml",
+      "size": 1786,
+      "sha256": "7866a6b046a23fdd9183d8cb429d002be6b3d9e54653924ed560b20e05d963d4"
+    },
+    {
+      "path": "hr_portal/department_checklists/exec_checklist.yaml",
+      "size": 909,
+      "sha256": "6f5010aab8f13c383f4e96b00634e82ba4cf61987f733b463621069a659af823"
+    },
+    {
+      "path": "hr_portal/department_checklists/sales_ramp_up.csv",
+      "size": 1584,
+      "sha256": "f2eb5b8b879b04fb50f83ea140047ff3506ae02afd3d1a30531b01042d968d1e"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/compliance_policy.md",
+      "size": 2425,
+      "sha256": "8050f045c5920885e8ffb4e56bb1152a2a6a198fed319e8dd0ea305332c703f7"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/exit_transcripts/exit_interview_q4.md",
+      "size": 3602,
+      "sha256": "7a51ca57c23d0a2de3723d876518cd3f4cbce0593fc84e4712d014cfd59698ad"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/new_hire_handbook.md",
+      "size": 4811,
+      "sha256": "9fb6631ac2d399be5ca35ae8d9ff40b9fef33ca6757a8c62c725fe19e96a30cf"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/orientation_guide.md",
+      "size": 2570,
+      "sha256": "c6aefa06615eec8e461b4ad2983ab3dd294d37149995041ec1677caeea74f0e4"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/performance_reviews/improvement_plans.csv",
+      "size": 1404,
+      "sha256": "5e99b126ff5934ae0ea3fb9fc6d560064371b02856d0f05329ed187214303444"
+    },
+    {
+      "path": "hr_portal/onboarding_policy/performance_reviews/q4_2024_review_cycle.json",
+      "size": 3249,
+      "sha256": "d7ac1d1bee28c2cdad7be56e80a931a2ef147812fccb9ae808160df6a5fa6154"
+    },
+    {
+      "path": "hr_portal/surveys/engagement_q2.csv",
+      "size": 352,
+      "sha256": "a9fa35afeeb077f27aaf8411b0d0bfd89b2fb77da3954662e7da39bf31332f14"
+    },
+    {
+      "path": "hr_portal/surveys/new_hire_feedback.json",
+      "size": 2089,
+      "sha256": "ed96f0c6e665347e2858c0b9b5158a21fe86312377e0d5ba255aa483dc8e9859"
+    },
+    {
+      "path": "hr_portal/surveys/post_onboarding_q1.csv",
+      "size": 1658,
+      "sha256": "ae3e7e8b42579ac275034e953ba73ff1a4f1ac6ceb0c0f4c3f3d68f495eed797"
+    },
+    {
+      "path": "hr_portal/surveys/pulse_survey_march.csv",
+      "size": 764,
+      "sha256": "3d23d00ae9574aa3258e15dd423e42dcd10f036f2df9f0ebb414be2c61e9fb1d"
+    },
+    {
+      "path": "legal_docs/case_notes/privileged_memo.md",
+      "size": 3598,
+      "sha256": "df881c881593d9711c01d1cb3d3f20f1bcbac10ac8bb28b75beaa5fd90c2ca63"
+    },
+    {
+      "path": "legal_docs/data_compliance_onboarding.md",
+      "size": 3247,
+      "sha256": "78d788f25330009e4b7c77522d7cd146c97f379b2e283a80e8141b88b2598206"
+    },
+    {
+      "path": "legal_docs/ip_policy_summary.md",
+      "size": 2257,
+      "sha256": "73a0ca9a5ed09ade1570685e3c17644e2997f5e29ccbe32a85bbd78206d90773"
+    },
+    {
+      "path": "owncloud_uploads/README.md",
+      "size": 1297,
+      "sha256": "7c4f8bef349ac5227681b25a6def108969b520862c164bf00fd7c578dbb290a5"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/chat_logs_may.json",
+      "size": 5530,
+      "sha256": "7039e9f34333795c572d3c010d3e043d8bd26516153a3a05bee6842c9767572d"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/escalation_dossiers/case_alice_2024.md",
+      "size": 2819,
+      "sha256": "dcacb96d94b4cb96533b538f26a4a2cc8ec15afdefe35969ba67bc4faba9d68f"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/escalation_dossiers/case_bob_2024.json",
+      "size": 1828,
+      "sha256": "227459a69408db19b96e68fbcc73eae7e13c8927efaf811cfaed94bcd991de99"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/helpdesk_tags.csv",
+      "size": 1438,
+      "sha256": "176c0672335b0ca8649be358503877a0510fe41f1d21a40500e74b33356375c8"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/network_troubleshooting_log.json",
+      "size": 3053,
+      "sha256": "2c828315ec92fb6aa0b2ed826720d5031a884587cee05ee190297ad66f3a1255"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/ticket_metadata.json",
+      "size": 1209,
+      "sha256": "69b3af42b9a00e7da8da8ca8c9310fe872bc1fd1d82592e7e49bccc8436386c3"
+    },
+    {
+      "path": "support_tickets/faq_qa_records/ticket_resolutions_q1.csv",
+      "size": 5217,
+      "sha256": "255eedad9a294cd574da50628749701b90c1908cf492ceafe50fe39017b723dd"
+    },
+    {
+      "path": "support_tickets/meeting_recaps/exec/offsite_strategy.md",
+      "size": 3751,
+      "sha256": "8ce4e24c51661d166b4c2b5f19f00095ea11c44015212ba08cd67c7ca3eeade8"
+    },
+    {
+      "path": "support_tickets/meeting_recaps/hr_standup_notes.txt",
+      "size": 2232,
+      "sha256": "d8629104a8d21713c827f6d571fa56b2fd35c56761954398e164388dc0d8b0d0"
+    },
+    {
+      "path": "support_tickets/meeting_recaps/onboarding_sync_2024-04.md",
+      "size": 2300,
+      "sha256": "f83d0932e184d64b49bf10335cdf5687d1e967e398d8abdd3254526507ae9adc"
+    },
+    {
+      "path": "templates/faq_schema.json",
+      "size": 1468,
+      "sha256": "a0cc3ddadcce7cf741d4998eb123ee5976670a1e0c30c390e2a98f5bf69c1afa"
+    },
+    {
+      "path": "templates/faq_template.md",
+      "size": 1217,
+      "sha256": "76a225b9b328b1950f6a73cebbeecb0fbfde10dbcaad5f53918b75e2695e2e95"
+    },
+    {
+      "path": "templates/faq_template.yaml",
+      "size": 2312,
+      "sha256": "c1f43843ca512c3785881c01b93506c183548c03d6c6f48b57e960d713feb261"
+    },
+    {
+      "path": "training/workshop_guides/data_privacy_basics.md",
+      "size": 3416,
+      "sha256": "e125323edc2974870d9fa96dc259a90a299e37ce3743df4ee8f5bc0b827ec2b7"
+    },
+    {
+      "path": "training/workshop_guides/facilitator_notes.txt",
+      "size": 1231,
+      "sha256": "1e4ee0592c70c19fb09792faf9bd583d2cf01444d7f8193fc35638d64978884d"
+    },
+    {
+      "path": "training/workshop_guides/security_basics.md",
+      "size": 2764,
+      "sha256": "a2d86a0eb6be5dd59300412e509dd9dcab176a5ab72bbaa86ed597853dfe9a3f"
+    },
+    {
+      "path": "training/workshop_guides/tools_training.md",
+      "size": 2158,
+      "sha256": "1b3c3b5aea509e890158515a196e88388a55c9ca49beaca5157a2574fa0dc9a7"
+    },
+    {
+      "path": "training/workshop_slides.pdf",
+      "size": 1061,
+      "sha256": "5a844124ace4b254eb468be76f9a3517c1345ffd329eecb790ca37a8e63d525c"
+    },
+    {
+      "path": "wiki_kb/access_setup.md",
+      "size": 3262,
+      "sha256": "9ec564ab3a0e73a6d5bb15c8e7a2a5674247bdc347ff0ccd4a3f61a229e7118e"
+    },
+    {
+      "path": "wiki_kb/email_setup.md",
+      "size": 1993,
+      "sha256": "2b439d0d1caeca345374599869a7aed06ef26a2ab38dbc8e3423934e30d8340e"
+    },
+    {
+      "path": "wiki_kb/faq_page_template.md",
+      "size": 1532,
+      "sha256": "fecb70c7a9270f0a562dc51b0687d3c888ee7e3f0265e5f52f8ccb6b8e29e8a9"
+    },
+    {
+      "path": "wiki_kb/roadmap/product_gantt.json",
+      "size": 2389,
+      "sha256": "a58989ae653875a7ac8d2e681a36b3098868544a2c29bd8196c20b976ec69bc4"
+    },
+    {
+      "path": "wiki_kb/software_install_guide.md",
+      "size": 2331,
+      "sha256": "1c6b921239b2cb0d17de81c83b0da357cdac2ddc86391e7a5e68b2877ff50d7e"
+    },
+    {
+      "path": "wiki_kb/troubleshooting_common.html",
+      "size": 2120,
+      "sha256": "c1cbf79807ffcc66b11bf58f7ee6266f20559205f167174c8a88b22ef3e5cbb6"
+    },
+    {
+      "path": "wiki_kb/vpn_config.html",
+      "size": 2572,
+      "sha256": "95a8453af97feb0b0bcad1de96fd7cfb1c89e137ef3ea8381e0d127c35ba96c4"
+    }
+  ]
+}

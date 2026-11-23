@@ -1,0 +1,119 @@
+/workspace:
+total 44
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 .
+drwxr-xr-x  1 root root 4096 Nov 13 05:47 ..
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 drafts
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 faq_guides
+drwxr-sr-x  6 1000 1000 4096 Nov 12 13:09 gitlab_repo
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 kb_articles
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 owncloud_shared
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 product_docs
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 release_notes
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 survey_results
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 ticket_history
+
+/workspace/drafts:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 4227 Nov 12 13:09 email_thread.txt
+
+/workspace/faq_guides:
+total 24
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1568 Nov 12 13:09 best_practices.txt
+-rwxr-xr-x  1 1000 1000   89 Nov 12 13:09 common_issues.pdf
+-rwxr-xr-x  1 1000 1000 2650 Nov 12 13:09 onboarding.md
+-rwxr-xr-x  1 1000 1000 1169 Nov 12 13:09 quick_start.html
+
+/workspace/gitlab_repo:
+total 24
+drwxr-sr-x  6 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 changelog
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 config
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 docs
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 org
+
+/workspace/gitlab_repo/changelog:
+total 12
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 6 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1443 Nov 12 13:09 v3.4.md
+
+/workspace/gitlab_repo/config:
+total 12
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 6 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1534 Nov 12 13:09 staging_tokens.json
+
+/workspace/gitlab_repo/docs:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 6 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1750 Nov 12 13:09 deployment.md
+-rwxr-xr-x 1 1000 1000 1663 Nov 12 13:09 qa_creds.md
+
+/workspace/gitlab_repo/org:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 6 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 3717 Nov 12 13:09 employees.json
+-rwxr-xr-x 1 1000 1000 1688 Nov 12 13:09 onboarding.md
+
+/workspace/kb_articles:
+total 32
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1455 Nov 12 13:09 api_docs.txt
+-rwxr-xr-x  1 1000 1000 1669 Nov 12 13:09 billing_faq.html
+-rwxr-xr-x  1 1000 1000   92 Nov 12 13:09 getting_started.pdf
+-rwxr-xr-x  1 1000 1000  509 Nov 12 13:09 getting_started.pdf.guide.txt
+-rwxr-xr-x  1 1000 1000 2190 Nov 12 13:09 product_overview.md
+-rwxr-xr-x  1 1000 1000 2851 Nov 12 13:09 troubleshooting.json
+
+/workspace/owncloud_shared:
+total 28
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1860 Nov 12 13:09 customer_export.csv
+-rwxr-xr-x  1 1000 1000 2981 Nov 12 13:09 escalation_log.md
+-rwxr-xr-x  1 1000 1000 1702 Nov 12 13:09 internal_escalation_details.txt
+-rwxr-xr-x  1 1000 1000 1433 Nov 12 13:09 premium_support.json
+-rwxr-xr-x  1 1000 1000 1420 Nov 12 13:09 regional_kb.md
+
+/workspace/product_docs:
+total 28
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1946 Nov 12 13:09 api_reference.html
+-rwxr-xr-x  1 1000 1000 1789 Nov 12 13:09 architecture.md
+-rwxr-xr-x  1 1000 1000 1080 Nov 12 13:09 changelog.json
+-rwxr-xr-x  1 1000 1000 2107 Nov 12 13:09 sla_contract_terms.yaml
+-rwxr-xr-x  1 1000 1000   90 Nov 12 13:09 tech_specs.pdf
+
+/workspace/release_notes:
+total 20
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1377 Nov 12 13:09 v3.1.md
+-rwxr-xr-x  1 1000 1000 1155 Nov 12 13:09 v3.2.json
+-rwxr-xr-x  1 1000 1000 2059 Nov 12 13:09 v3.3.yaml
+
+/workspace/survey_results:
+total 16
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 2058 Nov 12 13:09 q1_feedback.csv
+-rwxr-xr-x  1 1000 1000 2396 Nov 12 13:09 q2_feedback.json
+
+/workspace/ticket_history:
+total 32
+drwxr-sr-x  2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 11 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x  1 1000 1000 1807 Nov 12 13:09 internal_notes.txt
+-rwxr-xr-x  1 1000 1000 2632 Nov 12 13:09 resolutions.md
+-rwxr-xr-x  1 1000 1000 2958 Nov 12 13:09 sla_metadata.json
+-rwxr-xr-x  1 1000 1000 5512 Nov 12 13:09 tickets_q1.json
+-rwxr-xr-x  1 1000 1000 2286 Nov 12 13:09 tickets_q2.csv

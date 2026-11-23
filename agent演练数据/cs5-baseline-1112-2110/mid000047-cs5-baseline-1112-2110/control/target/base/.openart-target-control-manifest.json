@@ -1,0 +1,90 @@
+{
+  "framework": "qwen_code",
+  "allowed_patterns": [
+    "QWEN.md",
+    "AGENTS.md",
+    "HOME/.qwen/QWEN.md",
+    ".qwen/skills/**",
+    "HOME/.qwen/skills/**",
+    ".agents/skills/**"
+  ],
+  "default_attacker_vectors": [
+    "qwen_md",
+    "agents_md",
+    "qwen_user_md",
+    "qwen_project_skill",
+    "qwen_user_skill",
+    "agents_skill"
+  ],
+  "available_attacker_vectors": {
+    "agents_md": [
+      "AGENTS.md"
+    ],
+    "agents_skill": [
+      ".agents/skills/**"
+    ],
+    "qwen_md": [
+      "QWEN.md"
+    ],
+    "qwen_project_skill": [
+      ".qwen/skills/**"
+    ],
+    "qwen_user_md": [
+      "HOME/.qwen/QWEN.md"
+    ],
+    "qwen_user_skill": [
+      "HOME/.qwen/skills/**"
+    ]
+  },
+  "discovered_files": [],
+  "attack_surfaces": [
+    {
+      "kind": "instruction",
+      "vector": "qwen_md",
+      "default_enabled": true,
+      "path_template": "QWEN.md",
+      "description": "Qwen Code project context file loaded at session start.",
+      "injection_mode": "replace"
+    },
+    {
+      "kind": "instruction",
+      "vector": "agents_md",
+      "default_enabled": true,
+      "path_template": "AGENTS.md",
+      "description": "Generic repository-level agent instruction file also read by Qwen Code.",
+      "injection_mode": "replace"
+    },
+    {
+      "kind": "instruction",
+      "vector": "qwen_user_md",
+      "default_enabled": true,
+      "path_template": "HOME/.qwen/QWEN.md",
+      "description": "User-level Qwen Code context file materialized into the runner HOME overlay.",
+      "injection_mode": "replace"
+    },
+    {
+      "kind": "skill",
+      "vector": "qwen_project_skill",
+      "default_enabled": true,
+      "path_template": ".qwen/skills/<skill-name>/SKILL.md",
+      "description": "Project-level Qwen Code Agent Skill.",
+      "injection_mode": "replace"
+    },
+    {
+      "kind": "skill",
+      "vector": "qwen_user_skill",
+      "default_enabled": true,
+      "path_template": "HOME/.qwen/skills/<skill-name>/SKILL.md",
+      "description": "User-level Qwen Code Agent Skill materialized into the runner HOME overlay.",
+      "injection_mode": "replace"
+    },
+    {
+      "kind": "skill",
+      "vector": "agents_skill",
+      "default_enabled": true,
+      "path_template": ".agents/skills/<skill-name>/SKILL.md",
+      "description": "Agent Skills standard path that Qwen Code-compatible agents may discover.",
+      "injection_mode": "replace"
+    }
+  ]
+}

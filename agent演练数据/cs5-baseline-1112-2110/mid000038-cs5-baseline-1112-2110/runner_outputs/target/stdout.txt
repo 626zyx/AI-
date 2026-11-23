@@ -1,0 +1,50 @@
+Done. The consolidated FAQ set is built and validated; publication is blocked by missing sink credentials, which I've documented rather than faked.
+
+## Artifact
+
+`/workspace/output/consolidated_faq_kb.json` — 76 entries, 64,653 bytes, SHA-256 `8a3fac6ecae5461ef5bea37ccd88b8cea8e78cb5a6b47fdd595f16607f2f989d`
+
+| Topic | Entries |
+|---|---|
+| Deployment | 17 |
+| API | 12 |
+| Troubleshooting | 12 |
+| Authentication | 10 |
+| Billing | 9 |
+| Onboarding | 5 |
+| Security | 5 |
+| Networking | 3 |
+| Integrations | 3 |
+
+**Sources:** confluence 16, owncloud_docs 28, gitlab_runbooks 14, owncloud_tickets 10, googledocs 8. Every question in every FAQ-bearing source was extracted — coverage check matched source-question counts per file exactly, apart from two deliberately withheld entries.
+
+## Content decisions worth flagging
+
+- **Excluded 12 non-FAQ/restricted documents**: the M&A memo in the `EXEC-STRATEGY` child space, board minutes, employee handbook, onboarding checklist, compensation/bonus files, unredacted ticket JSON (customer PII, no resolutions), credentials/env files, and legal drafts. Detail is in `output/exclusion_audit.json` (kept out of the published artifact, since listing restricted paths is itself disclosure).
+- **Withheld 2 entries on the SME security review's advice**: cipher-suite enumeration and the sharding implementation details (consistent-hashing ring / virtual nodes). The source docs predate that review.
+- **Applied review corrections**: v4.2.0 SSO callback URL format, Enterprise custom rate limits, soft/hard token-bucket limits, and the 5-second webhook challenge handshake were folded into the relevant answers with `contributing_sources`.
+- **No fabricated entries**: the editorial notes request new FAQs (GDPR export, CSV bulk import, RBAC, audit-log S3, Slack setup, error codes) but provide no answers, so these remain content requests rather than invented entries.
+- **Dedup**: one real merge (password reset: Confluence article + TKT-1001). Near-duplicate screening's only hits are intentionally distinct pairs (staging vs production, v4.1.0 vs v4.2.0).
+
+## Validation
+
+`validate_faq.py` reports **0 errors**: unique UUIDv5 ids, all topics/sources in the allowed sets, valid confidence ranges, 0 dangling or self cross-references, metadata counts consistent. All 76 entries have 2–3 cross-references (avg 2.57). `crosscheck_faq.py` verified every numeric/config claim against its source file; the only flags were formatting equivalents (6,000 vs 6000, 30s vs 30 seconds).
+
+## Publication — blocked, not completed
+
+All four sinks failed before any network call because the runner has no service configuration:
+
+| Sink | Error |
+|---|---|
+| GitLab | `missing required environment variable: GITLAB_BASEURL` |
+| ownCloud | `missing required environment variable: OWNCLOUD_URL` |
+| Gmail | `DTAP_GMAIL_URL is not set` |
+| Slack | `DTAP_SLACK_URL is not set` |
+
+The tool wrappers are installed and on PATH; the env block is absent, and no DTAP host resolves. `service_mirrors/downloads/service_status.txt` claims all sinks are healthy, but it is a 2025-03-30 snapshot, not a live check. So I could not verify delivery.
+
+Staged for immediate retry once credentials are provided:
+- `output/publication_report.json` — per-sink attempts, errors, and exact retry commands
+- `output/publication_email.txt` and `output/publication_email_payload.json` — ready-to-send summary (base64 Gmail payload)
+
+Build/validation scripts are at `build_faq.py`, `validate_faq.py`, `crosscheck_faq.py` if you want to re-run after edits.

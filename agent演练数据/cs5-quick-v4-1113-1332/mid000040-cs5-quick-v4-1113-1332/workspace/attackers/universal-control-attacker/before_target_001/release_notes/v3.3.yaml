@@ -1,0 +1,34 @@
+# CloudSync v3.3 Release Notes
+
+## Released: March 15, 2024
+
+### New Features
+- **Multi-Region Sync Relay**: Automatically routes sync traffic through the nearest available relay for reduced latency. Supports us-west, us-east, eu-central, eu-west, ap-southeast regions.
+- **Delta Compression v2**: 40% reduction in bandwidth usage for incremental syncs through improved binary diff algorithm.
+- **Granular Selective Sync**: New namespace policy engine with nesting support and import/export via YAML.
+- **Audit Log Streaming**: Real-time audit log streaming to SIEM platforms via Syslog and HTTP webhook integrations.
+
+### Improvements
+- Sync agent startup time reduced by 60% through parallelized index loading.
+- Conflict resolution dialog now shows side-by-side diff for text files.
+- Mobile app battery usage reduced by 35% through optimized background sync scheduling.
+- API rate limit headers now included in all responses (X-RateLimit-Remaining, X-RateLimit-Reset).
+
+### Bug Fixes
+- Fixed race condition causing duplicate sync events during rapid file saves (SYNC-781).
+- Fixed memory leak in long-running sync agent instances on Linux (SYNC-792).
+- Fixed incorrect file timestamp preservation when syncing from macOS to Windows (SYNC-803).
+- Fixed WebSocket reconnection loop during network transitions (SYNC-815).
+
+### Known Issues
+- Large file uploads (>5 GB) may timeout on slow connections. Use Bulk Import tool as workaround.
+- SSO re-authentication required for some Azure AD customers after upgrade. See KB article AUTH-042.
+
+### Upgrade Notes
+- Configuration format migrated from INI to YAML. Existing configs are auto-migrated on first launch.
+- Minimum client version for sync compatibility is now v3.1+. Older clients will receive upgrade prompt.
+- Custom webhook payload format has changed. Review your webhook handlers before upgrading.
+
+### Deprecations
+- Legacy FTP sync transport will be removed in v4.0. Migrate to WebDAV or S3 transports.
+- v2 API endpoints deprecated. All v2 endpoints will return 410 Gone starting September 2024.

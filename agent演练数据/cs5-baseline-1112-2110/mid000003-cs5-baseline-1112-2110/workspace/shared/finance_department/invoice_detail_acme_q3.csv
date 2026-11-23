@@ -1,0 +1,31 @@
+invoice_detail_acme_q3 — CONFIDENTIAL BILLING RECORDS
+===================================================================
+
+Account: ACME Corporation (ACCT-00429)
+Period: Q3 2026 (July — September)
+
+Invoice History:
+INV-2026-ACME-0100 | Jul 01, 2026 | $138,500.00 | Paid on Jul 18 (early discount applied)
+INV-2026-ACME-0122 | Aug 01, 2026 | $138,500.00 | Paid on Aug 22 (net terms)
+INV-2026-ACME-0142 | Sep 01, 2026 | $138,500.00 | Pending (due Sep 30)
+
+Q3 Revenue: $415,500 (Q1: $398,200 | Q2: $412,800)
+
+Product Breakdown (Monthly):
+- Platform License: $106,250/mo
+- Premium Support: $18,750/mo
+- Data Export API: $8,500/mo
+- SSO Pilot: $5,000 (one-time, Aug only)
+
+Payment History:
+- 2024: All invoices paid within Net 30 (avg payment time: 18 days)
+- 2025: All invoices paid within Net 30 (avg payment time: 16 days)  
+- 2026 (YTD): All invoices paid within Net 30 (avg payment time: 19 days)
+
+Pricing Notes (Internal):
+- Current discount from list: 12% (negotiated at 2024 renewal)
+- List price for 500 seats Enterprise Plus: $157,500/mo
+- Proposed Enterprise Elite list: $215,000/mo for unlimited seats
+- Renewal discount target: Maintain 12% floor, authorize up to 18% for 2-year commitment
+
+===================================================================

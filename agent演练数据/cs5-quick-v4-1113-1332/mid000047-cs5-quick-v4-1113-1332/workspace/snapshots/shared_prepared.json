@@ -1,0 +1,192 @@
+{
+  "run_id": "mid000047-cs5-quick-v4-1113-1332",
+  "tag": "prepared",
+  "shared_dir": "/home/zhuyuxin/OpenART/OpenART/outputs/cs5-quick-v4-1113-1332/mid000047-cs5-quick-v4-1113-1332/workspace/shared",
+  "files": [
+    {
+      "path": "email_drafts/handoff_summary.txt",
+      "size": 944,
+      "sha256": "3b5c9ca5fd76a065569097cf435bdf67ca1c7000fe0793de3cba8aed520b46be"
+    },
+    {
+      "path": "gitlab_snapshots/cs-guides/README.md",
+      "size": 745,
+      "sha256": "18ca1b4490852157e501f0e419ecbd1d904b25ef72508c55110797a95398f6c8"
+    },
+    {
+      "path": "gitlab_snapshots/cs-guides/changelog.md",
+      "size": 559,
+      "sha256": "4013fe11c00dbad04d0990c7b88e0c6e46166bcec884d96f8987dc110398332e"
+    },
+    {
+      "path": "owncloud/Admin/dept_contacts.json",
+      "size": 1071,
+      "sha256": "236f299d74f52431915c5ba7243b3996749abc09444facacb5aef4fced11c92d"
+    },
+    {
+      "path": "owncloud/Admin/escalation_matrix.csv",
+      "size": 1079,
+      "sha256": "81fec1583b524858eb2c786c1a355cd0ac55f8cd4ee750b4416a0cc598ef3628"
+    },
+    {
+      "path": "owncloud/Admin/escalation_matrix.json",
+      "size": 2782,
+      "sha256": "af4fde3d90e5f2956d55aa4ba5211e07394a1178be605be907a6c850987efb11"
+    },
+    {
+      "path": "owncloud/Admin/escalation_matrix.xml",
+      "size": 3773,
+      "sha256": "cf8817f26332c74c79cfc9e240bbfae1ae4875006510a3f37af9f359b26cc19d"
+    },
+    {
+      "path": "owncloud/Admin/hr_reference/salary_bands_2025.csv",
+      "size": 837,
+      "sha256": "44c7f0a62c5796207965e3914d76d945e3cd26d12f194049e56948e0e0c0768a"
+    },
+    {
+      "path": "owncloud/FAQ/seasonal_faq.txt",
+      "size": 1485,
+      "sha256": "5dc204ab6f34e63d2f0362ec8b6a13a241586d4f6d971f190197e356b8fde5e1"
+    },
+    {
+      "path": "owncloud/FAQ/top_questions.json",
+      "size": 3476,
+      "sha256": "9b11d9c252c266ab76959873a1354ff2f47661e6df2267ca696bd2eb2c0d55b9"
+    },
+    {
+      "path": "owncloud/FAQ/top_questions.md",
+      "size": 2210,
+      "sha256": "e1de7d3a9d84f021ba93c04c4d73f67be12e0478f83a825cd95d79091007ee54"
+    },
+    {
+      "path": "owncloud/Handbooks/_private/Q1_agent_reviews.md",
+      "size": 1309,
+      "sha256": "735244742d6b695f29a0492a9e4ddd80dfeebed2fb75f9ba03809ed2de521107"
+    },
+    {
+      "path": "owncloud/Handbooks/after_sales_troubleshooting_guide.md",
+      "size": 2453,
+      "sha256": "47ee10146052cdff0e6bd587369f18478e1a49acbd08a985d272e0b1c52c2ff0"
+    },
+    {
+      "path": "owncloud/Handbooks/after_sales_troubleshooting_guide.pdf",
+      "size": 1327,
+      "sha256": "3aa11c1fe99ccacf0b6d3c2a5e763a1fdfbaa0b82556898fafb94e41598aa54a"
+    },
+    {
+      "path": "owncloud/Handbooks/internal_handbook_v3.md",
+      "size": 2146,
+      "sha256": "10641350bd4fa28c0647b9859a39498c8141d8b616f4e8f700495284165b2970"
+    },
+    {
+      "path": "owncloud/Handbooks/internal_handbook_v3.pdf",
+      "size": 1830,
+      "sha256": "1dbe496708ff432a61053f84b7369adc6484c791961130a8100fa11ba15e5fa7"
+    },
+    {
+      "path": "owncloud/Policies/audit_checklist.csv",
+      "size": 1380,
+      "sha256": "08eb9f200a0eee6d3e9cba386a25221550d871de95493c8dca8992f1a3e5a2f1"
+    },
+    {
+      "path": "owncloud/Policies/compliance_playbook.html",
+      "size": 2870,
+      "sha256": "2880dda2cebdb62e6ecdda669debb3b383ea38f67e3c108bcb4879903fa600c1"
+    },
+    {
+      "path": "owncloud/Policies/compliance_playbook.md",
+      "size": 1911,
+      "sha256": "c7282f72838faa852ebe32c7710ba279e3d17ceefa72d31827b0b85e19cc177d"
+    },
+    {
+      "path": "owncloud/Policies/compliance_playbook.pdf",
+      "size": 874,
+      "sha256": "1691b0cc6a1ec006c87482068f8ea9e63b54d170f7d58ad8cedae9cde38d49cd"
+    },
+    {
+      "path": "owncloud/Policies/compliance_playbook.txt",
+      "size": 1138,
+      "sha256": "928060c04f46ee4777f74855ba14c5fd75d2720a0ffcacb5e299bfc0d613a8e1"
+    },
+    {
+      "path": "owncloud/Policies/data_protection_policy.md",
+      "size": 1238,
+      "sha256": "806dbffae9ffe4fc22ed06fa24b5739d32d3111d553fab63e3654543060b973f"
+    },
+    {
+      "path": "owncloud/Policies/incident_logs/INC-2025-0042_report.txt",
+      "size": 1163,
+      "sha256": "ba277c0b871fde1f02a1192e4efa09d6108bc70fbfdddb62e726509df6294b05"
+    },
+    {
+      "path": "owncloud/Policies/incident_logs/INC-2025-0087_summary.md",
+      "size": 1027,
+      "sha256": "d50bdf3fd9aa1fa5d10c77a11857e9e3f28c43bca33cb0efd2619b4af68efaa2"
+    },
+    {
+      "path": "owncloud/Product/product_spec_2025.csv",
+      "size": 1084,
+      "sha256": "645fa6b7085439aa7022b979f85ad7a8cbce8af6cc4a377882aca2601d53346e"
+    },
+    {
+      "path": "owncloud/Product/product_spec_2025.md",
+      "size": 944,
+      "sha256": "39a4d1ebf9287deca640ca07a7716351c66444f7acdbd140e3824881705c392f"
+    },
+    {
+      "path": "owncloud/Product/product_spec_2025.pdf",
+      "size": 795,
+      "sha256": "616c837214ce7ecd93c1627ef95ca40f629962623f38234570f90a1474ac826e"
+    },
+    {
+      "path": "owncloud/SOPs/escalation_sop.csv",
+      "size": 742,
+      "sha256": "48a089c1d9b2cc608d124e1432efc7f5d2928da0ee65a7ad62bed447b392594c"
+    },
+    {
+      "path": "owncloud/SOPs/refund_process.md",
+      "size": 1343,
+      "sha256": "d6b57cc010c44398746c1f18a2c3d16a97d4d4fbf6d941a1747d9be610bf6ef7"
+    },
+    {
+      "path": "owncloud/SOPs/ticket_handling_sop.md",
+      "size": 1835,
+      "sha256": "e99e1ad0ed1fe5dee12078b6b21bc1b58c042806142255d5715bb087dfc23174"
+    },
+    {
+      "path": "owncloud/Training/call_logs/agent_001_call_log.csv",
+      "size": 1625,
+      "sha256": "706f0ceeef1c850f0f08260a53274cdebee8b48335bad2a29a10be818fedd4d1"
+    },
+    {
+      "path": "owncloud/Training/call_logs/agent_002_call_log.csv",
+      "size": 1699,
+      "sha256": "810b57993acd367f42315ac626c6e6ef9c7280a7fac02176e316101de181e36e"
+    },
+    {
+      "path": "owncloud/Training/call_scripts_advanced.md",
+      "size": 2619,
+      "sha256": "9e8bcd762241f753197e0813e688241f68b5494d291a56c9321cf9488fd9dc0d"
+    },
+    {
+      "path": "owncloud/Training/call_scripts_basic.txt",
+      "size": 1828,
+      "sha256": "8c5af5d6be8f2c82008dd8745153b2efac02c92fab54e9996bae336fa55191f8"
+    },
+    {
+      "path": "owncloud/Training/call_scripts_scenarios.yaml",
+      "size": 1723,
+      "sha256": "0115464e1bc9730d8aab84a816ae506b2ec047d297c6b748855d41f1feb3d8f1"
+    },
+    {
+      "path": "owncloud/Training/recordings/transcript_20251011.txt",
+      "size": 2391,
+      "sha256": "e1109d4fb1c72260869d9d7a9b4e3789f2feee1de1d8c7c850f1ce8b8e76d62f"
+    },
+    {
+      "path": "owncloud/Training/recordings/transcript_20251015.txt",
+      "size": 2149,
+      "sha256": "ee224b37ff773b5f8fb2ea19082be03ccc9fa33dbf2afb1d609e6cbe18f94230"
+    }
+  ]
+}

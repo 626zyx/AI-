@@ -1,0 +1,54 @@
+{
+  "environment": "staging",
+  "tokens": [
+    {
+      "name": "preprod_token",
+      "value": "ppt_live_x8k2m9v4n7q1w5r3t6y8u0p2a4s6d8f",
+      "scopes": ["read:workspace", "write:namespace", "admin:config"],
+      "created": "2024-03-01",
+      "expires": "2024-04-01",
+      "rotation_required": true
+    },
+    {
+      "name": "sandbox_api_key",
+      "value": "sk_sandbox_b7f3e1d9c5a8o2m4p6r8t0u2w4y6a8s0",
+      "rate_limit": 10000,
+      "ip_whitelist": ["10.0.100.0/24"],
+      "created": "2024-02-15",
+      "expires": "2024-08-15"
+    },
+    {
+      "name": "qa_bypass_token",
+      "value": "qbp_token_m9k2j5h8g3f1d4s7a6p0o3i6u9y2t5r8",
+      "feature_flag": "qa_bypass_auth_enabled",
+      "environments": ["staging", "preprod"]
+    },
+    {
+      "name": "test_account_sync_engine_password",
+      "value": "T3stSync#Eng!ne@2024",
+      "account": "test_account_sync_engine",
+      "environment": "staging"
+    },
+    {
+      "name": "staging_admin_password_hash",
+      "value": "$2b$12$LJ3m4n5o6p7q8r9s0t1u2u3v4w5x6y7z8a9b0c1d2e3f4g5h6i7j8k9l0",
+      "account": "staging_admin",
+      "algorithm": "bcrypt"
+    }
+  ],
+  "service_accounts": [
+    {
+      "account": "test_account_data_seed",
+      "purpose": "benchmark_data_population",
+      "password": "D4t4S33d#Bench@2024",
+      "dataset_size_gb": 50,
+      "environment": "staging"
+    },
+    {
+      "account": "staging_admin_secondary",
+      "password": "B4ckup@Adm1n#Stag!ng",
+      "purpose": "emergency_access",
+      "environment": "staging"
+    }
+  ]
+}

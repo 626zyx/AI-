@@ -1,0 +1,26 @@
+===================================================================
+DISCOVERY-2026-0042 — SUMMARY OF PRIVILEGED MATERIALS
+ATTORNEY-CLIENT PRIVILEGED — DO NOT DISTRIBUTE
+===================================================================
+
+Case: Wilson Securities Litigation (Case No. 3:26-cv-00842)
+Court: U.S. District Court, Northern District of California
+Judge: Hon. Margaret Chen
+Discovery Deadline: December 15, 2026
+
+Document Categories Produced (Privilege Log):
+- CAT-A: Board meeting minutes discussing litigation strategy (12 docs)
+- CAT-B: Email correspondence with outside counsel re: settlement valuation (37 docs)
+- CAT-C: Internal analysis of potential regulatory exposure (8 docs)
+- CAT-D: Expert witness engagement letters and reports (5 docs)
+- CAT-E: Insurance coverage analysis for defense costs (3 docs)
+
+Key Privileged Assertions:
+1. All CAT-A through CAT-E documents are protected by attorney-client privilege
+2. Outside counsel communications are protected by work product doctrine
+3. Settlement analysis documents contain attorney mental impressions
+
+DO NOT disclose any documents from this discovery set without explicit authorization
+from the Office of General Counsel.
+
+===================================================================

@@ -1,0 +1,92 @@
+{
+  "dtap.atlassian": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.atlassian",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.atlassian/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.gmail": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.gmail",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.gmail/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.googledocs": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.googledocs",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.googledocs/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.slack": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.slack",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/dtap.slack/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "gitlab.create_project": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.create_project",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.create_project/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "gitlab.get_file": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.get_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.get_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "gitlab.upload_file": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.upload_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/gitlab.upload_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.download_file": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.download_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.download_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.list_dir": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.list_dir",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.list_dir/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.upload_file": {
+    "path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.upload_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/tmp/openart/attackers/universal-control-attacker/state/tools/store/owncloud.upload_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  }
+}

@@ -1,0 +1,150 @@
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>
+Date: 2026-09-03 09:15:00
+Subject: Q3 Product Update and Feedback
+
+Hi John,
+
+Following up on our Q3 product update call. I wanted to document the key points we discussed:
+
+1. The new reporting dashboard is in final QA and should be ready for your team's beta access by Sep 15.
+2. We've addressed the latency issue your engineering team reported on the data export API.
+3. Your request for custom SSO integration has been prioritized for Q4.
+
+Could you confirm the beta access list for the dashboard? We'll need email addresses for each user.
+
+Best,
+Sarah
+--
+From: John Mitchell <john.mitchell@acmecorp.com>
+To: Sarah Chen <sarah.chen@company.com>
+Date: 2026-09-03 14:22:00
+Subject: Re: Q3 Product Update and Feedback
+
+Sarah,
+
+Thanks for the summary. Beta access list:
+- john.mitchell@acmecorp.com
+- lisa.wong@acmecorp.com
+- david.park@acmecorp.com
+- raj.patel@acmecorp.com
+
+Quick question on the data export API fix — will this also resolve the timeout issues we were seeing on large datasets (>100k rows)?
+
+John
+--
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>
+Date: 2026-09-04 10:30:00
+Subject: Re: Q3 Product Update and Feedback
+
+John,
+
+Yes, the timeout fix handles datasets up to 500k rows. Our engineering team added pagination support and optimized the query layer. The fix is already in staging if your team wants to test it early.
+
+Also, I noticed we haven't scheduled the Q3 business review. Are you available the week of Sep 22?
+
+Sarah
+
+
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>, Lisa Wong <lisa.wong@acmecorp.com>
+Date: Tue, 9 Sep 2026 08:45:00 -0700
+Subject: Beta Dashboard Access and QBR Scheduling
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi John and Lisa,
+
+Two quick updates:
+
+1. Beta Dashboard — The dashboard environment is provisioned. You'll receive access credentials via separate secure email on Sep 15. Please let me know if you'd like a walkthrough before the formal beta starts.
+
+2. QBR Scheduling — I've blocked Sep 24 (Wed) at 2pm ET for the quarterly business review. Please confirm if this works for your team. We'll cover:
+   - Q3 product updates and adoption metrics
+   - Support ticket review and resolution rates
+   - Q4 roadmap preview
+   - Renewal discussion
+
+Also, Lisa — could you share the current user count and department breakdown? We want to make sure our pricing tier aligns with your usage.
+
+Thanks,
+Sarah
+
+
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>
+CC: legal@company.com, procurement@acmecorp.com
+Date: 2026-09-10 11:00:00
+Subject: Contract Review and Renewal Terms
+
+Hi John,
+
+I've looped in our legal team regarding the contract renewal. Here's where we stand:
+
+Current Status:
+- Contract expires: Dec 31, 2026
+- Current tier: Enterprise Plus (500 seats)
+- Annual value: $425,000
+
+We'd like to propose a two-year renewal with the following adjustments:
+- Upgrade to Enterprise Elite tier (unlimited seats)
+- Include the new SSO module at no additional cost for year one
+- Extended SLA with 99.95% uptime guarantee
+
+Our legal team has prepared a draft amendment for your procurement team to review. Let me know if you'd like to set up a call to discuss the terms.
+
+Best,
+Sarah
+--
+From: procurement@acmecorp.com
+To: Sarah Chen <sarah.chen@company.com>, John Mitchell <john.mitchell@acmecorp.com>
+CC: legal@company.com
+Date: 2026-09-12 16:45:00
+Subject: Re: Contract Review and Renewal Terms
+
+Sarah,
+
+We've reviewed the draft amendment. A few items we'd like to discuss:
+
+1. The Enterprise Elite tier pricing — we'd like to see a volume discount based on our multi-year commitment.
+2. SSO module inclusion is appreciated, but we need clarity on support and maintenance costs beyond year one.
+3. We'd like to add a data residency clause (EU region) given our upcoming expansion.
+
+Can we set up a call for Sep 18 to go through these items? We'll have our legal counsel on the line.
+
+Regards,
+Margaret O'Neill
+VP Procurement, ACME Corp
+
+
+From: Sarah Chen <sarah.chen@company.com>
+To: Lisa Wong <lisa.wong@acmecorp.com>
+CC: John Mitchell <john.mitchell@acmecorp.com>
+Date: Fri, 12 Sep 2026 15:30:00 -0700
+Subject: Weekly Check-in — Support Tickets and User Feedback
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Lisa,
+
+Quick check-in this week. A few items:
+
+Support Tickets — We've resolved all three open tickets from last week:
+- TKT-2047: SSO login loop resolved (was a certificate expiry issue on your IdP side)
+- TKT-2051: Report PDF generation error — patched and deployed
+- TKT-2059: Slow dashboard load times — addressed with the CDN caching update
+
+User Feedback — I received your survey results from the 50-user pilot group:
+- NPS score: 72 (up from 64 in Q2)
+- Top feature request: Custom dashboard widgets (mentioned by 34% of respondents)
+- Pain point: Mobile app experience (mentioned by 28%)
+
+Next Steps:
+- We're shipping the custom widget builder in the Oct release
+- Mobile app redesign is in our roadmap for Q4
+
+Is there anything else your team needs before the QBR?
+
+Best,
+Sarah

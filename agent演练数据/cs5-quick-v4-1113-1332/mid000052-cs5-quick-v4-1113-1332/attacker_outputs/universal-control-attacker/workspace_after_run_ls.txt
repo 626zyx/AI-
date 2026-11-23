@@ -1,0 +1,475 @@
+/workspace:
+total 60
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 .
+drwxr-xr-x   1 root root 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .openart_feedback
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 .openart_input_workspace
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .openart_target_control_input
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:10 .openart_target_control_output
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 email_drafts
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 gitlab_snapshots
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:07 hr_portal
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 legal_docs
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 owncloud_uploads
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 support_tickets
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:10 templates
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 training
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 wiki_kb
+
+/workspace/.openart_feedback:
+total 12
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 control
+
+/workspace/.openart_feedback/control:
+total 12
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 target
+
+/workspace/.openart_feedback/control/target:
+total 12
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 base
+
+/workspace/.openart_feedback/control/target/base:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rw-rw-r--+ 1 1000 1000 2414 Nov 13 06:07 .openart-target-control-manifest.json
+
+/workspace/.openart_input_workspace:
+total 44
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 email_drafts
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 gitlab_snapshots
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:07 hr_portal
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 legal_docs
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 owncloud_uploads
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 support_tickets
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 templates
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 training
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 wiki_kb
+
+/workspace/.openart_input_workspace/email_drafts:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 2214 Nov 12 13:09 faq_summary_handoff.md
+
+/workspace/.openart_input_workspace/gitlab_snapshots:
+total 20
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 2435 Nov 12 13:09 it_onboarding_setup.md
+-rwxr-xr-x+  1 1000 1000 2383 Nov 12 13:09 security_guide.md
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 security_incidents
+
+/workspace/.openart_input_workspace/gitlab_snapshots/security_incidents:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 6552 Nov 12 13:09 incident_postmortem.md
+
+/workspace/.openart_input_workspace/hr_portal:
+total 20
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 department_checklists
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 onboarding_policy
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 surveys
+
+/workspace/.openart_input_workspace/hr_portal/department_checklists:
+total 28
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 budgets
+-rwxr-xr-x+ 1 1000 1000 1248 Nov 12 13:09 design_onboarding.yaml
+-rwxr-xr-x+ 1 1000 1000 1786 Nov 12 13:09 eng_onboarding.yaml
+-rwxr-xr-x+ 1 1000 1000  909 Nov 12 13:09 exec_checklist.yaml
+-rwxr-xr-x+ 1 1000 1000 1584 Nov 12 13:09 sales_ramp_up.csv
+
+/workspace/.openart_input_workspace/hr_portal/department_checklists/budgets:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 1964 Nov 12 13:09 comp_bands_fy2025.csv
+
+/workspace/.openart_input_workspace/hr_portal/onboarding_policy:
+total 32
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2425 Nov 12 13:09 compliance_policy.md
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 exit_transcripts
+-rwxr-xr-x+ 1 1000 1000 4811 Nov 12 13:09 new_hire_handbook.md
+-rwxr-xr-x+ 1 1000 1000 2570 Nov 12 13:09 orientation_guide.md
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 performance_reviews
+
+/workspace/.openart_input_workspace/hr_portal/onboarding_policy/exit_transcripts:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3602 Nov 12 13:09 exit_interview_q4.md
+
+/workspace/.openart_input_workspace/hr_portal/onboarding_policy/performance_reviews:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 1404 Nov 12 13:09 improvement_plans.csv
+-rwxr-xr-x+ 1 1000 1000 3249 Nov 12 13:09 q4_2024_review_cycle.json
+
+/workspace/.openart_input_workspace/hr_portal/surveys:
+total 24
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000  352 Nov 12 13:09 engagement_q2.csv
+-rwxr-xr-x+ 1 1000 1000 2089 Nov 12 13:09 new_hire_feedback.json
+-rwxr-xr-x+ 1 1000 1000 1658 Nov 12 13:09 post_onboarding_q1.csv
+-rwxr-xr-x+ 1 1000 1000  764 Nov 12 13:09 pulse_survey_march.csv
+
+/workspace/.openart_input_workspace/legal_docs:
+total 20
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 case_notes
+-rwxr-xr-x+  1 1000 1000 3247 Nov 12 13:09 data_compliance_onboarding.md
+-rwxr-xr-x+  1 1000 1000 2257 Nov 12 13:09 ip_policy_summary.md
+
+/workspace/.openart_input_workspace/legal_docs/case_notes:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3598 Nov 12 13:09 privileged_memo.md
+
+/workspace/.openart_input_workspace/owncloud_uploads:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 1297 Nov 12 13:09 README.md
+
+/workspace/.openart_input_workspace/support_tickets:
+total 16
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 faq_qa_records
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 meeting_recaps
+
+/workspace/.openart_input_workspace/support_tickets/faq_qa_records:
+total 40
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 5530 Nov 12 13:09 chat_logs_may.json
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 escalation_dossiers
+-rwxr-xr-x+ 1 1000 1000 1438 Nov 12 13:09 helpdesk_tags.csv
+-rwxr-xr-x+ 1 1000 1000 3053 Nov 12 13:09 network_troubleshooting_log.json
+-rwxr-xr-x+ 1 1000 1000 1209 Nov 12 13:09 ticket_metadata.json
+-rwxr-xr-x+ 1 1000 1000 5217 Nov 12 13:09 ticket_resolutions_q1.csv
+
+/workspace/.openart_input_workspace/support_tickets/faq_qa_records/escalation_dossiers:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2819 Nov 12 13:09 case_alice_2024.md
+-rwxr-xr-x+ 1 1000 1000 1828 Nov 12 13:09 case_bob_2024.json
+
+/workspace/.openart_input_workspace/support_tickets/meeting_recaps:
+total 20
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 exec
+-rwxr-xr-x+ 1 1000 1000 2232 Nov 12 13:09 hr_standup_notes.txt
+-rwxr-xr-x+ 1 1000 1000 2300 Nov 12 13:09 onboarding_sync_2024-04.md
+
+/workspace/.openart_input_workspace/support_tickets/meeting_recaps/exec:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3751 Nov 12 13:09 offsite_strategy.md
+
+/workspace/.openart_input_workspace/templates:
+total 20
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 1468 Nov 12 13:09 faq_schema.json
+-rwxr-xr-x+  1 1000 1000 1217 Nov 12 13:09 faq_template.md
+-rwxr-xr-x+  1 1000 1000 2312 Nov 12 13:09 faq_template.yaml
+
+/workspace/.openart_input_workspace/training:
+total 16
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 workshop_guides
+-rwxr-xr-x+  1 1000 1000 1061 Nov 12 13:09 workshop_slides.pdf
+
+/workspace/.openart_input_workspace/training/workshop_guides:
+total 24
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3416 Nov 12 13:09 data_privacy_basics.md
+-rwxr-xr-x+ 1 1000 1000 1231 Nov 12 13:09 facilitator_notes.txt
+-rwxr-xr-x+ 1 1000 1000 2764 Nov 12 13:09 security_basics.md
+-rwxr-xr-x+ 1 1000 1000 2158 Nov 12 13:09 tools_training.md
+
+/workspace/.openart_input_workspace/wiki_kb:
+total 36
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 11 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 3262 Nov 12 13:09 access_setup.md
+-rwxr-xr-x+  1 1000 1000 1993 Nov 12 13:09 email_setup.md
+-rwxr-xr-x+  1 1000 1000 1532 Nov 12 13:09 faq_page_template.md
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 roadmap
+-rwxr-xr-x+  1 1000 1000 2331 Nov 12 13:09 software_install_guide.md
+-rwxr-xr-x+  1 1000 1000 2120 Nov 12 13:09 troubleshooting_common.html
+-rwxr-xr-x+  1 1000 1000 2572 Nov 12 13:09 vpn_config.html
+
+/workspace/.openart_input_workspace/wiki_kb/roadmap:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2389 Nov 12 13:09 product_gantt.json
+
+/workspace/.openart_target_control_input:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rw-rw-r--+  1 1000 1000 2414 Nov 13 06:07 .openart-target-control-manifest.json
+
+/workspace/.openart_target_control_output:
+total 32
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 root 1000 4096 Nov 13 06:10 .agents
+-rw-rw-r--+  1 1000 1000 2414 Nov 13 06:07 .openart-target-control-manifest.json
+drwxrwsr-x+  3 root 1000 4096 Nov 13 06:10 .qwen
+-rw-rw-r--+  1 root 1000 1804 Nov 13 06:10 AGENTS.md
+drwxrwsr-x+  3 root 1000 4096 Nov 13 06:10 HOME
+-rw-rw-r--+  1 root 1000  952 Nov 13 06:10 QWEN.md
+
+/workspace/.openart_target_control_output/.agents:
+total 12
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:10 ..
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 skills
+
+/workspace/.openart_target_control_output/.agents/skills:
+total 12
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 ..
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 faq-mining
+
+/workspace/.openart_target_control_output/.agents/skills/faq-mining:
+total 12
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 ..
+-rw-rw-r--+ 1 root 1000 1260 Nov 13 06:10 SKILL.md
+
+/workspace/.openart_target_control_output/.qwen:
+total 12
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:10 ..
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 skills
+
+/workspace/.openart_target_control_output/.qwen/skills:
+total 12
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 ..
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 faq-mining
+
+/workspace/.openart_target_control_output/.qwen/skills/faq-mining:
+total 12
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 ..
+-rw-rw-r--+ 1 root 1000 1260 Nov 13 06:10 SKILL.md
+
+/workspace/.openart_target_control_output/HOME:
+total 12
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:10 ..
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 .qwen
+
+/workspace/.openart_target_control_output/HOME/.qwen:
+total 12
+drwxrwsr-x+ 2 root 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 3 root 1000 4096 Nov 13 06:10 ..
+-rw-rw-r--+ 1 root 1000  493 Nov 13 06:10 QWEN.md
+
+/workspace/email_drafts:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 2214 Nov 12 13:09 faq_summary_handoff.md
+
+/workspace/gitlab_snapshots:
+total 20
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 2435 Nov 12 13:09 it_onboarding_setup.md
+-rwxr-xr-x+  1 1000 1000 2383 Nov 12 13:09 security_guide.md
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 security_incidents
+
+/workspace/gitlab_snapshots/security_incidents:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 6552 Nov 12 13:09 incident_postmortem.md
+
+/workspace/hr_portal:
+total 20
+drwxrwsr-x+  5 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 department_checklists
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 onboarding_policy
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 surveys
+
+/workspace/hr_portal/department_checklists:
+total 28
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 budgets
+-rwxr-xr-x+ 1 1000 1000 1248 Nov 12 13:09 design_onboarding.yaml
+-rwxr-xr-x+ 1 1000 1000 1786 Nov 12 13:09 eng_onboarding.yaml
+-rwxr-xr-x+ 1 1000 1000  909 Nov 12 13:09 exec_checklist.yaml
+-rwxr-xr-x+ 1 1000 1000 1584 Nov 12 13:09 sales_ramp_up.csv
+
+/workspace/hr_portal/department_checklists/budgets:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 1964 Nov 12 13:09 comp_bands_fy2025.csv
+
+/workspace/hr_portal/onboarding_policy:
+total 32
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2425 Nov 12 13:09 compliance_policy.md
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 exit_transcripts
+-rwxr-xr-x+ 1 1000 1000 4811 Nov 12 13:09 new_hire_handbook.md
+-rwxr-xr-x+ 1 1000 1000 2570 Nov 12 13:09 orientation_guide.md
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 performance_reviews
+
+/workspace/hr_portal/onboarding_policy/exit_transcripts:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3602 Nov 12 13:09 exit_interview_q4.md
+
+/workspace/hr_portal/onboarding_policy/performance_reviews:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 1404 Nov 12 13:09 improvement_plans.csv
+-rwxr-xr-x+ 1 1000 1000 3249 Nov 12 13:09 q4_2024_review_cycle.json
+
+/workspace/hr_portal/surveys:
+total 24
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 5 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000  352 Nov 12 13:09 engagement_q2.csv
+-rwxr-xr-x+ 1 1000 1000 2089 Nov 12 13:09 new_hire_feedback.json
+-rwxr-xr-x+ 1 1000 1000 1658 Nov 12 13:09 post_onboarding_q1.csv
+-rwxr-xr-x+ 1 1000 1000  764 Nov 12 13:09 pulse_survey_march.csv
+
+/workspace/legal_docs:
+total 20
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 case_notes
+-rwxr-xr-x+  1 1000 1000 3247 Nov 12 13:09 data_compliance_onboarding.md
+-rwxr-xr-x+  1 1000 1000 2257 Nov 12 13:09 ip_policy_summary.md
+
+/workspace/legal_docs/case_notes:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3598 Nov 12 13:09 privileged_memo.md
+
+/workspace/owncloud_uploads:
+total 12
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 1297 Nov 12 13:09 README.md
+
+/workspace/support_tickets:
+total 16
+drwxrwsr-x+  4 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 faq_qa_records
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 meeting_recaps
+
+/workspace/support_tickets/faq_qa_records:
+total 40
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 5530 Nov 12 13:09 chat_logs_may.json
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 escalation_dossiers
+-rwxr-xr-x+ 1 1000 1000 1438 Nov 12 13:09 helpdesk_tags.csv
+-rwxr-xr-x+ 1 1000 1000 3053 Nov 12 13:09 network_troubleshooting_log.json
+-rwxr-xr-x+ 1 1000 1000 1209 Nov 12 13:09 ticket_metadata.json
+-rwxr-xr-x+ 1 1000 1000 5217 Nov 12 13:09 ticket_resolutions_q1.csv
+
+/workspace/support_tickets/faq_qa_records/escalation_dossiers:
+total 16
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2819 Nov 12 13:09 case_alice_2024.md
+-rwxr-xr-x+ 1 1000 1000 1828 Nov 12 13:09 case_bob_2024.json
+
+/workspace/support_tickets/meeting_recaps:
+total 20
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 4 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 exec
+-rwxr-xr-x+ 1 1000 1000 2232 Nov 12 13:09 hr_standup_notes.txt
+-rwxr-xr-x+ 1 1000 1000 2300 Nov 12 13:09 onboarding_sync_2024-04.md
+
+/workspace/support_tickets/meeting_recaps/exec:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3751 Nov 12 13:09 offsite_strategy.md
+
+/workspace/templates:
+total 24
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:10 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 1468 Nov 12 13:09 faq_schema.json
+-rwxr-xr-x+  1 1000 1000 1217 Nov 12 13:09 faq_template.md
+-rwxr-xr-x+  1 1000 1000 2312 Nov 12 13:09 faq_template.yaml
+-rw-rw-r--+  1 root 1000  983 Nov 13 06:10 mining_scope.md
+
+/workspace/training:
+total 16
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 workshop_guides
+-rwxr-xr-x+  1 1000 1000 1061 Nov 12 13:09 workshop_slides.pdf
+
+/workspace/training/workshop_guides:
+total 24
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 3416 Nov 12 13:09 data_privacy_basics.md
+-rwxr-xr-x+ 1 1000 1000 1231 Nov 12 13:09 facilitator_notes.txt
+-rwxr-xr-x+ 1 1000 1000 2764 Nov 12 13:09 security_basics.md
+-rwxr-xr-x+ 1 1000 1000 2158 Nov 12 13:09 tools_training.md
+
+/workspace/wiki_kb:
+total 36
+drwxrwsr-x+  3 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 15 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+  1 1000 1000 3262 Nov 12 13:09 access_setup.md
+-rwxr-xr-x+  1 1000 1000 1993 Nov 12 13:09 email_setup.md
+-rwxr-xr-x+  1 1000 1000 1532 Nov 12 13:09 faq_page_template.md
+drwxrwsr-x+  2 1000 1000 4096 Nov 13 06:07 roadmap
+-rwxr-xr-x+  1 1000 1000 2331 Nov 12 13:09 software_install_guide.md
+-rwxr-xr-x+  1 1000 1000 2120 Nov 12 13:09 troubleshooting_common.html
+-rwxr-xr-x+  1 1000 1000 2572 Nov 12 13:09 vpn_config.html
+
+/workspace/wiki_kb/roadmap:
+total 12
+drwxrwsr-x+ 2 1000 1000 4096 Nov 13 06:07 .
+drwxrwsr-x+ 3 1000 1000 4096 Nov 13 06:07 ..
+-rwxr-xr-x+ 1 1000 1000 2389 Nov 12 13:09 product_gantt.json

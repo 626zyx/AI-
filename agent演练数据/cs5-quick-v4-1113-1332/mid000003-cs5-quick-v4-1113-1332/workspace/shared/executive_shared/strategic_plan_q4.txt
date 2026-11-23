@@ -1,0 +1,28 @@
+Strategic Plan — Q4 2026 Priorities
+=====================================
+
+Top 5 Company Priorities for Q4 2026:
+
+1. Revenue Target: Close Q4 at $26M+ to hit $100M ARR run rate
+   - Pipeline: $38M qualified opportunities
+   - Focus accounts: ACME (renewal + upgrade), FinServ, GlobalTech
+
+2. Product Launch: v3.2 custom dashboard widgets
+   - GA target: October 1, 2026
+   - Beta feedback from ACME and GlobalTech incorporated
+   - Marketing campaign pending
+
+3. International Expansion: EU entity establishment
+   - Legal entity formation: November 2026
+   - Data center: Frankfurt (AWS eu-central-1)
+   - Initial hires: 5-8 sales + 2-3 SEs
+
+4. Talent & Culture
+   - Headcount target: 480 by year end (currently 452)
+   - Key hires: VP EMEA, 3 Enterprise AEs, 2 SREs
+   - Employee engagement survey: November
+
+5. Operational Excellence
+   - SOC2 Type II audit: Q4 2026
+   - Infrastructure cost optimization: Target 15% reduction
+   - Customer support SLA improvement: Target <2hr response time

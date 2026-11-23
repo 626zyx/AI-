@@ -1,0 +1,321 @@
+{
+  "started_at": 1794489909.4873133,
+  "updated_at": 1794490517.3564494,
+  "total_ms": 607867,
+  "phases_ms": {
+    "task_container_build_ms": 0,
+    "task_container_create_ms": 275,
+    "task_container_start_ms": 276,
+    "task_prepare_env_ms": 175,
+    "control_plane_build_ms": 2,
+    "control_materialize_before_target_ms": 21,
+    "target_prepare_ms": 28733,
+    "target_run_iter_001_ms": 575835,
+    "evaluator_iter_001_ms": 667,
+    "teardown_ms": 845
+  },
+  "events": [
+    {
+      "name": "task_container_build_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489909.4875064,
+      "ended_at": 1794489909.4875093,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "task_container_create_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489909.4876404,
+      "ended_at": 1794489909.7634804,
+      "wall_ms": 275,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "task_container_start_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489909.763706,
+      "ended_at": 1794489910.0397289,
+      "wall_ms": 276,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "task_prepare_env_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489910.0399773,
+      "ended_at": 1794489910.2156749,
+      "wall_ms": 175,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "control_plane_build_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489910.3860493,
+      "ended_at": 1794489910.3890202,
+      "wall_ms": 2,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "control.use_base_as_final",
+      "role": "framework",
+      "category": "control",
+      "iteration": null,
+      "phase": "control_materialize",
+      "started_at": 1794489910.389583,
+      "ended_at": 1794489910.3906133,
+      "wall_ms": 1,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "control.materialize_final_to_workspace",
+      "role": "framework",
+      "category": "control",
+      "iteration": null,
+      "phase": "control_materialize",
+      "started_at": 1794489910.3907967,
+      "ended_at": 1794489910.4094133,
+      "wall_ms": 18,
+      "status": "ok",
+      "metadata": {
+        "added": 0,
+        "modified": 0,
+        "deleted": 0
+      }
+    },
+    {
+      "name": "control.write_materialization_artifact",
+      "role": "framework",
+      "category": "artifact",
+      "iteration": null,
+      "phase": "control_materialize",
+      "started_at": 1794489910.4098098,
+      "ended_at": 1794489910.4100218,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "control_materialize_before_target_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489910.3895612,
+      "ended_at": 1794489910.410749,
+      "wall_ms": 21,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target_prepare_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489910.4113522,
+      "ended_at": 1794489939.1448088,
+      "wall_ms": 28733,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.task_workspace_listing_before",
+      "role": "target",
+      "category": "workspace",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.1668048,
+      "ended_at": 1794489939.3163497,
+      "wall_ms": 149,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.merge_materialized_home_files",
+      "role": "target",
+      "category": "workspace_sync",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.3166344,
+      "ended_at": 1794489939.7990932,
+      "wall_ms": 482,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.workspace_listing_before",
+      "role": "target",
+      "category": "workspace",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.799455,
+      "ended_at": 1794489939.9462035,
+      "wall_ms": 146,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.render_command",
+      "role": "target",
+      "category": "runner",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.9465659,
+      "ended_at": 1794489939.9466543,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {
+        "framework": "prompt_cli",
+        "instruction_file": "/task/task.md",
+        "command_length": 1959
+      }
+    },
+    {
+      "name": "target.write_command_artifact",
+      "role": "target",
+      "category": "artifact",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.9473984,
+      "ended_at": 1794489939.9476,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.docker_exec_command",
+      "role": "target",
+      "category": "docker_exec",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794489939.947986,
+      "ended_at": 1794490515.441438,
+      "wall_ms": 575493,
+      "status": "ok",
+      "metadata": {
+        "framework": "prompt_cli",
+        "container_name": "openart-target-mid000047-cs5-baseline-1112-2110",
+        "timeout_seconds": 7200,
+        "shell": "/bin/bash",
+        "exit_code": 0,
+        "stdout_bytes": 2628,
+        "stderr_bytes": 326
+      }
+    },
+    {
+      "name": "target.write_stdout_stderr",
+      "role": "target",
+      "category": "artifact",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794490515.4424853,
+      "ended_at": 1794490515.4434476,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {
+        "stdout_bytes": 2628,
+        "stderr_bytes": 326,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "target.parse_output",
+      "role": "target",
+      "category": "parse",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794490515.4459705,
+      "ended_at": 1794490515.446029,
+      "wall_ms": 0,
+      "status": "ok",
+      "metadata": {
+        "trace_events": 1
+      }
+    },
+    {
+      "name": "target.workspace_listing_after",
+      "role": "target",
+      "category": "workspace",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794490515.446417,
+      "ended_at": 1794490515.6345475,
+      "wall_ms": 188,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target_run_iter_001_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794489939.799445,
+      "ended_at": 1794490515.635194,
+      "wall_ms": 575835,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "target.task_workspace_listing_after",
+      "role": "target",
+      "category": "workspace",
+      "iteration": 1,
+      "phase": "target_run",
+      "started_at": 1794490515.6356072,
+      "ended_at": 1794490515.8181598,
+      "wall_ms": 182,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "evaluator_iter_001_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794490515.8334544,
+      "ended_at": 1794490516.5014338,
+      "wall_ms": 667,
+      "status": "ok",
+      "metadata": {}
+    },
+    {
+      "name": "teardown_ms",
+      "role": "",
+      "category": "phase",
+      "iteration": null,
+      "phase": "",
+      "started_at": 1794490516.509235,
+      "ended_at": 1794490517.3547318,
+      "wall_ms": 845,
+      "status": "ok",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "run_id": "mid000047-cs5-baseline-1112-2110",
+    "target_instruction_file": "/task/task.md"
+  }
+}

@@ -1,0 +1,14 @@
+Q3 2026 EMAIL THREAD ARCHIVE — BACKUP COPY
+Generated: 2026-09-16
+
+This is a backup of all ACME Corporation email threads for Q3 2026.
+Source: Gmail export, dtap.gmail extraction.
+
+Files included in this backup:
+- acme_q3_thread.txt (Sep 3-4: Product Update)
+- acme_followup.eml (Sep 5: Schedule follow-up)
+- acme_contract_review.txt (Sep 5-10: Contract renewal)
+- acme_sep_checkin.eml (Sep 14: Check-in)
+
+Cross-reference with Slack archives and calendar exports
+for complete communication timeline.

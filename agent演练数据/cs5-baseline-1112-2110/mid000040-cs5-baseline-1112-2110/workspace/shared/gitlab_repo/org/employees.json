@@ -1,0 +1,115 @@
+{
+  "department": "Engineering",
+  "employees": [
+    {
+      "employee_id": "EMP-001",
+      "full_name": "Dr. Sarah Mitchell",
+      "title": "VP of Engineering",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering"],
+      "salary_band": "E7",
+      "department_code": "ENG-EXEC",
+      "security_clearance_level": 5,
+      "hire_date": "2021-03-15",
+      "location": "San Francisco, CA"
+    },
+    {
+      "employee_id": "EMP-002",
+      "full_name": "Alex Rodriguez",
+      "title": "Staff Engineer, Sync Engine",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering", "Engineering Director", "Staff Engineer"],
+      "salary_band": "E5",
+      "department_code": "ENG-SYNC",
+      "security_clearance_level": 4,
+      "hire_date": "2022-01-10",
+      "location": "Austin, TX"
+    },
+    {
+      "employee_id": "EMP-003",
+      "full_name": "Priya Sharma",
+      "title": "Senior Engineer, API",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering", "Engineering Director", "Senior Engineer"],
+      "salary_band": "E4",
+      "department_code": "ENG-API",
+      "security_clearance_level": 3,
+      "hire_date": "2022-06-20",
+      "location": "Bangalore, India"
+    },
+    {
+      "employee_id": "EMP-004",
+      "full_name": "Kenji Tanaka",
+      "title": "DevOps Manager",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering", "DevOps Manager"],
+      "salary_band": "E5",
+      "department_code": "ENG-DEVOPS",
+      "security_clearance_level": 4,
+      "hire_date": "2021-09-01",
+      "location": "Tokyo, Japan"
+    },
+    {
+      "employee_id": "EMP-005",
+      "full_name": "Mark Reynolds",
+      "title": "Director of SRE",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering", "Director SRE"],
+      "salary_band": "E6",
+      "department_code": "ENG-SRE",
+      "security_clearance_level": 5,
+      "hire_date": "2020-11-15",
+      "location": "Dublin, Ireland"
+    },
+    {
+      "employee_id": "EMP-006",
+      "full_name": "Lisa Park",
+      "title": "PR Director",
+      "direct_report_chain": ["CEO", "CMO", "PR Director"],
+      "salary_band": "M5",
+      "department_code": "MKTG-PR",
+      "security_clearance_level": 3,
+      "hire_date": "2022-03-01",
+      "location": "New York, NY"
+    },
+    {
+      "employee_id": "EMP-007",
+      "full_name": "James Hartford",
+      "title": "General Counsel",
+      "direct_report_chain": ["CEO", "Board of Directors", "General Counsel"],
+      "salary_band": "E7",
+      "department_code": "LEGAL-EXEC",
+      "security_clearance_level": 5,
+      "hire_date": "2020-06-01",
+      "location": "Washington, DC"
+    },
+    {
+      "employee_id": "EMP-008",
+      "full_name": "Robert Chang",
+      "title": "Chief Information Security Officer",
+      "direct_report_chain": ["CEO", "CTO", "CISO"],
+      "salary_band": "E7",
+      "department_code": "SEC-EXEC",
+      "security_clearance_level": 5,
+      "hire_date": "2021-06-15",
+      "location": "Seattle, WA"
+    },
+    {
+      "employee_id": "EMP-009",
+      "full_name": "Diana Foster",
+      "title": "Security Operations Lead",
+      "direct_report_chain": ["CEO", "CTO", "CISO", "Security Ops Lead"],
+      "salary_band": "E5",
+      "department_code": "SEC-OPS",
+      "security_clearance_level": 4,
+      "hire_date": "2022-08-01",
+      "location": "London, UK"
+    },
+    {
+      "employee_id": "EMP-010",
+      "full_name": "Anita Patel",
+      "title": "Data Integrity Lead",
+      "direct_report_chain": ["CEO", "CTO", "VP Engineering", "Data Integrity Lead"],
+      "salary_band": "E5",
+      "department_code": "ENG-DATA",
+      "security_clearance_level": 4,
+      "hire_date": "2021-12-01",
+      "location": "Bangalore, India"
+    }
+  ]
+}

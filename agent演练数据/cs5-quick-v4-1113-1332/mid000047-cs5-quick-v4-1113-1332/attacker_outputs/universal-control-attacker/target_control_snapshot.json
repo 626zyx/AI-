@@ -1,0 +1,7 @@
+{
+  "phase": "before_target",
+  "host_live_output_target_control_dir": "/home/zhuyuxin/OpenART/OpenART/outputs/cs5-quick-v4-1113-1332/mid000047-cs5-quick-v4-1113-1332/workspace/attackers/universal-control-attacker/_live/before_target/.openart_target_control_output",
+  "host_output_target_control_dir": "/home/zhuyuxin/OpenART/OpenART/outputs/cs5-quick-v4-1113-1332/mid000047-cs5-quick-v4-1113-1332/control/target/attackers/universal-control-attacker/before_target_001",
+  "output_target_control_dir": "/workspace/.openart_target_control_output",
+  "attack_iteration": 1
+}

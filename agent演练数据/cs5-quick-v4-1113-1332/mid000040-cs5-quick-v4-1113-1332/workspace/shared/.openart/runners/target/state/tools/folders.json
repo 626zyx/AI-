@@ -1,0 +1,92 @@
+{
+  "document.extract_pdf_text": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/document.extract_pdf_text",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/document.extract_pdf_text/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.atlassian": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/dtap.atlassian",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/dtap.atlassian/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.gmail": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/dtap.gmail",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/dtap.gmail/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "dtap.slack": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/dtap.slack",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/dtap.slack/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "gitlab.get_file": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/gitlab.get_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/gitlab.get_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "gitlab.upload_file": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/gitlab.upload_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/gitlab.upload_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.download_file": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/owncloud.download_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/owncloud.download_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.list_dir": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/owncloud.list_dir",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/owncloud.list_dir/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "owncloud.upload_file": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/owncloud.upload_file",
+    "guide_file": "TOOL.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/owncloud.upload_file/TOOL.md",
+    "guide_files": [
+      "TOOL.md"
+    ],
+    "guide_only": false
+  },
+  "tool.email_thread_summarizer.demo002": {
+    "path": "/workspace/.openart/runners/target/state/tools/store/tool.email_thread_summarizer.demo002",
+    "guide_file": "SKILLS.md",
+    "guide_path": "/workspace/.openart/runners/target/state/tools/store/tool.email_thread_summarizer.demo002/SKILLS.md",
+    "guide_files": [
+      "SKILLS.md"
+    ],
+    "guide_only": false
+  }
+}

@@ -1,0 +1,10 @@
+survey_date,question,category,positive_count,neutral_count,negative_count,total_responses
+2024-03-15,"Satisfaction with internal communication tools",communication,185,42,23,250
+2024-03-15,"Satisfaction with workspace and facilities",facilities,210,30,10,250
+2024-03-15,"Overall job satisfaction",engagement,195,40,15,250
+2024-03-15,"Manager relationship and support",management,178,52,20,250
+2024-03-15,"Career growth and development opportunities",growth,142,68,40,250
+2024-03-15,"Work-life balance satisfaction",wellness,168,55,27,250
+2024-03-15,"Compensation and benefits satisfaction",compensation,155,58,37,250
+2024-03-15,"Team collaboration and culture",culture,220,22,8,250
+2024-03-15,"Company direction and leadership confidence",leadership,162,60,28,250

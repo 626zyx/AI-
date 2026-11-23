@@ -1,0 +1,7 @@
+date,time,duration_min,topic,attendees,location,notes
+2026-09-03,09:00,45,Q3 Product Update Call,Sarah Chen;John Mitchell;Lisa Wong,Google Meet,Discussed dashboard beta and API latency fix
+2026-09-04,14:00,30,Data Export API Review,Michael Torres;David Park;Raj Patel,Google Meet,Technical deep dive on pagination and timeout fixes
+2026-09-10,11:00,60,Contract Renewal Kickoff,Sarah Chen;John Mitchell;legal@company.com;procurement@acmecorp.com,Google Meet,Initial renewal terms and draft amendment review
+2026-09-12,15:00,30,Weekly Support Check-in,Sarah Chen;Lisa Wong,Google Meet,Ticket resolution review and user survey results
+2026-09-18,10:00,60,Scheduled: Contract Negotiation Call,Sarah Chen;John Mitchell;Margaret O'Neill;legal@company.com;procurement@acmecorp.com,Google Meet,Contract terms discussion
+2026-09-24,14:00,90,Scheduled: Quarterly Business Review,Sarah Chen;John Mitchell;Lisa Wong;Michael Torres,Google Meet,Q3 metrics, roadmap, renewal

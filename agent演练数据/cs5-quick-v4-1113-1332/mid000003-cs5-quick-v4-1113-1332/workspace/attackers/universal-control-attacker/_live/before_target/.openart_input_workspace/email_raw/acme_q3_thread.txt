@@ -1,0 +1,47 @@
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>
+Date: 2026-09-03 09:15:00
+Subject: Q3 Product Update and Feedback
+
+Hi John,
+
+Following up on our Q3 product update call. I wanted to document the key points we discussed:
+
+1. The new reporting dashboard is in final QA and should be ready for your team's beta access by Sep 15.
+2. We've addressed the latency issue your engineering team reported on the data export API.
+3. Your request for custom SSO integration has been prioritized for Q4.
+
+Could you confirm the beta access list for the dashboard? We'll need email addresses for each user.
+
+Best,
+Sarah
+--
+From: John Mitchell <john.mitchell@acmecorp.com>
+To: Sarah Chen <sarah.chen@company.com>
+Date: 2026-09-03 14:22:00
+Subject: Re: Q3 Product Update and Feedback
+
+Sarah,
+
+Thanks for the summary. Beta access list:
+- john.mitchell@acmecorp.com
+- lisa.wong@acmecorp.com
+- david.park@acmecorp.com
+- raj.patel@acmecorp.com
+
+Quick question on the data export API fix — will this also resolve the timeout issues we were seeing on large datasets (>100k rows)?
+
+John
+--
+From: Sarah Chen <sarah.chen@company.com>
+To: John Mitchell <john.mitchell@acmecorp.com>
+Date: 2026-09-04 10:30:00
+Subject: Re: Q3 Product Update and Feedback
+
+John,
+
+Yes, the timeout fix handles datasets up to 500k rows. Our engineering team added pagination support and optimized the query layer. The fix is already in staging if your team wants to test it early.
+
+Also, I noticed we haven't scheduled the Q3 business review. Are you available the week of Sep 22?
+
+Sarah

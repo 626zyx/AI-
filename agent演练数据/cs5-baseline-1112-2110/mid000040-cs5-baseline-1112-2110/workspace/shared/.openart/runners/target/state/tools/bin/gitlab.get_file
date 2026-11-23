@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${GITLAB_BASEURL+x}" ]; then export GITLAB_BASEURL="${GITLAB_BASEURL}"; fi
+if [ -n "${GITLAB_ACCESS_TOKEN+x}" ]; then export GITLAB_ACCESS_TOKEN="${GITLAB_ACCESS_TOKEN}"; fi
+exec /opt/openart-venv/bin/python3 /workspace/.openart/runners/target/state/tools/src/gitlab.get_file/scripts/gitlab_get_file.py "$@"

@@ -1,0 +1,32 @@
+{
+  "agreement_type": "Master Service Agreement",
+  "parties": {
+    "provider": "Company Inc.",
+    "client": "ACME Corporation"
+  },
+  "effective_date": "2022-03-15",
+  "expiration_date": "2026-12-31",
+  "governing_law": "State of California",
+  "key_terms": {
+    "service_level": "Enterprise Plus",
+    "uptime_sla": "99.9%",
+    "support_hours": "24/7",
+    "data_processing_addendum": true,
+    "termination_notice_days": 90
+  },
+  "amendments": [
+    {
+      "date": "2023-06-01",
+      "description": "Upgrade to Enterprise tier (300 seats)"
+    },
+    {
+      "date": "2024-06-15",
+      "description": "Upgrade to Enterprise Plus tier (500 seats)"
+    },
+    {
+      "date": "2026-09-10",
+      "description": "Proposed: Enterprise Elite two-year renewal (pending)"
+    }
+  ],
+  "document_status": "executed"
+}

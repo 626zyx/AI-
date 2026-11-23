@@ -1,0 +1,89 @@
+[
+  {
+    "chat_id": "CHAT-0502-001",
+    "date": "2024-05-02",
+    "agent": "sarah.chen",
+    "user": "newhire_alex",
+    "topic": "WiFi Setup",
+    "messages": [
+      {"sender": "newhire_alex", "text": "Hi, I'm in office for the first time and can't figure out the WiFi. Which network do I join?"},
+      {"sender": "sarah.chen", "text": "Welcome! Connect to 'Corp-Secure' with your SSO credentials. Do not use 'Corp-Guest' — that network is throttled and blocks internal resources."},
+      {"sender": "newhire_alex", "text": "When I try Corp-Secure it asks for a domain. What should I enter?"},
+      {"sender": "sarah.chen", "text": "Leave the domain field blank. Use your full email for the identity field. The certificate prompt is expected — accept it."}
+    ],
+    "resolved": true
+  },
+  {
+    "chat_id": "CHAT-0502-002",
+    "date": "2024-05-02",
+    "agent": "mike.patel",
+    "user": "newhire_jordan",
+    "topic": "IDE License",
+    "messages": [
+      {"sender": "newhire_jordan", "text": "I need a JetBrains license for my onboarding setup. The software portal says I'm not authorized."},
+      {"sender": "mike.patel", "text": "Your manager needs to approve the license first. I can see the request was submitted but the approval is pending. Let me ping them."},
+      {"sender": "mike.patel", "text": "Actually, I see the issue — your account was created under the wrong cost center. I've escalated to IT provisioning. Should be fixed within 2 hours."},
+      {"sender": "newhire_jordan", "text": "Is there a temporary license I can use in the meantime?"},
+      {"sender": "mike.patel", "text": "Yes — you can use a 30-day trial directly from JetBrains with your corporate email. The license will be merged when provisioning is fixed."}
+    ],
+    "resolved": true
+  },
+  {
+    "chat_id": "CHAT-0503-003",
+    "date": "2024-05-03",
+    "agent": "lisa.wong",
+    "user": "newhire_taylor",
+    "topic": "Benefits Questions",
+    "messages": [
+      {"sender": "newhire_taylor", "text": "The benefits portal shows an error when I try to enroll. My start date was Monday. Is there a waiting period?"},
+      {"sender": "lisa.wong", "text": "No waiting period but sometimes there's a 48-hour delay for account creation after your start date. Let me check. What's your employee ID?"},
+      {"sender": "newhire_taylor", "text": "EMP-2941"},
+      {"sender": "lisa.wong", "text": "I can confirm your record is active in the HRIS. The benefits sync runs at midnight. You should be able to enroll tomorrow morning. The 30-day window starts from your start date, not enrollment date."},
+      {"sender": "newhire_taylor", "text": "Perfect, thanks! Which health plan do most people pick?"},
+      {"sender": "lisa.wong", "text": "The PPO Gold plan is most popular — lower deductible and wider network. The HDHP with HSA is good if you're generally healthy. You can find plan comparison docs on the benefits portal under Documents."}
+    ],
+    "resolved": true
+  },
+  {
+    "chat_id": "CHAT-0504-004",
+    "date": "2024-05-04",
+    "agent": "tony.kim",
+    "user": "newhire_morgan",
+    "topic": "Building Access",
+    "messages": [
+      {"sender": "newhire_morgan", "text": "My badge works for the main entrance but not for my department floor (5th floor)."},
+      {"sender": "tony.kim", "text": "Floor-specific access is provisioned separately. Your manager must submit a zone access request form through the facilities portal. I'll send you the link."},
+      {"sender": "newhire_morgan", "text": "Is there a temporary solution? I have a meeting on the 5th floor in 30 minutes."},
+      {"sender": "tony.kim", "text": "Go to the security desk in the main lobby. They can issue a temporary floor-access card valid for 24 hours. Bring your employee badge and ID."}
+    ],
+    "resolved": true
+  },
+  {
+    "chat_id": "CHAT-0506-005",
+    "date": "2024-05-06",
+    "agent": "sarah.chen",
+    "user": "newhire_riley",
+    "topic": "Email Signature",
+    "messages": [
+      {"sender": "newhire_riley", "text": "Is there a standard email signature format I should use?"},
+      {"sender": "sarah.chen", "text": "Yes — the template is on the internal wiki at wiki.internal.example.com/brand/email-signature. Standard format: Name, Title, Department, Company Name, Phone, Email. Optionally add LinkedIn and the company logo."},
+      {"sender": "newhire_riley", "text": "Thanks. Should I include my pronouns?"},
+      {"sender": "sarah.chen", "text": "Pronouns are encouraged but optional. Add them in parentheses after your name: 'Riley Chen (they/them)'. The wiki has examples."}
+    ],
+    "resolved": true
+  },
+  {
+    "chat_id": "CHAT-0507-006",
+    "date": "2024-05-07",
+    "agent": "amanda.nguyen",
+    "user": "newhire_casey",
+    "topic": "Expense Reimbursement",
+    "messages": [
+      {"sender": "newhire_casey", "text": "I bought a monitor for my home office. Can I get reimbursed? What's the limit?"},
+      {"sender": "amanda.nguyen", "text": "Yes, the home office equipment stipend is $500 for new hires. File through Concur under 'Home Office Setup'. Attach the receipt. The policy is at policy.internal.example.com/hr/home-office."},
+      {"sender": "newhire_casey", "text": "The monitor was $650. Do I get $500 reimbursed or nothing because it's over?"},
+      {"sender": "amanda.nguyen", "text": "You get reimbursed up to $500. The remaining $150 is out of pocket. Submit within 60 days of purchase. Expense reports are processed in the next pay cycle."}
+    ],
+    "resolved": true
+  }
+]

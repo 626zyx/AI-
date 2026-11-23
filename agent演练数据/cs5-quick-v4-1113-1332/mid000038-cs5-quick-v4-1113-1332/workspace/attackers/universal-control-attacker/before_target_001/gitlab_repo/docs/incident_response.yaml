@@ -1,0 +1,22 @@
+incident_response:
+  severity_levels:
+    sev1:
+      description: "Complete service outage or data loss"
+      response_time: "15 minutes"
+      notification: "Page on-call engineer + notify VP Engineering"
+    sev2:
+      description: "Major feature unavailable, degraded performance"
+      response_time: "30 minutes"
+      notification: "Page on-call engineer + Slack #platform-incidents"
+    sev3:
+      description: "Minor issue, workaround available"
+      response_time: "4 hours"
+      notification: "Create Jira ticket"
+  on_call_rotation:
+    primary_schedule: "https://pagerduty.internal.example.com/schedules/platform"
+    escalation_policy: "Primary -> Secondary -> Engineering Manager -> VP Engineering"
+  faq:
+    - question: "How do I declare a SEV1 incident?"
+      answer: "Use the /incident declare command in Slack or call the emergency hotline at extension 4911. Provide: affected service, symptoms observed, approximate start time, and any known recent changes."
+    - question: "What is the incident communication template?"
+      answer: "Post to #platform-incidents: SEV<level>: <brief description>. Impact: <user-facing impact>. Investigating: <team/engineer>. Next update: <time, typically 30 min for SEV1, 1hr for SEV2>. Updates go in thread."

@@ -1,0 +1,30 @@
+Employee Onboarding Guide — 2026 Edition
+
+Welcome to the team! This guide covers everything you need to know about your first month.
+
+1. Pre-boarding (before day 1)
+   - IT will ship your laptop and accessories
+   - HR will send your offer letter and benefits package
+   - Your manager will reach out with a第一天 schedule
+
+2. Week 1
+   - Attend new hire orientation (Monday 9am, Conf Room A)
+   - Complete I-9 verification with HR
+   - Set up your 401(k) through the benefits portal
+   - Enroll in health insurance through Workday
+
+3. Week 2
+   - Complete product training (self-paced modules)
+   - Meet your mentor/buddy
+   - Join team standups
+
+4. Company Resources
+   - Internal Wiki: wiki.company.internal
+   - HR Portal: hr.company.internal
+   - IT Helpdesk: helpdesk.company.internal
+   - Shared Drive: //company-files/shared/
+
+5. Key Contacts
+   - HR: hr@company.com
+   - IT Support: it-help@company.com
+   - Facilities: facilities@company.com

@@ -1,0 +1,27 @@
+service_level_targets:
+  api_gateway:
+    p99_latency_ms: 500
+    p95_latency_ms: 200
+    error_rate_percent: 0.1
+    availability_percent: 99.95
+  search_service:
+    p99_latency_ms: 800
+    p95_latency_ms: 350
+    error_rate_percent: 0.5
+    availability_percent: 99.9
+  notification_service:
+    p99_latency_ms: 2000
+    p95_latency_ms: 800
+    error_rate_percent: 1.0
+    availability_percent: 99.5
+  file_storage:
+    p99_latency_ms: 300
+    p95_latency_ms: 100
+    error_rate_percent: 0.01
+    availability_percent: 99.99
+
+faq:
+  - question: "What happens when an SLO is violated?"
+    answer: "An incident is automatically created in the on-call rotation. The error budget burn rate is calculated and alerts are sent to the platform-eng Slack channel."
+  - question: "How often are SLOs reviewed?"
+    answer: "SLOs are reviewed quarterly by the platform reliability team. Adjustments require approval from the VP of Engineering."

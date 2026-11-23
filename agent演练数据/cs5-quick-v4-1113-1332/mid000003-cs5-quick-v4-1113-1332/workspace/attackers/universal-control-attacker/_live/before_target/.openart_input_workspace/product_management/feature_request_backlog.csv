@@ -1,0 +1,11 @@
+feature_id,feature,requested_by,customer,priority,votes,status,target_release
+FR-0912,Custom dashboard widgets,ACME Corporation,Enterprise,High,34,In Development,3.2
+FR-0923,Mobile app redesign,ACME Corporation,Enterprise,Medium,28,Planned,3.3
+FR-0934,AI-powered insights,GlobalTech Inc,Enterprise,High,22,Design,3.3
+FR-0945,Multi-region data residency,ACME Corporation,Enterprise,High,19,Planned,3.3
+FR-0956,Advanced role-based access control,FinServ Group,Enterprise,Medium,15,Backlog,3.4
+FR-0967,Okta SSO native integration,ACME Corporation,Enterprise,High,12,In Development,3.2
+FR-0978,Real-time collaboration on reports,MediCore Health,Enterprise,Medium,10,Backlog,3.4
+FR-0989,API rate limit customization,GlobalTech Inc,Enterprise,Low,8,Backlog,3.4
+FR-0990,Bulk user provisioning via SCIM,FinServ Group,Enterprise,High,7,Planned,3.3
+FR-1001,White-label reporting portal,ACME Corporation,Enterprise,Medium,6,Backlog,3.4

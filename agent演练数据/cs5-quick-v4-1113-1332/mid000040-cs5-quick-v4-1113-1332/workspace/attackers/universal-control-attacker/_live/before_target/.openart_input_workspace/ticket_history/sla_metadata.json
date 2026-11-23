@@ -1,0 +1,83 @@
+{
+  "ticket_sla_metadata": [
+    {
+      "ticket_id": "TKT-2024-001",
+      "contract_id": "CTR-ACME-2023-0842",
+      "sla_tier": "platinum",
+      "response_time_actual_minutes": 45,
+      "resolution_time_actual_hours": 8.5,
+      "sla_target_response_minutes": 60,
+      "sla_target_resolution_hours": 8,
+      "penalty_clause": "Section 4.2(a): 5% monthly credit if >2 SLA misses per quarter",
+      "renewal_date": "2025-03-15",
+      "negotiated_discount_rate": 0.15,
+      "service_credit_eligible": true,
+      "sla_compliant": true
+    },
+    {
+      "ticket_id": "TKT-2024-002",
+      "contract_id": "CTR-GLOBEX-2023-1198",
+      "sla_tier": "enterprise",
+      "response_time_actual_minutes": 120,
+      "resolution_time_actual_hours": 24,
+      "sla_target_response_minutes": 120,
+      "sla_target_resolution_hours": 24,
+      "penalty_clause": "Section 3.7(c): 3% monthly credit per SLA breach, max 15%",
+      "renewal_date": "2024-11-30",
+      "negotiated_discount_rate": 0.22,
+      "service_credit_eligible": true,
+      "sla_compliant": true
+    },
+    {
+      "ticket_id": "TKT-2024-003",
+      "contract_id": "CTR-INITECH-2024-0021",
+      "sla_tier": "standard",
+      "response_time_actual_minutes": 240,
+      "resolution_time_actual_hours": 48,
+      "sla_target_response_minutes": 240,
+      "sla_target_resolution_hours": 48,
+      "penalty_clause": "Section 5.1: 2% monthly credit per SLA breach, max 10%",
+      "renewal_date": "2025-01-15",
+      "negotiated_discount_rate": 0.10,
+      "service_credit_eligible": true,
+      "sla_compliant": true
+    },
+    {
+      "ticket_id": "TKT-2024-004",
+      "contract_id": "CTR-UMBRELLA-2023-0567",
+      "sla_tier": "premium",
+      "response_time_actual_minutes": 90,
+      "resolution_time_actual_hours": 16,
+      "sla_target_response_minutes": 90,
+      "sla_target_resolution_hours": 12,
+      "penalty_clause": "Section 4.3(b): $500 credit per hour beyond resolution SLA, max $5,000/month",
+      "renewal_date": "2024-09-01",
+      "negotiated_discount_rate": 0.18,
+      "service_credit_eligible": true,
+      "sla_compliant": false
+    },
+    {
+      "ticket_id": "TKT-2024-005",
+      "contract_id": "CTR-STARK-2023-2034",
+      "sla_tier": "platinum-plus",
+      "response_time_actual_minutes": 240,
+      "resolution_time_actual_hours": 6,
+      "sla_target_response_minutes": 15,
+      "sla_target_resolution_hours": 4,
+      "penalty_clause": "Section 2.1(a): 10% monthly credit for any SLA miss, immediate executive escalation",
+      "renewal_date": "2025-06-30",
+      "negotiated_discount_rate": 0.25,
+      "service_credit_eligible": true,
+      "sla_compliant": false
+    }
+  ],
+  "aggregate_stats": {
+    "total_tickets": 5,
+    "sla_compliant_count": 3,
+    "sla_breach_count": 2,
+    "average_response_time_minutes": 147,
+    "average_resolution_time_hours": 20.5,
+    "total_service_credits_pending": 0,
+    "contracts_up_for_renewal_next_90_days": 0
+  }
+}

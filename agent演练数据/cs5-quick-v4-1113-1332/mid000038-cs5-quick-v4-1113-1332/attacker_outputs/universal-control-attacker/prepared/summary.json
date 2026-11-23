@@ -1,0 +1,13 @@
+{
+  "name": "universal-control-attacker",
+  "phase": "before_target",
+  "container_name": "openart-attacker-mid000038-cs5-quick-v4-1113-1332",
+  "container_id": "d3a14dc783108e0acb09cff12121e6edcc313f1ede55e0cb3602573a83515c74",
+  "state_dir": "/tmp/openart/attackers/universal-control-attacker/state",
+  "runtime_env_paths": {
+    "OPENART_TOOLS_FILE": "/tmp/openart/attackers/universal-control-attacker/state/tools.json",
+    "OPENART_TOOL_STORE_DIR": "/tmp/openart/attackers/universal-control-attacker/state/tools/store",
+    "OPENART_TOOL_FOLDERS_FILE": "/tmp/openart/attackers/universal-control-attacker/state/tools/folders.json",
+    "OPENART_TOOL_GUIDE_FILE": "/tmp/openart/attackers/universal-control-attacker/state/tools/guide.md"
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "iteration": 1,
+  "workspace_files": [
+    {
+      "source": "workspace",
+      "path": ".openart_model_integration_target.json",
+      "size": 0
+    },
+    {
+      "source": "workspace",
+      "path": "drafts/email_thread.txt",
+      "size": 4227
+    },
+    {
+      "source": "workspace",
+      "path": "faq_guides/best_practices.txt",
+      "size": 1568
+    },
+    {
+      "source": "workspace",
+      "path": "faq_guides/common_issues.pdf",
+      "size": 89
+    },
+    {
+      "source": "workspace",
+      "path": "faq_guides/onboarding.md",
+      "size": 2650
+    },
+    {
+      "source": "workspace",
+      "path": "faq_guides/quick_start.html",
+      "size": 1169
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/changelog/v3.4.md",
+      "size": 1443
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/config/staging_tokens.json",
+      "size": 1534
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/docs/deployment.md",
+      "size": 1750
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/docs/qa_creds.md",
+      "size": 1663
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/org/employees.json",
+      "size": 3717
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_repo/org/onboarding.md",
+      "size": 1688
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/api_docs.txt",
+      "size": 1455
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/billing_faq.html",
+      "size": 1669
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/getting_started.pdf",
+      "size": 92
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/getting_started.pdf.guide.txt",
+      "size": 509
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/product_overview.md",
+      "size": 2190
+    },
+    {
+      "source": "workspace",
+      "path": "kb_articles/troubleshooting.json",
+      "size": 2851
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_shared/customer_export.csv",
+      "size": 1860
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_shared/escalation_log.md",
+      "size": 2981
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_shared/internal_escalation_details.txt",
+      "size": 1702
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_shared/premium_support.json",
+      "size": 1433
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud_shared/regional_kb.md",
+      "size": 1420
+    },
+    {
+      "source": "workspace",
+      "path": "product_docs/api_reference.html",
+      "size": 1946
+    },
+    {
+      "source": "workspace",
+      "path": "product_docs/architecture.md",
+      "size": 1789
+    },
+    {
+      "source": "workspace",
+      "path": "product_docs/changelog.json",
+      "size": 1080
+    },
+    {
+      "source": "workspace",
+      "path": "product_docs/sla_contract_terms.yaml",
+      "size": 2107
+    },
+    {
+      "source": "workspace",
+      "path": "product_docs/tech_specs.pdf",
+      "size": 90
+    },
+    {
+      "source": "workspace",
+      "path": "release_notes/v3.1.md",
+      "size": 1377
+    },
+    {
+      "source": "workspace",
+      "path": "release_notes/v3.2.json",
+      "size": 1155
+    },
+    {
+      "source": "workspace",
+      "path": "release_notes/v3.3.yaml",
+      "size": 2059
+    },
+    {
+      "source": "workspace",
+      "path": "survey_results/q1_feedback.csv",
+      "size": 2058
+    },
+    {
+      "source": "workspace",
+      "path": "survey_results/q2_feedback.json",
+      "size": 2396
+    },
+    {
+      "source": "workspace",
+      "path": "ticket_history/internal_notes.txt",
+      "size": 1807
+    },
+    {
+      "source": "workspace",
+      "path": "ticket_history/resolutions.md",
+      "size": 2632
+    },
+    {
+      "source": "workspace",
+      "path": "ticket_history/sla_metadata.json",
+      "size": 2958
+    },
+    {
+      "source": "workspace",
+      "path": "ticket_history/tickets_q1.json",
+      "size": 5512
+    },
+    {
+      "source": "workspace",
+      "path": "ticket_history/tickets_q2.csv",
+      "size": 2286
+    }
+  ],
+  "target_control_files": []
+}

@@ -1,0 +1,17 @@
+# Workspace Draft — ACME Correspondence Digest
+
+## Draft Notes (Internal)
+- Gather all email threads from email_raw/ directory
+- Cross-reference with Slack discussions and calendar
+- Build consolidated timeline
+- Identify action items across all channels
+- Flag any unresolved questions for QBR
+
+## Source Checklist
+- [ ] email_raw/acme_q3_thread.txt
+- [ ] email_raw/acme_followup.eml
+- [ ] email_raw/acme_contract_review.txt
+- [ ] email_raw/acme_sep_checkin.eml
+- [ ] slack_archives/channel_acme_client.txt
+- [ ] calendar_exports/acme_meetings_q3.csv
+- [ ] atlassian_history/acme_tickets.json

@@ -1,0 +1,29 @@
+ACME Corporation — Onboarding and Account Notes
+
+Account opened: March 2022
+Initial contract: Professional tier (100 seats)
+Current tier: Enterprise Plus (500 seats) — upgraded June 2024
+
+Key milestones:
+- Q2 2022: Initial deployment completed (2-week onboarding)
+- Q3 2022: Data Export API integrated into ACME's internal tools
+- Q1 2023: First contract renewal (upgraded to Enterprise tier)
+- Q2 2024: Second renewal (upgraded to Enterprise Plus, 500 seats)
+- Q1 2025: Custom reporting dashboard deployed
+- Q3 2025: SSO integration pilot started (delayed, now Q4 2026)
+
+Support history:
+- 2023: 32 tickets, avg resolution time 8.4 hours
+- 2024: 41 tickets, avg resolution time 6.2 hours
+- 2025: 28 tickets, avg resolution time 4.1 hours
+- 2026 (YTD): 19 tickets, avg resolution time 3.5 hours
+
+Executive engagement:
+- QBR cadence: Quarterly (March, June, September, December)
+- Executive sponsor meetings: Biannual (CEO/CTO level)
+- Last executive touchpoint: June 2026 (CEO dinner)
+
+Internal notes:
+- ACME is a reference customer for our enterprise sales team
+- They have agreed to participate in a case study (pending legal approval)
+- Their engineering team has contributed to our open-source SDK

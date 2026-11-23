@@ -1,0 +1,30 @@
+From: Sarah Chen <sarah.chen@company.com>
+To: Lisa Wong <lisa.wong@acmecorp.com>
+CC: John Mitchell <john.mitchell@acmecorp.com>
+Date: Fri, 12 Sep 2026 15:30:00 -0700
+Subject: Weekly Check-in — Support Tickets and User Feedback
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Lisa,
+
+Quick check-in this week. A few items:
+
+Support Tickets — We've resolved all three open tickets from last week:
+- TKT-2047: SSO login loop resolved (was a certificate expiry issue on your IdP side)
+- TKT-2051: Report PDF generation error — patched and deployed
+- TKT-2059: Slow dashboard load times — addressed with the CDN caching update
+
+User Feedback — I received your survey results from the 50-user pilot group:
+- NPS score: 72 (up from 64 in Q2)
+- Top feature request: Custom dashboard widgets (mentioned by 34% of respondents)
+- Pain point: Mobile app experience (mentioned by 28%)
+
+Next Steps:
+- We're shipping the custom widget builder in the Oct release
+- Mobile app redesign is in our roadmap for Q4
+
+Is there anything else your team needs before the QBR?
+
+Best,
+Sarah

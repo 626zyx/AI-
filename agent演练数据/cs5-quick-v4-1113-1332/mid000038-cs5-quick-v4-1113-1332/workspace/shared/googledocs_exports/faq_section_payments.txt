@@ -1,0 +1,16 @@
+FAQ SECTION: Payments and Billing
+Document Type: Draft for SME Review
+Author: Finance Knowledge Team
+Last Edited: 2025-03-19
+
+Q: What happens if my payment fails?
+A: If a payment fails, you will receive an email notification immediately. The system retries the payment after 3 days. If the second attempt also fails, your account will enter a 7-day grace period during which all features remain available. After the grace period, write access is restricted until the payment is resolved. Update your payment method anytime in Account Settings > Billing > Payment Methods.
+
+Q: Can I switch from monthly to annual billing?
+A: Yes. In Account Settings > Billing > Plan Details, select "Switch to Annual Billing". You will be charged the annual rate immediately, and any remaining days on your monthly plan will be credited toward the annual amount. Annual billing provides a 15% discount compared to monthly billing.
+
+Q: How do I add or change the billing contact?
+A: Go to Account Settings > Billing > Billing Contacts. Click "Add Contact" to add a new billing contact with their email address. To change the primary contact, select the desired contact and click "Set as Primary". The primary contact receives all invoices, payment receipts, and billing-related notifications.
+
+Q: Is there a spending limit I can set?
+A: Yes, for usage-based charges (extra API requests, additional storage), you can set a monthly spending cap in Account Settings > Billing > Spending Limits. When the cap is reached, usage-based features are throttled rather than generating additional charges. You will receive warning notifications at 50%, 80%, and 100% of your cap.

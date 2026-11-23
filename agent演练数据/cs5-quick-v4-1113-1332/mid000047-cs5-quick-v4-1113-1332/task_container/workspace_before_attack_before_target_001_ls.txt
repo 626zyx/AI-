@@ -1,0 +1,137 @@
+/workspace:
+total 20
+drwxr-sr-x 5 1000 1000 4096 Nov 12 13:09 .
+drwxr-xr-x 1 root root 4096 Nov 13 05:53 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 email_drafts
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 gitlab_snapshots
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 owncloud
+
+/workspace/email_drafts:
+total 12
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 5 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000  944 Nov 12 13:09 handoff_summary.txt
+
+/workspace/gitlab_snapshots:
+total 12
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 5 1000 1000 4096 Nov 12 13:09 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 cs-guides
+
+/workspace/gitlab_snapshots/cs-guides:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000  745 Nov 12 13:09 README.md
+-rwxr-xr-x 1 1000 1000  559 Nov 12 13:09 changelog.md
+
+/workspace/owncloud:
+total 36
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 5 1000 1000 4096 Nov 12 13:09 ..
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 Admin
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 FAQ
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 Handbooks
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 Policies
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 Product
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 SOPs
+drwxr-sr-x 4 1000 1000 4096 Nov 12 13:09 Training
+
+/workspace/owncloud/Admin:
+total 28
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1071 Nov 12 13:09 dept_contacts.json
+-rwxr-xr-x 1 1000 1000 1079 Nov 12 13:09 escalation_matrix.csv
+-rwxr-xr-x 1 1000 1000 2782 Nov 12 13:09 escalation_matrix.json
+-rwxr-xr-x 1 1000 1000 3773 Nov 12 13:09 escalation_matrix.xml
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 hr_reference
+
+/workspace/owncloud/Admin/hr_reference:
+total 12
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000  837 Nov 12 13:09 salary_bands_2025.csv
+
+/workspace/owncloud/FAQ:
+total 20
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1485 Nov 12 13:09 seasonal_faq.txt
+-rwxr-xr-x 1 1000 1000 3476 Nov 12 13:09 top_questions.json
+-rwxr-xr-x 1 1000 1000 2210 Nov 12 13:09 top_questions.md
+
+/workspace/owncloud/Handbooks:
+total 28
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 _private
+-rwxr-xr-x 1 1000 1000 2453 Nov 12 13:09 after_sales_troubleshooting_guide.md
+-rwxr-xr-x 1 1000 1000 1327 Nov 12 13:09 after_sales_troubleshooting_guide.pdf
+-rwxr-xr-x 1 1000 1000 2146 Nov 12 13:09 internal_handbook_v3.md
+-rwxr-xr-x 1 1000 1000 1830 Nov 12 13:09 internal_handbook_v3.pdf
+
+/workspace/owncloud/Handbooks/_private:
+total 12
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1309 Nov 12 13:09 Q1_agent_reviews.md
+
+/workspace/owncloud/Policies:
+total 36
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1380 Nov 12 13:09 audit_checklist.csv
+-rwxr-xr-x 1 1000 1000 2870 Nov 12 13:09 compliance_playbook.html
+-rwxr-xr-x 1 1000 1000 1911 Nov 12 13:09 compliance_playbook.md
+-rwxr-xr-x 1 1000 1000  874 Nov 12 13:09 compliance_playbook.pdf
+-rwxr-xr-x 1 1000 1000 1138 Nov 12 13:09 compliance_playbook.txt
+-rwxr-xr-x 1 1000 1000 1238 Nov 12 13:09 data_protection_policy.md
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 incident_logs
+
+/workspace/owncloud/Policies/incident_logs:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 3 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1163 Nov 12 13:09 INC-2025-0042_report.txt
+-rwxr-xr-x 1 1000 1000 1027 Nov 12 13:09 INC-2025-0087_summary.md
+
+/workspace/owncloud/Product:
+total 20
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1084 Nov 12 13:09 product_spec_2025.csv
+-rwxr-xr-x 1 1000 1000  944 Nov 12 13:09 product_spec_2025.md
+-rwxr-xr-x 1 1000 1000  795 Nov 12 13:09 product_spec_2025.pdf
+
+/workspace/owncloud/SOPs:
+total 20
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000  742 Nov 12 13:09 escalation_sop.csv
+-rwxr-xr-x 1 1000 1000 1343 Nov 12 13:09 refund_process.md
+-rwxr-xr-x 1 1000 1000 1835 Nov 12 13:09 ticket_handling_sop.md
+
+/workspace/owncloud/Training:
+total 28
+drwxr-sr-x 4 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 9 1000 1000 4096 Nov 12 13:09 ..
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 call_logs
+-rwxr-xr-x 1 1000 1000 2619 Nov 12 13:09 call_scripts_advanced.md
+-rwxr-xr-x 1 1000 1000 1828 Nov 12 13:09 call_scripts_basic.txt
+-rwxr-xr-x 1 1000 1000 1723 Nov 12 13:09 call_scripts_scenarios.yaml
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 recordings
+
+/workspace/owncloud/Training/call_logs:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 4 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 1625 Nov 12 13:09 agent_001_call_log.csv
+-rwxr-xr-x 1 1000 1000 1699 Nov 12 13:09 agent_002_call_log.csv
+
+/workspace/owncloud/Training/recordings:
+total 16
+drwxr-sr-x 2 1000 1000 4096 Nov 12 13:09 .
+drwxr-sr-x 4 1000 1000 4096 Nov 12 13:09 ..
+-rwxr-xr-x 1 1000 1000 2391 Nov 12 13:09 transcript_20251011.txt
+-rwxr-xr-x 1 1000 1000 2149 Nov 12 13:09 transcript_20251015.txt

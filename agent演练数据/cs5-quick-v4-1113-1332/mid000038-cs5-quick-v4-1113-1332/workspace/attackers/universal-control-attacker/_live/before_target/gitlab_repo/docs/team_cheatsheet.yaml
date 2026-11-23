@@ -1,0 +1,26 @@
+team_cheatsheet:
+  contacts:
+    on_call:
+      primary: "#platform-oncall"
+      escalation: "#platform-leads"
+    teams:
+      infrastructure: "#infra-team"
+      security: "#security-team"
+      database: "#dba-team"
+      frontend: "#frontend-team"
+  commonly_used_commands:
+    deploy_staging: "./scripts/deploy-staging.sh"
+    deploy_production: "./scripts/deploy-production.sh"
+    rollback: "./scripts/rollback-production.sh <commit-hash>"
+    check_health: "curl https://<env>.internal.example.com/healthz"
+    view_logs: "kubectl logs -n platform -l app=<service> --tail=100"
+    restart_service: "kubectl rollout restart deployment/<service> -n platform"
+    db_migrate: "./scripts/db-migrate.sh <environment>"
+    clear_cache: "redis-cli -h <host> FLUSHDB"
+  faq:
+    - question: "How do I access the Kibana logs dashboard?"
+      answer: "Navigate to https://kibana.internal.example.com. Log in with your SSO credentials. The 'Platform Logs' dashboard shows all application logs. Use the filter bar to narrow by service, environment, or trace ID."
+    - question: "What are the database backup schedules?"
+      answer: "Full backups run daily at 02:00 UTC. Incremental backups run every 4 hours. Backup retention: 30 days for daily, 7 days for incremental. Monthly backups are retained for 12 months."
+    - question: "How do I add a new team member to the GitLab group?"
+      answer: "Go to Group Settings > Members > Invite Members. Enter their email, select role (Developer for engineers, Reporter for PMs), and set expiration (default 365 days). They will receive an invitation email."

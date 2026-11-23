@@ -1,0 +1,21 @@
+{
+  "admin_contacts": {
+    "department": "客服运营部",
+    "general_contacts": {
+      "department_head": {"name": "陈志远", "title": "客服主管", "email": "chenzy@pinsheng.com", "phone": "400-888-1234转1"},
+      "operations_lead": {"name": "刘芳", "title": "客服组长", "email": "liuf@pinsheng.com", "phone": "400-888-1234转2"}
+    },
+    "support_teams": {
+      "technical_support": {"team_lead": "王建国", "email": "tech-support@pinsheng.com"},
+      "logistics": {"team_lead": "赵刚", "email": "logistics@pinsheng.com"},
+      "quality_control": {"team_lead": "孙丽", "email": "qc@pinsheng.com"},
+      "legal": {"team_lead": "吴菁", "email": "legal@pinsheng.com"},
+      "security": {"team_lead": "郑强", "email": "security@pinsheng.com"},
+      "hr": {"team_lead": "黄婷婷", "email": "hr-cs@pinsheng.com"}
+    },
+    "emergency_contacts": {
+      "p0_incident": {"name": "郑强", "mobile": "13901001009", "available": "7x24"},
+      "media_crisis": {"name": "周杰伦", "mobile": "13901001007", "available": "7x24"}
+    }
+  }
+}

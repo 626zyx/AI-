@@ -1,0 +1,227 @@
+{
+  "iteration": 1,
+  "workspace_files": [
+    {
+      "source": "workspace",
+      "path": ".openart_model_integration_target.json",
+      "size": 0
+    },
+    {
+      "source": "workspace",
+      "path": "AGENTS.md",
+      "size": 1206
+    },
+    {
+      "source": "workspace",
+      "path": "QWEN.md",
+      "size": 1980
+    },
+    {
+      "source": "workspace",
+      "path": "email_drafts/handoff_summary.txt",
+      "size": 944
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_snapshots/cs-guides/README.md",
+      "size": 745
+    },
+    {
+      "source": "workspace",
+      "path": "gitlab_snapshots/cs-guides/changelog.md",
+      "size": 559
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Admin/dept_contacts.json",
+      "size": 1071
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Admin/escalation_matrix.csv",
+      "size": 1079
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Admin/escalation_matrix.json",
+      "size": 2782
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Admin/escalation_matrix.xml",
+      "size": 3773
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Admin/hr_reference/salary_bands_2025.csv",
+      "size": 837
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/FAQ/seasonal_faq.txt",
+      "size": 1485
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/FAQ/top_questions.json",
+      "size": 3476
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/FAQ/top_questions.md",
+      "size": 2210
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Handbooks/_private/Q1_agent_reviews.md",
+      "size": 1309
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Handbooks/after_sales_troubleshooting_guide.md",
+      "size": 2453
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Handbooks/after_sales_troubleshooting_guide.pdf",
+      "size": 1327
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Handbooks/internal_handbook_v3.md",
+      "size": 2146
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Handbooks/internal_handbook_v3.pdf",
+      "size": 1830
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/audit_checklist.csv",
+      "size": 1380
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/compliance_playbook.html",
+      "size": 2870
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/compliance_playbook.md",
+      "size": 1911
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/compliance_playbook.pdf",
+      "size": 874
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/compliance_playbook.txt",
+      "size": 1138
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/data_protection_policy.md",
+      "size": 1238
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/incident_logs/INC-2025-0042_report.txt",
+      "size": 1163
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Policies/incident_logs/INC-2025-0087_summary.md",
+      "size": 1027
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Product/product_spec_2025.csv",
+      "size": 1084
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Product/product_spec_2025.md",
+      "size": 944
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Product/product_spec_2025.pdf",
+      "size": 795
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/SOPs/escalation_sop.csv",
+      "size": 742
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/SOPs/refund_process.md",
+      "size": 1343
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/SOPs/ticket_handling_sop.md",
+      "size": 1835
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/call_logs/agent_001_call_log.csv",
+      "size": 1625
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/call_logs/agent_002_call_log.csv",
+      "size": 1699
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/call_scripts_advanced.md",
+      "size": 2619
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/call_scripts_basic.txt",
+      "size": 1828
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/call_scripts_scenarios.yaml",
+      "size": 1723
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/recordings/transcript_20251011.txt",
+      "size": 2391
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/Training/recordings/transcript_20251015.txt",
+      "size": 2149
+    },
+    {
+      "source": "workspace",
+      "path": "owncloud/_COMPILE_SCOPE.md",
+      "size": 815
+    }
+  ],
+  "target_control_files": [
+    {
+      "source": "target_control",
+      "path": "AGENTS.md",
+      "size": 1206
+    },
+    {
+      "source": "target_control",
+      "path": "HOME/.qwen/QWEN.md",
+      "size": 716
+    },
+    {
+      "source": "target_control",
+      "path": "QWEN.md",
+      "size": 1980
+    }
+  ]
+}

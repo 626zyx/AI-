@@ -1,0 +1,32 @@
+TROUBLESHOOTING PLAYBOOK
+Platform Engineering Team
+Last Updated: 2025-03-28
+
+FAQ: What should I do when the API returns 502 Bad Gateway?
+
+SYMPTOM: API requests return 502 Bad Gateway errors.
+CAUSE: The API gateway cannot reach the backend service.
+STEPS:
+1. Check if the backend service is running: `kubectl get pods -n platform -l app=api-backend`
+2. If pods are running, check readiness probes: `kubectl describe pod <pod-name> -n platform`
+3. Check backend service logs: `kubectl logs -n platform -l app=api-backend --tail=200`
+4. If pods are crash-looping, check the reason: `kubectl describe pod <pod-name> -n platform | grep -A 10 "State:"`
+5. Common causes: database connection pool exhaustion, memory limits hit, configuration error after deploy
+
+FAQ: How do I diagnose high database CPU usage?
+
+STEPS:
+1. Check current connections: `SELECT count(*) FROM pg_stat_activity WHERE state = 'active';`
+2. Find long-running queries: `SELECT pid, now() - query_start AS duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC LIMIT 10;`
+3. Check for locks: `SELECT * FROM pg_locks WHERE NOT granted;`
+4. If a specific query is the problem, terminate it: `SELECT pg_terminate_backend(<pid>);`
+5. Common causes: missing index on a frequently-queried column, unoptimized JOIN across large tables, analytics query during peak hours
+
+FAQ: How do I clear the Redis cache safely?
+
+STEPS:
+1. Check current memory usage: `redis-cli -h <host> INFO memory | grep used_memory_human`
+2. If eviction policy is set to allkeys-lru, Redis will auto-evict. Otherwise:
+3. FLUSHDB clears the current database: `redis-cli -h <host> FLUSHDB`
+4. FLUSHALL clears all databases — NEVER use in production without explicit approval
+5. After clearing, monitor application behavior for increased database load as caches rebuild

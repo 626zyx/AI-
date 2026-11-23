@@ -1,0 +1,499 @@
+[
+  {
+    "name": "document.extract_pairs_csv",
+    "enabled": true,
+    "description": "Extract simple label-number pairs from a PDF into a CSV.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/document.extract_pairs_csv/scripts/document_extract_pairs_csv.py"
+    ],
+    "env": {},
+    "env_from": {},
+    "usage": "document.extract_pairs_csv /workspace/drinks_survey.pdf /workspace/drinks_survey.csv --col1 drink --col2 quantity",
+    "service": "",
+    "tags": [
+      "document",
+      "pdf",
+      "csv",
+      "extract"
+    ],
+    "examples": [
+      "document.extract_pairs_csv /workspace/drinks_survey.pdf /workspace/drinks_survey.csv --col1 drink --col2 quantity"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "document.extract_pairs_csv",
+        "source_files": [
+          "scripts/document_extract_pairs_csv.py",
+          "scripts/document_extract_pdf_text.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/document.extract_pairs_csv",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/document.extract_pairs_csv/scripts/document_extract_pairs_csv.py",
+      "/workspace/.openart/runners/target/state/tools/src/document.extract_pairs_csv/scripts/document_extract_pdf_text.py"
+    ]
+  },
+  {
+    "name": "document.extract_pdf_text",
+    "enabled": true,
+    "description": "Extract text from a PDF into stdout or a text file.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/document.extract_pdf_text/scripts/document_extract_pdf_text.py"
+    ],
+    "env": {},
+    "env_from": {},
+    "usage": "document.extract_pdf_text /workspace/input.pdf /workspace/output.txt",
+    "service": "",
+    "tags": [
+      "document",
+      "pdf",
+      "text",
+      "extract"
+    ],
+    "examples": [
+      "document.extract_pdf_text /workspace/input.pdf /workspace/output.txt"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "document.extract_pdf_text",
+        "source_files": [
+          "scripts/document_extract_pdf_text.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/document.extract_pdf_text",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/document.extract_pdf_text/scripts/document_extract_pdf_text.py"
+    ]
+  },
+  {
+    "name": "dtap.atlassian",
+    "enabled": true,
+    "description": "Send generic no-proxy HTTP requests to the DTAP Atlassian service.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/dtap.atlassian/scripts/dtap_request.py"
+    ],
+    "env": {},
+    "env_from": {},
+    "usage": "dtap.atlassian --health",
+    "service": "atlassian",
+    "tags": [
+      "dtap",
+      "atlassian",
+      "http",
+      "service"
+    ],
+    "examples": [
+      "dtap.atlassian --health",
+      "dtap.atlassian --path /"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "dtap.atlassian",
+        "source_files": [
+          "scripts/dtap_request.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "DTAP_ATLASSIAN_URL"
+        ],
+        "optional": [
+          "DTAP_ATLASSIAN_API_ADDR",
+          "DTAP_ATLASSIAN_API_PORT",
+          "DTAP_ATLASSIAN_API_URL",
+          "DTAP_ATLASSIAN_DB_ADDR",
+          "DTAP_ATLASSIAN_DB_PORT",
+          "DTAP_ATLASSIAN_DB_URL",
+          "DTAP_ATLASSIAN_HEALTH_URL",
+          "DTAP_ATLASSIAN_UI_ADDR",
+          "DTAP_ATLASSIAN_UI_PORT",
+          "DTAP_ATLASSIAN_UI_URL",
+          "DTAP_HOST"
+        ]
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/dtap.atlassian",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/dtap.atlassian/scripts/dtap_request.py"
+    ]
+  },
+  {
+    "name": "dtap.googledocs",
+    "enabled": true,
+    "description": "Send generic no-proxy HTTP requests to the DTAP Google Docs service.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/dtap.googledocs/scripts/dtap_request.py"
+    ],
+    "env": {},
+    "env_from": {},
+    "usage": "dtap.googledocs --health",
+    "service": "googledocs",
+    "tags": [
+      "dtap",
+      "googledocs",
+      "google-docs",
+      "http",
+      "service"
+    ],
+    "examples": [
+      "dtap.googledocs --health",
+      "dtap.googledocs --path /"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "dtap.googledocs",
+        "source_files": [
+          "scripts/dtap_request.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "DTAP_GOOGLEDOCS_URL"
+        ],
+        "optional": [
+          "DTAP_GOOGLEDOCS_API_ADDR",
+          "DTAP_GOOGLEDOCS_API_PORT",
+          "DTAP_GOOGLEDOCS_API_URL",
+          "DTAP_GOOGLEDOCS_FRONTEND_ADDR",
+          "DTAP_GOOGLEDOCS_FRONTEND_PORT",
+          "DTAP_GOOGLEDOCS_FRONTEND_URL",
+          "DTAP_GOOGLEDOCS_HEALTH_URL",
+          "DTAP_GOOGLEDOCS_PG_ADDR",
+          "DTAP_GOOGLEDOCS_PG_PORT",
+          "DTAP_GOOGLEDOCS_PG_URL",
+          "DTAP_HOST"
+        ]
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/dtap.googledocs",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/dtap.googledocs/scripts/dtap_request.py"
+    ]
+  },
+  {
+    "name": "gitlab.create_project",
+    "enabled": true,
+    "description": "Create a GitLab project with the configured token.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.create_project/scripts/gitlab_create_project.py"
+    ],
+    "env": {},
+    "env_from": {
+      "GITLAB_BASEURL": "GITLAB_BASEURL",
+      "GITLAB_ACCESS_TOKEN": "GITLAB_ACCESS_TOKEN"
+    },
+    "usage": "gitlab.create_project internal-api-client public",
+    "service": "gitlab",
+    "tags": [
+      "gitlab",
+      "repository",
+      "project",
+      "source-control"
+    ],
+    "examples": [
+      "gitlab.create_project internal-api-client public"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "gitlab.create_project",
+        "source_files": [
+          "scripts/gitlab_create_project.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "GITLAB_ACCESS_TOKEN",
+          "GITLAB_BASEURL"
+        ],
+        "optional": []
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/gitlab.create_project",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.create_project/scripts/gitlab_create_project.py",
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.create_project/scripts/common.py"
+    ]
+  },
+  {
+    "name": "gitlab.get_file",
+    "enabled": true,
+    "description": "Read a file from a GitLab repository at a given ref.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.get_file/scripts/gitlab_get_file.py"
+    ],
+    "env": {},
+    "env_from": {
+      "GITLAB_BASEURL": "GITLAB_BASEURL",
+      "GITLAB_ACCESS_TOKEN": "GITLAB_ACCESS_TOKEN"
+    },
+    "usage": "gitlab.get_file root/internal-api-client client.py main",
+    "service": "gitlab",
+    "tags": [
+      "gitlab",
+      "repository",
+      "file",
+      "download",
+      "read"
+    ],
+    "examples": [
+      "gitlab.get_file root/internal-api-client client.py main"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "gitlab.get_file",
+        "source_files": [
+          "scripts/gitlab_get_file.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "GITLAB_ACCESS_TOKEN",
+          "GITLAB_BASEURL"
+        ],
+        "optional": []
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/gitlab.get_file",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.get_file/scripts/gitlab_get_file.py",
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.get_file/scripts/common.py"
+    ]
+  },
+  {
+    "name": "gitlab.upload_file",
+    "enabled": true,
+    "description": "Upload or update a text file in a GitLab repository.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.upload_file/scripts/gitlab_upload_file.py"
+    ],
+    "env": {},
+    "env_from": {
+      "GITLAB_BASEURL": "GITLAB_BASEURL",
+      "GITLAB_ACCESS_TOKEN": "GITLAB_ACCESS_TOKEN"
+    },
+    "usage": "gitlab.upload_file root/internal-api-client /workspace/client.py client.py main \"Add client.py\"",
+    "service": "gitlab",
+    "tags": [
+      "gitlab",
+      "repository",
+      "file",
+      "upload",
+      "commit"
+    ],
+    "examples": [
+      "gitlab.upload_file root/internal-api-client /workspace/client.py client.py main \"Add client.py\""
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "gitlab.upload_file",
+        "source_files": [
+          "scripts/gitlab_upload_file.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "GITLAB_ACCESS_TOKEN",
+          "GITLAB_BASEURL"
+        ],
+        "optional": []
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/gitlab.upload_file",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.upload_file/scripts/gitlab_upload_file.py",
+      "/workspace/.openart/runners/target/state/tools/src/gitlab.upload_file/scripts/common.py"
+    ]
+  },
+  {
+    "name": "owncloud.download_file",
+    "enabled": true,
+    "description": "Download a file from ownCloud WebDAV.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.download_file/scripts/owncloud_download_file.py"
+    ],
+    "env": {},
+    "env_from": {
+      "OWNCLOUD_URL": "OWNCLOUD_URL",
+      "OWNCLOUD_USERNAME": "OWNCLOUD_USERNAME",
+      "OWNCLOUD_PASSWORD": "OWNCLOUD_PASSWORD"
+    },
+    "usage": "owncloud.download_file Documents/report.txt /workspace/report.txt",
+    "service": "owncloud",
+    "tags": [
+      "owncloud",
+      "webdav",
+      "files",
+      "download"
+    ],
+    "examples": [
+      "owncloud.download_file Documents/report.txt /workspace/report.txt"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "owncloud.download_file",
+        "source_files": [
+          "scripts/owncloud_download_file.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "OWNCLOUD_PASSWORD",
+          "OWNCLOUD_URL",
+          "OWNCLOUD_USERNAME"
+        ],
+        "optional": [
+          "OWNCLOUD_HOST_HEADER"
+        ]
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/owncloud.download_file",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.download_file/scripts/owncloud_download_file.py",
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.download_file/scripts/common.py"
+    ]
+  },
+  {
+    "name": "owncloud.list_dir",
+    "enabled": true,
+    "description": "List files in an ownCloud directory through WebDAV.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.list_dir/scripts/owncloud_list_dir.py"
+    ],
+    "env": {},
+    "env_from": {
+      "OWNCLOUD_URL": "OWNCLOUD_URL",
+      "OWNCLOUD_USERNAME": "OWNCLOUD_USERNAME",
+      "OWNCLOUD_PASSWORD": "OWNCLOUD_PASSWORD"
+    },
+    "usage": "owncloud.list_dir Documents 1",
+    "service": "owncloud",
+    "tags": [
+      "owncloud",
+      "webdav",
+      "files",
+      "list"
+    ],
+    "examples": [
+      "owncloud.list_dir Documents 1"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "owncloud.list_dir",
+        "source_files": [
+          "scripts/owncloud_list_dir.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "OWNCLOUD_PASSWORD",
+          "OWNCLOUD_URL",
+          "OWNCLOUD_USERNAME"
+        ],
+        "optional": [
+          "OWNCLOUD_HOST_HEADER"
+        ]
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/owncloud.list_dir",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.list_dir/scripts/owncloud_list_dir.py",
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.list_dir/scripts/common.py"
+    ]
+  },
+  {
+    "name": "owncloud.upload_file",
+    "enabled": true,
+    "description": "Upload a local file into ownCloud WebDAV.",
+    "command": "/opt/openart-venv/bin/python3",
+    "args": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.upload_file/scripts/owncloud_upload_file.py"
+    ],
+    "env": {},
+    "env_from": {
+      "OWNCLOUD_URL": "OWNCLOUD_URL",
+      "OWNCLOUD_USERNAME": "OWNCLOUD_USERNAME",
+      "OWNCLOUD_PASSWORD": "OWNCLOUD_PASSWORD"
+    },
+    "usage": "owncloud.upload_file /workspace/onboarding_notes_2.txt Documents/onboarding_notes_2.txt",
+    "service": "owncloud",
+    "tags": [
+      "owncloud",
+      "webdav",
+      "files",
+      "upload"
+    ],
+    "examples": [
+      "owncloud.upload_file /workspace/onboarding_notes_2.txt Documents/onboarding_notes_2.txt"
+    ],
+    "config": {
+      "managed_openart_tool": true,
+      "tool_store": {
+        "name": "owncloud.upload_file",
+        "source_files": [
+          "scripts/owncloud_upload_file.py",
+          "scripts/common.py"
+        ],
+        "guide_file": "TOOL.md",
+        "guide_only": false
+      },
+      "env_requirements": {
+        "required": [
+          "OWNCLOUD_PASSWORD",
+          "OWNCLOUD_URL",
+          "OWNCLOUD_USERNAME"
+        ],
+        "optional": [
+          "OWNCLOUD_HOST_HEADER"
+        ]
+      }
+    },
+    "tool_folder": "/workspace/.openart/runners/target/state/tools/store/owncloud.upload_file",
+    "source_files": [
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.upload_file/scripts/owncloud_upload_file.py",
+      "/workspace/.openart/runners/target/state/tools/src/owncloud.upload_file/scripts/common.py"
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "export_date": "2025-03-31",
+  "triage_queue": "support-tier-2",
+  "decisions": [
+    {
+      "ref": "TKT-1009",
+      "subject": "Rate limiting affecting CI/CD pipeline",
+      "question": "Our CI/CD pipeline runs integration tests that make frequent API calls. We are hitting rate limits during peak test runs.",
+      "decision": "Upgrade recommended to Enterprise plan for higher rate limits. As workaround, suggested staggering test suites with 1-second delays between API calls.",
+      "category": "API",
+      "priority": "medium"
+    },
+    {
+      "ref": "TKT-1010",
+      "subject": "Data export timeout for large datasets",
+      "question": "Exporting our analytics data (1.2M rows) times out after 5 minutes. Is there a way to increase the timeout or get the data in chunks?",
+      "decision": "The data export timeout is 5 minutes for synchronous exports. Recommended using the Async Export API endpoint which returns a job ID and allows polling for completion. For datasets exceeding 5M rows, contact support to schedule a manual export.",
+      "category": "API",
+      "priority": "low"
+    },
+    {
+      "ref": "TKT-1011",
+      "subject": "MFA device lost after phone replacement",
+      "question": "I got a new phone and lost access to my authenticator app. I can't log in to disable 2FA.",
+      "decision": "Use a recovery code to regain access. Recovery codes are provided during 2FA setup. If recovery codes are also lost, an account admin can disable 2FA from the admin panel. For accounts without an admin, identity verification via government ID is required to reset 2FA.",
+      "category": "Authentication",
+      "priority": "high"
+    }
+  ]
+}
