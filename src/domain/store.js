@@ -17,9 +17,12 @@ import { MODEL_STATUS } from './constants.js';
 import { scenes as rawScenes, advbench } from '../data/catalog.js';
 import { modelMethodCatalog as methodCatalog } from './method-catalog.js';
 import { functionalModels, saveFunctionalModel, removeFunctionalModel } from './functional-models.js';
+import { guardMethods as guards } from './system-guard.js';
+export { guardMethods as guards, guardMethod as guardOf, guardCapability, GUARD_STAGES } from './system-guard.js';
 import { activityNotifications } from './notifications.js';
 import { taskRepository } from './task-repository.js';
 import { createTaskService } from './task-service.js';
+import { createReportService } from './report-service.js';
 import { buildModelConfiguration } from './task-configuration.js';
 import { buildAgentConfiguration } from './agent-configuration.js';
 import { copyStrategyRecord, createStrategyVersion, freezeStrategyDependencies, withoutTaskJudge } from './strategy-service.js';
@@ -216,60 +219,7 @@ export function setStrategyStatus(id, enabled, type = 'model') {
   return strategy;
 }
 
-/* ---------------------------------------------------------------- 防护方法 */
-/* 平台内置，不属于用户资产：不进资产中心，也不向用户展示底层检测模型（内部为 Qwen3Guard-Gen）。
- * 维度沿用 Qwen3Guard 官方安全类别；拦截与处置逻辑待接入真实数据后再定。 */
-export const GUARD_STAGES = ['输入', '输出'];
-export const guards = [
-  {
-    id: 'grd-content-review',
-    name: '生成式内容审核',
-    desc: '对进入靶标的提示词或靶标生成的回复做内容安全审核，判定为安全、有争议、不安全三级。',
-    builtin: true, familyId: 'grd-content-review', version: '1.0', status: 'published', modelId: 'mdl-qwen-guard', threshold: 'unsafe', action: 'block', failureAction: 'block', updatedAt: '2026-11-23 09:00',
-    stages: ['输入', '输出'],
-    dims: [
-      ['暴力', '暴力行为、武器制作、伤害他人的指导'],
-      ['非暴力违法行为', '诈骗、盗窃、黑客攻击、毒品等违法活动'],
-      ['色情低俗内容', '色情、性行为描写及低俗内容'],
-      ['个人隐私信息', '泄露或索取身份证号、住址、联系方式等个人信息'],
-      ['自杀与自残', '鼓励或指导自杀、自残及极端行为'],
-      ['不道德行为', '歧视、仇恨言论、霸凌等违背社会公德的内容'],
-      ['政治敏感话题', '涉及政治敏感人物、事件的不当内容'],
-      ['版权侵犯', '未经授权复制、传播受版权保护的作品'],
-      ['越狱攻击', '试图绕过模型安全限制的提示词（仅输入侧）', 'input'],
-    ],
-    taskCount: 0,
-  },
-];
-export const guardOf = (id) => guards.find((g) => g.id === id);
-export function saveGuard(data) {
-  const old = guardOf(data.id);
-  if (old?.builtin || data.builtin) throw new Error('系统防护方法仅支持查看');
-  if (old && ['published', 'disabled'].includes(old.status)) throw new Error('已发布版本不可编辑，请创建新版本');
-  if (!String(data.name || '').trim()) throw new Error('请输入防护方法名称');
-  if (guards.some(g => g.id !== data.id && (g.familyId || g.id) !== data.familyId && g.name === data.name.trim())) throw new Error('策略名称已存在');
-  const model = modelsWithRole('防护').find(row => row.id === data.modelId);
-  if (data.status === 'published') {
-    if (!model) throw new Error('请选择已连通的防护模型');
-    if (!data.stages?.length) throw new Error('请选择输入或输出审核');
-    if (data.stages.some(stage => !(model.guardStages || GUARD_STAGES).includes(stage))) throw new Error('防护模型不支持所选审核位置');
-    if (!data.dims?.length) throw new Error('请选择审核维度');
-    if (!data.stages.includes('输入') && data.dims.some(dimension => dimension[2] === 'input')) throw new Error('越狱攻击维度仅支持输入审核');
-  }
-  const rec = { version: '1.0', status: 'draft', source: 'custom', ...old, ...structuredClone(data), name: data.name.trim(), updatedAt: nowText() };
-  if (model) rec.modelSnapshot = { id: model.id, name: model.name, apiModel: model.apiModel, revision: model.revision };
-  if (old) Object.assign(old, rec);
-  else { rec.id = `guard-${crypto.randomUUID()}`; rec.familyId ||= rec.id; guards.push(rec); }
-  return rec.id;
-}
-export function newGuardVersion(id) { const source = guardOf(id); if(source?.builtin)throw new Error('系统防护方法没有版本'); const next = createStrategyVersion(source, guards); return next.id || saveGuard(next); }
-export function setGuardStatus(id, enabled) {
-  const guard = guardOf(id);
-  if (guard?.builtin) throw new Error('系统防护方法仅支持查看');
-  if (!guard || !['published','disabled'].includes(guard.status)) throw new Error('请先发布防护方法');
-  guard.status = enabled ? 'published' : 'disabled';
-  return guard;
-}
+/* Built-in protection is a read-only system capability, outside model intake. */
 export const guardStageText = (t) => (t.guardStages?.length ? t.guardStages.join(' + ') : '输入 + 输出');
 
 /* ---------------------------------------------------------------- 攻击方法 */
@@ -626,7 +576,7 @@ export function agentResultRows() {
 
 /* Agent 演练报告：一任务一份 */
 export function listAgentReports() {
-  return listAgentTasks().filter((t) => t.status === 'done').map((t) => ({
+  return listAgentTasks().filter((t) => t.status === 'done' && !isReportDeleted(t.id, 'agent')).map((t) => ({
     id: `agrpt-${t.id}`,
     taskId: t.id,
     name: t.name,
@@ -883,7 +833,7 @@ export function logText(taskId) {
 
 /* 报告：一条任务一份，内容由真实单元生成 */
 export function listReports() {
-  return listTasks().filter((t) => t.status === 'done').map((t) => ({
+  return listTasks().filter((t) => t.status === 'done' && !isReportDeleted(t.id, 'model')).map((t) => ({
     id: `rpt-${t.id}`,
     taskId: t.id,
     name: t.name,
@@ -896,6 +846,7 @@ export function listReports() {
 }
 
 /* Task service commands are assembled once; pages keep using the store facade. */
+export const { deleteReport, restoreReport, isReportDeleted, subscribeReports } = createReportService({ getTask: (id, type) => type === 'agent' ? getAgentTask(id) : getTask(id) });
 export { listTaskTemplates, saveTask, copyTask, startTask, stopTask, deleteTask, restoreTask, subscribeTasks, advanceTaskReplay, initializeTaskRuntime };
 
 export function taskEvents(id, type = 'model') {

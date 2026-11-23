@@ -21,6 +21,7 @@ let batch=[],ruleDraft;
 const blankModel=()=>({name:'',apiModel:'',baseUrl:'',apiKey:'',apiType:'openai',roles:[],status:'planned'});
 const checked=name=>[...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el=>el.value);
 function modelForm(id=''){
+  if(id&&!functionalModel(id))return UI.toast('功能模型不存在');
   const m=functionalModel(id)||blankModel();
   const body=`<div class="form-grid">${field('模型名称 *',input('fm-name',m.name))}${field('模型标识 *',input('fm-model',m.apiModel))}
     ${field('接口协议',`<select id="fm-type">${options([['openai','OpenAI 兼容'],['guard','防护审核 API'],['embedding','Embeddings'],['image','图像生成 API']],m.apiType)}</select>`)}
@@ -77,7 +78,7 @@ export const actions={
   async fmTest(id){const m=functionalModel(id);if(!m)return;m.status='checking';router.nav('platform','roles');await new Promise(resolve=>setTimeout(resolve,220));try{checkFunctionalModel(id);router.nav('platform','roles');UI.toast(m.checkMessage);}catch(error){m.status='error';router.nav('platform','roles');UI.toast(error.message);}},
   roleForm(id){const m=functionalModel(id);if(!m)return;UI.modal('配置用途',`<div class="form-role-grid">${FUNCTIONAL_ROLES.map(role=>`<label class="check"><input type="checkbox" name="rf-role" value="${role}" ${m.roles.includes(role)?'checked':''}><span>${roleLabel(role)}</span></label>`).join('')}</div>`,UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('保存',{kind:'primary',onclick:`App.roleSave('${id}')`}));},
   roleSave(id){const m=functionalModel(id);if(!m)return;store.saveModel({...m,roles:checked('rf-role')});UI.closeModal();router.nav('platform','roles');},
-  fmDelete(id){if(store.modelUsage(id).length)return UI.toast('模型正在被引用，请先调整相关配置');UI.modal('删除功能模型',`<p>删除 ${esc(functionalModel(id)?.name)}？</p>`,UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('删除',{kind:'danger',onclick:`App.fmDeleteConfirm('${id}')`}));},
+  fmDelete(id){if(!functionalModel(id))return UI.toast('功能模型不存在');if(store.modelUsage(id).length)return UI.toast('模型正在被引用，请先调整相关配置');UI.modal('删除功能模型',`<p>删除 ${esc(functionalModel(id).name)}？</p>`,UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('删除',{kind:'danger',onclick:`App.fmDeleteConfirm('${id}')`}));},
   fmDeleteConfirm(id){try{store.deleteModel(id);UI.closeModal();router.nav('platform','roles');}catch(error){UI.toast(error.message);}},
   fmBatch(){batch=[blankModel(),blankModel(),blankModel()];renderBatch();},fmBatchAdd(){batch.push(blankModel());renderBatch();},fmBatchRemove(i){batch.splice(i,1);renderBatch();},fmBatchField(i,k,v){batch[i][k]=v;batch[i].error='';},fmBatchRole(role){if(role)batch.forEach(r=>r.roles=[role]);renderBatch();},fmBatchClose(){UI.closeModal();router.nav('platform','roles');},
   fmBatchPaste(){UI.modal('粘贴模型清单','<label class="field"><span>每行：名称、模型标识、服务地址、API Key</span><textarea id="fm-paste" rows="8" placeholder="使用制表符或逗号分隔"></textarea></label>',UI.btn('返回',{onclick:'App.fmBatchReturn()'})+UI.btn('解析',{kind:'primary',onclick:'App.fmBatchParse()'}),{wide:true});},fmBatchReturn:renderBatch,

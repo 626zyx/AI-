@@ -92,7 +92,7 @@ export function freezeStrategyDependencies(
     };
   });
   const guard = guards.find((item) => item.id === strategy.guardId);
-  snapshot.guardVersion = guard?.version || strategy.guardVersion || null;
+  snapshot.guardVersion = guard?.builtin ? null : guard?.version || strategy.guardVersion || null;
   snapshot.guardSnapshot = guard ? structuredClone(guard) : null;
   snapshot.guardStages = guard
     ? (strategy.guardStages || guard.stages).filter((stage) =>

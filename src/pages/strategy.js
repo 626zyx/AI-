@@ -59,21 +59,21 @@ export function guardStrategyPage() {
   const table = UI.pagedTable(
     'guards',
     [
-      { title: '方法名称', render: (g) => `<button class="link-btn" onclick="App.${!g.builtin&&g.status==='draft'?'guardForm':'openGuard'}('${g.id}')">${UI.esc(g.name)}</button>` },
-      { title:'来源',width:'80px',render:g=>UI.badge(g.builtin?'系统':'自建','gray') },
-      { title:'防护模型',render:g=>g.builtin?'—':UI.esc(store.modelName(g.modelId)||'—') },
+      { title: '方法名称', render: (g) => UI.linkBtn(g.name,{onclick:`App.openGuard('${g.id}')`}) },
+      { title:'来源',width:'80px',render:()=>UI.badge('系统','gray') },
+      { title:'防护模型',render:()=>'—' },
       { title: '审核维度', render: (g) => UI.tagList(g.dims.map(([n]) => n)) },
       { title: '可部署位置', width: '130px', render: (g) => g.stages.join(' / ') },
-      { title: '版本', width: '90px', render: g => g.builtin?'—':UI.linkBtn(releaseLabel(g.version),{onclick:`App.guardHistory('${g.id}')`}) },
+      { title: '版本', width: '90px', render: () => '—' },
       {
         title: '操作', width: '172px', cls: 'actions',
-        render: (g) => `<div class="row-actions strategy-row-actions">${g.builtin?UI.linkBtn('查看',{onclick:`App.openGuard('${g.id}')`}):UI.linkBtn(g.status==='draft'?'编辑':'详情',{onclick:`App.${g.status==='draft'?'guardForm':'openGuard'}('${g.id}')`})+(g.status!=='draft'?UI.linkBtn('新版本',{onclick:`App.guardNewVersion('${g.id}')`})+UI.moreMenu([[g.status==='disabled'?'启用':'停用',`App.guardToggle('${g.id}')`]]):'')}</div>`,
+        render: (g) => UI.linkBtn('查看',{onclick:`App.openGuard('${g.id}')`}),
       },
     ],
-    latestStrategyRows(store.guards),
+    store.guards,
     '暂无防护方法',
   );
-  return `${UI.pageHead('防护方法',{actions:UI.btn('新建防护方法',{kind:'primary',ico:'plus',onclick:'App.guardForm()'})})}
+  return `${UI.pageHead('防护方法')}
   ${UI.card('', table, '', true)}`;
 }
 
@@ -121,12 +121,12 @@ export const actions = {
     const g = store.guards.find((x) => x.id === id);
     if (!g) return;
     openConfigDetail('防护方法详情', detailContent(
-      detailBlock('方法基础信息', detailFields([['方法名称',g.name],['来源',g.builtin?'系统':'自建'],['版本',g.builtin?'—':releaseLabel(g.version)],...(!g.builtin?[['状态',store.STRATEGY_STATUS[g.status]]]:[]),['防护模型',g.builtin?'—':g.modelSnapshot?.name||store.modelName(g.modelId)]]))
+      detailBlock('方法基础信息', detailFields([['方法名称',g.name],['来源','系统'],['版本','—'],['防护模型','—']]))
       + detailBlock('详细配置信息', detailFields([
         ['防护位置',g.stages.join(' + ')],['拦截阈值',g.threshold==='unsafe'?'不安全':'有争议及以上'],['触发动作',g.action==='review'?'转人工复核':'阻断'],['异常处置',({block:'阻断',allow:'放行并记录',stop:'中止演练'})[g.failureAction]||'阻断'],
         ...(g.stages.includes('输入')?[['输入审核','请求送达靶标前审核']]:[]),...(g.stages.includes('输出')?[['输出审核','审核靶标生成的回复']]:[]), ['判定结果', '安全 / 有争议 / 不安全'],
       ]) + detailTableField(`审核维度（${g.dims.length}）`, UI.table([
         { title: '维度', render: row => UI.esc(row[0]) }, { title: '说明', render: row => UI.esc(row[1]) },
-      ], g.dims)))), (g.builtin?'':UI.btn('版本记录',{onclick:`App.guardHistory('${g.id}')`}) + UI.btn(g.status==='draft'?'编辑草稿':'创建新版本',{kind:'primary',onclick:`App.${g.status==='draft'?'guardForm':'guardNewVersion'}('${g.id}')`}) + (g.status==='draft'?'':UI.btn(g.status==='disabled'?'启用':'停用',{onclick:`App.guardToggle('${g.id}')`}))) + UI.btn('关闭',{onclick:'UI.closeDrawer()'}));
+      ], g.dims)))), UI.btn('关闭',{onclick:'UI.closeDrawer()'}));
   },
 };

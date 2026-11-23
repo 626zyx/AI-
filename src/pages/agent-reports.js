@@ -9,8 +9,8 @@ import { reportResultPanel } from './report-result.js';
 import { agentPerformance } from '../domain/agent-performance.js';
 import { agentErrorFramework } from '../domain/agent-error-framework.js';
 import { assessmentTask } from '../domain/task-assessment.js';
-import { agentTaskMetrics } from '../domain/metrics.js';
-import { taskMetricMarkdown, metricRuleBadge } from './task-metrics.js';
+import { taskMetricMarkdown } from './task-metrics.js';
+import { actions as reportManagementActions } from './report-management.js';
 import { agentAssessmentText } from './agent-evidence.js';
 import { agentDetailTable, agentQuestionNumber, agentUnitEvidenceHTML, agentDetailExportHTML, agentDetailMarkdown } from './agent-report-detail.js';
 import { emit, closePops, fmtOf } from '../core/export.js';
@@ -29,10 +29,9 @@ export function agentReportsPage() {
   const filters = UI.filters({ search: { label: '搜索', id: 'agrp-q', value: view.q, placeholder: '搜索报告或靶标', oninput: 'App.agrpSearch(this.value)' }, selects: [{ label: '靶标', id: 'agrp-target', value: view.targetId, onchange: 'App.agrpTarget(this.value)', options: [['all', '全部靶标'], ...targets] }] });
   const table = UI.pagedTable('ag-reports', [
     { title: '报告名称', render: row => `<button class="link-btn" onclick="App.openAgReport('${row.taskId}')">${UI.esc(row.name)}</button>` },
-    { title: '靶标', render: row => UI.esc(row.targetName) },
-    { title: '攻破率 / 等级', width: '160px', render: row => { const task = getTask(row.taskId), metric = agentTaskMetrics(task).asr; return `<span class="num">${metric.value == null ? '未评估' : UI.pct(metric.value)}</span> ${metricRuleBadge(task, 'asr', metric)}`; } },
+    { title: '靶标名称', render: row => UI.esc(row.targetName) },
     { title: '生成时间', width: '160px', sort: { direction: view.sortDesc ? 'descending' : 'ascending', onclick: 'App.agrpSort()' }, render: row => UI.esc(row.createdAt || '—') },
-    { title: '操作', width: '80px', render: row => UI.linkBtn('查看报告', { onclick: `App.openAgReport('${row.taskId}')` }) },
+    { title: '操作', width: '120px', cls: 'actions', render: row => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openAgReport('${row.taskId}')` })}${UI.linkBtn('删除', { danger: true, onclick: `App.rpDeleteReport('${row.taskId}','agent')` })}</div>` },
   ], rows, '暂无演练报告');
   return `${UI.pageHead('演练报告')}${filters}${UI.card('', table, '', true)}`;
 }
@@ -89,6 +88,7 @@ function analysisMarkdown(task) {
 }
 const refresh = () => router.nav('agent', 'ag-reports');
 export const actions = {
+  ...reportManagementActions,
   agrpSearch(value) { view.q = value; UI.resetPage('ag-reports'); refresh(); },
   agrpTarget(value) { view.targetId = value; UI.resetPage('ag-reports'); refresh(); },
   agrpSort() { view.sortDesc = !view.sortDesc; refresh(); },

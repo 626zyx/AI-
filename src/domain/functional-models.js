@@ -1,14 +1,15 @@
 /* Functional models have their own identity and lifecycle, separate from targets. */
+import { systemCapability } from './system-guard.js';
 export const FUNCTIONAL_ROLES = ['攻击生成', '裁判', '题库生成', '防护', '文本嵌入', '图像生成', '视觉理解'];
 export const FUNCTIONAL_ROLE_LABEL = { 题库生成: '场景生成', 裁判: '裁判模型', 防护: '防护审核' };
 export const functionalModels = [
   { id: 'mdl-deepseek-flash', name: 'DeepSeek-V3-Flash', vendor: 'DeepSeek', apiModel: 'deepseek-flash', baseUrl: 'https://api.deepseek.com', roles: ['攻击生成', '裁判', '题库生成'], reasoning: true },
   { id: 'mdl-deepseek-v4-pro', name: 'DeepSeek-V4-Pro', vendor: 'DeepSeek', apiModel: 'deepseek-v4-pro', baseUrl: 'https://api.deepseek.com', roles: ['攻击生成', '裁判'], reasoning: true },
-  { id: 'mdl-qwen-guard', name: 'Qwen3Guard', vendor: 'Alibaba', apiModel: 'qwen3guard-gen', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', roles: ['防护'], guardStages: ['输入', '输出'], responseFormat: 'label', labelMap: 'safe=允许; unsafe=阻断; controversial=复核' },
   { id: 'mdl-text-embedding', name: 'Text Embedding', vendor: 'Alibaba', apiModel: 'text-embedding-v3', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', roles: ['文本嵌入'] },
 ].map(model => ({ apiType: 'openai', apiKey: '', status: 'connected', statusLabel: '已连通', functional: true, revision: 1, ...model }));
 export function functionalModel(id) { return functionalModels.find(model => model.id === id); }
 export function validateFunctionalModel(data) {
+  if (systemCapability(data.id)) throw new Error('内置能力不属于接入模型');
   if (!String(data.name || '').trim()) throw new Error('请输入模型名称');
   if (!String(data.apiModel || '').trim()) throw new Error('请输入模型标识');
   let url;
@@ -39,4 +40,4 @@ export function checkFunctionalModel(id) {
   model.checkMessage = fail ? '连接超时，请检查服务地址' : '接口与响应格式验证通过';
   return model;
 }
-export function removeFunctionalModel(id) { const index = functionalModels.findIndex(item => item.id === id); if (index >= 0) functionalModels.splice(index, 1); }
+export function removeFunctionalModel(id) { if (systemCapability(id)) throw new Error('内置能力不属于接入模型'); const index = functionalModels.findIndex(item => item.id === id); if (index >= 0) functionalModels.splice(index, 1); }

@@ -4,7 +4,7 @@ import { pushNotification } from './notifications.js';
 const copy=value=>JSON.parse(JSON.stringify(value)), now=()=>new Date().toISOString();
 const listeners=new Set(), credentials=new Map(), running=new Map(), history=[];
 let serial=0;
-const seedAssets=listAssets().map(a=>({...a,id:a.sourceId||a.id,status:a.sourceStatus,version:a.enterpriseVersion,endpoint:a.baseUrl||a.runtimeEndpoint||a.image,changedAt:a.syncedAt}));
+const seedAssets=listAssets().map(a=>({...a,id:a.sourceId||a.id,status:a.sourceStatus,version:a.enterpriseVersion,endpoint:a.baseUrl||a.runtimeEndpoint||a.image,changedAt:a.sourceUpdatedAt}));
 const connectors=[{id:'enterprise-core',name:'企业 AI 资产平台',connector:'rest',baseUrl:'https://assets.enterprise.cn/api',resourcePath:'/ai-assets',authType:'bearer',credentialConfigured:true,listPath:'data.items',pageMode:'cursor',timeout:30,mapping:{id:'id',name:'name',kind:'kind',status:'status',version:'version',endpoint:'endpoint',updatedAt:'changedAt'},statusMap:{published:'已上线',draft:'未上线',disabled:'已停用'},kinds:['model','agent'],environment:'全部',department:'全部',selectedIds:seedAssets.map(a=>a.id),autoInclude:true,notifyChanges:true,interval:30,reconcile:'每日',webhook:false,status:'connected',lastSync:'2026-11-23T01:40:00.000Z',lastAttempt:'2026-11-23T01:40:00.000Z',nextSync:'2026-11-23T02:10:00.000Z',lastCount:seedAssets.length,error:'',syncCount:0}];
 const sources=new Map([['enterprise-core',seedAssets.map(a=>copy(a))]]);
 const emit=event=>{for(const fn of [...listeners])fn(event);};
@@ -36,14 +36,14 @@ export function connectionRecords(connection){
 export function filteredSourceRows(c){return connectionRecords(c).filter(a=>(c.kinds||[]).includes(a.kind)&&(!c.environment||c.environment==='全部'||a.environment===c.environment)&&(!c.department||c.department==='全部'||a.department===c.department));}
 function mappedRows(c){return filteredSourceRows(c).filter(row=>c.selectedIds===null||c.selectedIds?.includes(row.id)||c.autoInclude&&c.lastSync&&!listAssets().some(a=>a.sourceConnectionId===c.id&&a.sourceId===row.id)).map(row=>{
  const read=key=>row[c.mapping?.[key]||DEFAULT_MAPPING[key]];
- const mapped={...row,id:read('id'),sourceId:read('id'),name:read('name'),kind:read('kind'),enterpriseVersion:read('version'),sourceStatus:c.statusMap?.[read('status')]||read('status'),source:c.name,sourceConnectionId:c.id,syncedAt:now()};
+ const mapped={...row,id:read('id'),sourceId:read('id'),name:read('name'),kind:read('kind'),enterpriseVersion:read('version'),sourceStatus:c.statusMap?.[read('status')]||read('status'),source:c.name,sourceConnectionId:c.id,sourceUpdatedAt:read('updatedAt')??'',syncedAt:now()};
  if(mapped.kind==='model')mapped.baseUrl=read('endpoint');else if(/^https?:/i.test(read('endpoint')||''))mapped.runtimeEndpoint=read('endpoint');else mapped.image=read('endpoint');
  const errors=[];if(!mapped.id)errors.push('企业 ID 为空');if(!mapped.name)errors.push('资产名称为空');if(!['model','agent'].includes(mapped.kind))errors.push('类型无法识别');if(!mapped.enterpriseVersion)errors.push('企业版本为空');
  return {sourceId:row.id,data:mapped,errors};
 });}
 export function previewConnection(c){
  const rows=mappedRows(c),existing=listAssets();
- return rows.map(row=>{const old=existing.find(a=>a.sourceConnectionId===c.id&&a.sourceId===row.data.sourceId);const fields=['name','sourceStatus','enterpriseVersion','baseUrl','runtimeEndpoint','image','owner'];const changes=old?fields.filter(k=>String(old[k]??'')!==String(row.data[k]??'')).map(field=>({field,before:old[field]||'—',after:row.data[field]||'—'})):[];
+ return rows.map(row=>{const old=existing.find(a=>a.sourceConnectionId===c.id&&a.sourceId===row.data.sourceId);const fields=['name','sourceStatus','enterpriseVersion','baseUrl','runtimeEndpoint','image','owner','sourceUpdatedAt'];const changes=old?fields.filter(k=>String(old[k]??'')!==String(row.data[k]??'')).map(field=>({field,before:old[field]||'—',after:row.data[field]||'—'})):[];
  return {...row,operation:row.errors.length?'failed':!old?'added':changes.length?'updated':'unchanged',changes};});
 }
 export function saveConnection(draft){
@@ -58,7 +58,7 @@ function prepareSource(c){
  if(c.id!=='enterprise-core'||c.syncCount>0)return;
  const rows=sources.get(c.id);const model=rows.find(a=>a.kind==='model'&&a.id.includes('qwen'));
  if(model){model.version='2026.11.1';model.enterpriseVersion='2026.11.1';model.changedAt=now();}
- const agent=rows.find(a=>a.kind==='agent'&&a.id.includes('1195'));if(agent)agent.owner='智能应用 · 交付团队';
+ const agent=rows.find(a=>a.kind==='agent'&&a.id.includes('1195'));if(agent){agent.owner='智能应用 · 交付团队';agent.changedAt=now();}
  rows.push({id:'enterprise-policy-model',name:'政策问答模型',kind:'model',status:'未上线',sourceStatus:'未上线',version:'1.0.0',enterpriseVersion:'1.0.0',endpoint:'https://ai.enterprise.cn/policy/v1',baseUrl:'https://ai.enterprise.cn/policy/v1',apiModel:'policy-assistant',owner:'知识服务组',department:'模型研发部',environment:'预发布',tags:['政策问答'],changedAt:now()});
 }
 export async function synchronizeConnection(id,{wait=260,retryOnly=false}={}){

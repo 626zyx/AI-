@@ -3,7 +3,7 @@ import { models, agents } from './store.js';
 const clone=x=>JSON.parse(JSON.stringify(x)), clean=x=>String(x??'').trim(), now=()=>new Date().toISOString();
 const directory=new Map(), chosen=new Map(), secrets=new Map(), checks=new Map(), listeners=new Set();
 let serial=0;
-const metaKeys=['name','owner','source','sourceStatus','sourceConnectionId','sourceId','department','environment','tags','syncedAt'];
+const metaKeys=['name','owner','source','sourceStatus','sourceConnectionId','sourceId','department','environment','tags','sourceUpdatedAt','syncedAt'];
 const testKeys=['enterpriseVersion','kind','apiModel','apiType','image','command','taskInput','promptFlag','baseModelId','baseModelVersion','baseModelSnapshot','surfaceDeclarations'];
 const connKeys=['baseUrl','runtimeEndpoint','credentialRef'], configKeys=[...metaKeys,...testKeys,...connKeys];
 const vn=v=>Number(clean(v).replace(/^v/i,''))||1, cv=v=>'V'+vn(v), key=(id,v)=>id+'@'+cv(v);
@@ -15,7 +15,7 @@ function normalize(data,prev={}){
  const kind=clean(data.kind||data.type||prev.kind).toLowerCase();
  const x={...copyConfig(prev),kind,name:clean(data.name??prev.name),owner:clean(data.owner??prev.owner)||'待分配',source:clean(data.source??prev.source)||'手动上传',sourceStatus:clean(data.sourceStatus??prev.sourceStatus)||'未发布'};
  if(['停止','停用'].includes(x.sourceStatus))x.sourceStatus='已停用';
- for(const name of ['enterpriseVersion','sourceConnectionId','sourceId','department','environment','syncedAt','credentialRef'])if(data[name]!==undefined||prev[name]!==undefined)x[name]=clean(data[name]??prev[name]);
+ for(const name of ['enterpriseVersion','sourceConnectionId','sourceId','department','environment','sourceUpdatedAt','syncedAt','credentialRef'])if(data[name]!==undefined||prev[name]!==undefined)x[name]=clean(data[name]??prev[name]);
  x.tags=Array.isArray(data.tags??prev.tags)?clone(data.tags??prev.tags):[];
  if(kind==='model')Object.assign(x,{apiType:'openai',apiModel:clean(data.apiModel??prev.apiModel),baseUrl:clean(data.baseUrl??prev.baseUrl).replace(/\/+$/,'')});
  if(kind==='agent'){
@@ -33,7 +33,7 @@ for(const x of models.filter(x=>x.roles?.includes('靶标')))seed(x,'model');for
 for(const record of directory.values())for(const x of record.versions){
  x.sourceConnectionId='enterprise-core';x.sourceId=x.id;x.source='企业 AI 资产平台';x.sourceStatus='已上线';
  x.enterpriseVersion=x.kind==='model'?(x.id.includes('qwen')?'2026.11':'V3-0324'):x.id.includes('0210')?'0.2.10':x.id.includes('orchestrator')?'0.0.5-fixed':x.id.includes('1195')?'1.19.5':'0.5.2';
- x.department=x.kind==='model'?'模型研发部':'智能应用部';x.environment='生产';x.syncedAt='2026-11-23T01:40:00.000Z';x.tags=[x.kind==='model'?'对话服务':'业务交付'];
+ x.department=x.kind==='model'?'模型研发部':'智能应用部';x.environment='生产';x.sourceUpdatedAt||='2026-11-22T08:30:00.000Z';x.syncedAt='2026-11-23T01:40:00.000Z';x.tags=[x.kind==='model'?'对话服务':'业务交付'];
  if(x.kind==='agent'&&!x.baseModelSnapshot)x.baseModelSnapshot={id:x.baseModelId,name:'企业运行基座',status:'connected'};
 }
 export function getAsset(id,version){const x=current(id,version);return x?{...clone(x),latestVersion:directory.get(id).latestVersion,versions:clone(directory.get(id).versions)}:null;}
@@ -92,7 +92,7 @@ export function applyEnterpriseAsset(input, connectionId='enterprise-core') {
  const sourceId=clean(input.sourceId||input.id);
  const known=[...directory.values()].find(r=>r.versions.some(v=>v.sourceConnectionId===connectionId&&v.sourceId===sourceId));
  const id=known?.id||(connectionId==='enterprise-core'?sourceId:connectionId+':'+sourceId);
- const prev=known&&current(id,known.latestVersion);
+ const prev=known&&clone(current(id,known.latestVersion));
  const data={...input,id,version:prev?.version,sourceId,sourceConnectionId:connectionId,source:input.source||'企业资产平台',syncedAt:input.syncedAt||now()};
  const normalized=normalize(data,prev||{});
  const impact=prev?diff(prev,normalized,[...testKeys,...connKeys]):[];

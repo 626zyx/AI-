@@ -28,7 +28,7 @@ export function homeResources() {
   const models = store.platformModels(), rules = listGradeRules(), enabled = rules.filter(rule => rule.enabled);
   return [
     { id: 'strategies', label: '演练策略', icon: 'layers', count: model.length + agent.length, cards: [strategyCard(model, '模型演练', 'attack'), strategyCard(agent, '智能体演练', 'ag-strategy')] },
-    { id: 'resources', label: '底层资源', icon: 'book', count: selectableModelBanks().length + selectableAgentBanks().length + store.methods.length + store.agentMethods.length + store.guards.length, cards: [
+    { id: 'resources', label: '演练资源', icon: 'book', count: selectableModelBanks().length + selectableAgentBanks().length + store.methods.length + store.agentMethods.length + store.guards.length, cards: [
       { title: '模型场景与方法', value: selectableModelBanks().length, unit: '个场景题库', detail: `${store.methods.length} 种演练方法 · ${store.guards.length} 种防护方法`, tag: '查看', go: "App.go('strategy','banks')" },
       { title: '智能体场景与方法', value: selectableAgentBanks().length, unit: '个场景题库', detail: `${store.agentMethods.length} 种演练方法`, tag: '查看', go: "App.go('strategy','scenebanks')" },
     ] },
@@ -46,11 +46,11 @@ export function homeView(periodId = '7d', now = new Date()) {
   const reports = allTasks.filter(t => t.status === 'done' && period.includes(t.finishedAt));
   const graded = assets.filter(a => a.latest), pending = assets.filter(a => ['untested', 'retest'].includes(a.exercise));
   const grades = [['critical', '致命', '#c44b63'], ['high', '高危', '#dc8b50'], ['medium', '中危', '#d9b04f'], ['low', '低危', '#7198d3'], ['safe', '安全', '#4ea58e'], ['unassessed', '未评估', '#b8c3d3']].map(([key, label, color]) => ({ key, label, color, count: assets.filter(a => key === 'unassessed' ? !a.latest || a.grade.key === 'unassessed' : a.latest && a.grade.key === key).length }));
-  const attention = assets.map(asset => ({ ...asset, activityAt: [asset.updatedAt, asset.syncedAt, asset.latest?.at].filter(Boolean).sort((a, b) => activityTime(b) - activityTime(a))[0] })).filter(a => period.includes(a.activityAt)).sort((a, b) => activityTime(b.activityAt) - activityTime(a.activityAt));
+
   const connections = listConnections().map(c => ({ ...c, assetCount: assets.filter(a => a.sourceConnectionId === c.id).length, lastBatch: listSyncRuns(c.id)[0] || null }));
   // Report notifications already carry the assessment grade and open its frozen report.
   const notices = store.notifications().filter(n => period.includes(n.at)).map(n => ({ ...n, assessment: ['grade', 'report'].includes(n.type), urgent: ['grade', 'report'].includes(n.type) && /致命|高危/.test(`${n.title} ${n.meta}`) })).sort((a, b) => Number(b.assessment) - Number(a.assessment) || Number(b.urgent) - Number(a.urgent) || activityTime(b.at) - activityTime(a.at)).slice(0, 40);
-  return { period, assets, tasks, running, reports, graded, pending, grades, attention, connections, notices, resources: homeResources(), coverage: assets.length ? graded.length / assets.length : 0, errorTasks: tasks.filter(t => t.status === 'error') };
+  return { period, assets, tasks, running, reports, graded, pending, grades, connections, notices, resources: homeResources(), coverage: assets.length ? graded.length / assets.length : 0, errorTasks: tasks.filter(t => t.status === 'error') };
 }
 export function initialResources({ banks = [], sceneBanks = [] } = {}) { return [...banks.filter(b => b.source === 'system').map(b => ({ name: b.name, kind: '模型场景题库', page: 'strategy', sub: 'banks' })), ...sceneBanks.filter(b => b.source === 'system' && b.items?.length).map(b => ({ name: b.name, kind: '智能体场景题库', page: 'strategy', sub: 'scenebanks' }))]; }
 export { exerciseDemoSequences as welcomeSequences } from './exercise-demo.js';

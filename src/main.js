@@ -30,7 +30,6 @@ import { exerciseHubPage, actions as exerciseHubActions } from './pages/exercise
 import { assetIntakePage, actions as intakeActions } from './pages/asset-intake.js';
 import { initializeAssetBridge } from './domain/asset-bridge.js';
 import { resourceAuthoringPage, actions as authoringActions } from './pages/resource-authoring.js';
-import { actions as guardEditorActions } from './pages/guard-editor.js';
 import { captureCompletedTaskAssessment } from './domain/metrics.js';
 
 initializeAssetBridge();
@@ -100,7 +99,6 @@ window.App = Object.assign(
   intakeActions,
   exerciseHubActions,
   authoringActions,
-  guardEditorActions,
 );
 window.UI = ui;
 window.Shell = shell.api;

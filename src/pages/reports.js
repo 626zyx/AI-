@@ -12,6 +12,7 @@ import { configSummary } from '../core/task-config.js';
 import { roundInfo } from '../domain/task-rounds.js';
 import { roundCountText, breachRoundText, methodRoundMetrics, methodRoundColumns, methodRoundNote, methodPerformanceMd } from './report-rounds.js';
 import { reportQuestionCell, reportSection, reportDocument } from './report-format.js';
+import { actions as reportManagementActions } from './report-management.js';
 
 const view = { q: '', targetId: 'all', sortDesc: true };
 const detail = { tab: 'analysis', method: 'all', verdict: 'all', scene: 'all' };
@@ -53,7 +54,7 @@ export function reportsPage() {
         title: '操作', width: '120px', cls: 'actions',
         render: (r) => `<div class="row-actions">
           ${UI.linkBtn('详情', { onclick: `App.openReport('${r.taskId}')` })}
-          ${UI.linkBtn('删除', { danger: true, onclick: 'App.deleteBlocked()' })}
+          ${UI.linkBtn('删除', { danger: true, onclick: `App.rpDeleteReport('${r.taskId}','model')` })}
         </div>`,
       },
     ],
@@ -495,6 +496,7 @@ function completedTask(id) {
 
 /* ---------------------------------------------------------------- 操作 */
 export const actions = {
+  ...reportManagementActions,
   rpSearch(v) { view.q = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpFilter(k, v) { view[k] = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpSort() { view.sortDesc = !view.sortDesc; router.nav('exercise', 'reports'); },
