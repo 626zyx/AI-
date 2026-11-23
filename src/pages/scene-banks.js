@@ -1,17 +1,18 @@
 /* 策略中心 · 场景题库：列表 + 右侧抽屉详情。
  * 一个 domain 一套题库，与 openart_mid_by_domain 的 14 个包一一对应。
- * 风险标签是题目属性，用于结果归因；这里只展示，不参与任务创建。 */
+ * 场景标签是题目属性，用于结果归因；这里只展示，不参与任务创建。 */
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { RISK_LABEL } from '../domain/constants.js';
 import { detailFields, detailBlock, detailContent, openConfigDetail } from '../core/config-detail.js';
+import { authoringListRows, authoringState, authoringRowActions } from './resource-authoring.js';
 
 const view = { q: '' };
 
 /* ---------------------------------------------------------------- 列表 */
 export function sceneBanksPage() {
-  let rows = store.sceneBanks.filter(bank => bank.items?.length);
+  let rows = [...store.sceneBanks.filter(bank => !bank.archived && !bank.authoringId && bank.items?.length), ...authoringListRows('agent')];
   if (view.q.trim()) {
     const q = view.q.trim().toLowerCase();
     rows = rows.filter((b) => (b.name + b.code).toLowerCase().includes(q));
@@ -24,11 +25,12 @@ export function sceneBanksPage() {
   const table = UI.pagedTable(
     'scenebanks',
     [
-      { title: '题库名称', render: (b) => `<button class="link-btn" onclick="App.openSceneBank('${b.id}')">${UI.esc(b.name)}</button>` },
-      { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', b.source === 'system' ? 'blue' : 'gray') },
+      { title: '题库名称', render: (b) => `<button class="link-btn" onclick="App.${b.userResource ? 'raOpen' : 'openSceneBank'}('${b.id}')">${UI.esc(b.name)}</button>` },
+      { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', 'gray') },
       { title: '题目数', width: '90px', cls: 'num', render: (b) => `<span class="num">${b.items.length || b.total}</span>` },
+      { title: '版本', width: '145px', render: b => b.userResource ? authoringState(b) : '—' },
       {
-        title: '覆盖风险标签',
+        title: '覆盖场景',
         render: (b) => {
           const cov = store.bankLabelCoverage(b);
           const keys = Object.keys(cov);
@@ -38,7 +40,7 @@ export function sceneBanksPage() {
       },
       {
         title: '操作', width: '120px', cls: 'actions',
-        render: (b) => `<div class="row-actions">
+        render: (b) => b.userResource ? authoringRowActions(b) : `<div class="row-actions">
           ${UI.linkBtn('详情', { onclick: `App.openSceneBank('${b.id}')` })}
           ${UI.linkBtn('导出', { onclick: `App.sbExport('${b.id}')` })}
         </div>`,
@@ -48,7 +50,7 @@ export function sceneBanksPage() {
     '暂无场景题库',
   );
 
-  return `${UI.pageHead('场景题库')}${flt}${UI.card('', table, '', true)}`;
+  return `${UI.pageHead('场景题库', { actions: UI.btn('新建题库', { kind: 'primary', ico: 'plus', onclick: "App.raCreate('agent')" }) })}${flt}${UI.card('', table, '', true)}`;
 }
 
 /* ---------------------------------------------------------------- 题库详情（右侧抽屉） */
@@ -60,7 +62,7 @@ function bankBody(b) {
   const count = b.items.length || b.total;
   const base = detailBlock('题库基础信息', detailFields([
     ['题库名称', b.name], ['来源', b.source === 'system' ? '系统' : '自建'], ['题目数', count],
-    ['风险标签', Object.keys(cov).map(k => RISK_LABEL[k]?.label || k).join('、')],
+    ['场景标签', Object.keys(cov).map(k => RISK_LABEL[k]?.label || k).join('、')],
   ]));
   if (!b.items.length) return detailContent(base + detailBlock('题目内容', '<div class="empty"><strong>题目明细待导入</strong></div>'));
 
@@ -78,7 +80,7 @@ function bankBody(b) {
   const table = UI.table(
     [
       { title: '编号 / 任务目标', render: (i) => `<div class="mono faint text-support">${UI.esc(i.taskId)}</div>${UI.esc(i.goal || '—')}` },
-      { title: '风险标签', width: '32%', render: (i) => UI.tagList((i.labels || []).map((k) => RISK_LABEL[k]?.label || k)) },
+      { title: '场景标签', width: '32%', render: (i) => UI.tagList((i.labels || []).map((k) => RISK_LABEL[k]?.label || k)) },
     ],
     slice,
     '该筛选条件下暂无题目',
@@ -86,7 +88,7 @@ function bankBody(b) {
   return detailContent(base + detailBlock('题目内容', UI.filters({
     search: { label: '搜索', id: 'sbd-q', value: dView.q, placeholder: '搜索编号或任务目标', oninput: 'App.sbdSearch(this.value)' },
     selects: [{
-      label: '风险标签', id: 'sbd-label', value: dView.label, onchange: 'App.sbdLabel(this.value)',
+      label: '场景标签', id: 'sbd-label', value: dView.label, onchange: 'App.sbdLabel(this.value)',
       options: [['all', '全部标签'], ...Object.keys(cov).map((k) => [k, RISK_LABEL[k]?.label || k])],
     }],
   }) + table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.sbdPage({p})')));

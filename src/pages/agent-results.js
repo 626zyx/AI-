@@ -56,7 +56,7 @@ export function agentResultsPage() {
     '暂无 Agent 评估记录',
   );
 
-  return `${UI.pageHead('Agent 评估')}${flt}${UI.card('', table, '', true)}`;
+  return `${UI.pageHead('结果评估')}${flt}${UI.card('', table, '', true)}`;
 }
 
 export const actions = {

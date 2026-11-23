@@ -22,9 +22,9 @@ export function baseInfoRows(t) {
     ['演练类型', OBJECT_TYPE[t.objectType]?.label || '—'],
     ['靶标名称', UI.esc(t.targetName)],
     ['任务状态', UI.statusPill(t.status)],
-    ['攻击策略', UI.esc(t.strategyName)],
+    ['演练策略', UI.esc(t.strategyName)],
     ['裁判模型', UI.esc(t.judgeName)],
-    ['蓝队防护', t.guardId ? `${UI.esc(t.guardName)}·${(t.guardStages?.length ? t.guardStages : ['输入', '输出']).join('+')}` : `<span class="faint">${GUARD_NONE}</span>`],
+    ['防护方法', t.guardId ? `${UI.esc(t.guardName)}·${(t.guardStages?.length ? t.guardStages : ['输入', '输出']).join('+')}` : `<span class="faint">${GUARD_NONE}</span>`],
     ['创建时间', `<span class="num">${UI.esc(t.startedAt)}</span>`],
     ['完成时间', `<span class="num">${UI.esc(t.finishedAt || '—')}</span>`],
   ];
@@ -35,7 +35,7 @@ export function configRows(t) {
     .map((m) => `<div>${UI.esc(m.name)}（最大攻击轮数：${UI.esc(m.maxRounds ?? '—')}）</div>`)
     .join('');
   return [
-    ['攻击题库', UI.esc(store.bankRefText(t.bankName, t.bankCount))],
+    ['场景题库', UI.esc(store.bankRefText(t.bankName, t.bankCount))],
     ['攻击方法', `<div class="cfg-lines">${methods}</div>`],
     ['执行并发', t.concurrency ? `${t.concurrency}` : NOT_RECORDED],
     ['单次输出上限', t.maxTokens ? `${t.maxTokens} tokens` : NOT_RECORDED],

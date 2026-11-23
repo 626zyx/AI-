@@ -3,7 +3,7 @@ import { SIDE_NAV, SUB_PARENT } from '../domain/constants.js';
 
 const routes = new Map();
 /* 无侧栏栏目的默认子页 */
-const DEFAULT_SUB = { risk: 'events' };
+const DEFAULT_SUB = { assets: 'intake' };
 let current = { page: 'home', sub: 'home', param: null };
 
 export function register(page, sub, render) {
@@ -65,6 +65,11 @@ function navigate(next, options = {}, consumeHistory = false) {
 }
 
 export function nav(page, sub = null, param = null, options = {}) {
+  if (page === 'risk') { page = 'assets'; sub = 'intake'; param = null; }
+  if (page === 'assets' && sub === 'agent-detail') { sub = 'intake'; param = null; }
+  if (page === 'posture') { page = 'home'; sub = 'home'; }
+  if (page === 'platform' && sub === 'riskrule') sub = 'grading';
+  if (['results', 'ag-results', 'compare'].includes(sub)) { page = 'assets'; sub = 'intake'; }
   const side = SIDE_NAV[page];
   const target = sub || (side && side.length ? side[0].id : DEFAULT_SUB[page] || 'home');
   const next = { page, sub: target, param };

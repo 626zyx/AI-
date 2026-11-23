@@ -8,10 +8,12 @@ import { roundInfo } from '../domain/task-rounds.js';
 import { agentMetricLabel, agentMetricDefinition, isSemanticBaseline } from '../domain/metrics.js';
 import { currentTaskContent } from './task-content.js';
 import { agentTaskGoalHTML, injectionAssessmentHTML, agentAssessmentText } from './agent-evidence.js';
+import { taskMetricCards } from './task-metrics.js';
+import { assessmentTask } from '../domain/task-assessment.js';
 
 const views=new Map();
-const getTask=(id,type)=>type==='agent'?store.getAgentTask(id):store.getTask(id);
-const stageNames={preparing:'准备演练环境',ready:'红队、靶标与裁判就绪',attack:'红队生成攻击',input_guard:'蓝队输入审核',target:'靶标响应',output_guard:'蓝队输出审核',judge:'裁判评估',round_complete:'本轮结束',unit_complete:'单元结束',complete:'结果汇总完成'};
+const getTask=(id,type)=>{const task=type==='agent'?store.getAgentTask(id):store.getTask(id);return task?assessmentTask(task):null;};
+const stageNames={preparing:'准备演练环境',ready:'攻击生成、靶标与裁判就绪',attack:'生成攻击',input_guard:'防护输入审核',target:'靶标响应',output_guard:'防护输出审核',judge:'裁判评估',round_complete:'本轮结束',unit_complete:'单元结束',complete:'结果汇总完成'};
 const stageRoles={attack:'src',input_guard:'input_guard',target:'tgt',output_guard:'output_guard',judge:'judge',unit_complete:'judge'};
 const viewOf=id=>{if(!views.has(id))views.set(id,{selected:null,follow:true,tableFollow:true});return views.get(id);};
 const allUnits=t=>t.executionUnits||t.units||[];
@@ -62,7 +64,7 @@ function rowsHTML(t,v){
 function guardEvidence(g,position){
   const check=g?.[position];if(!check)return '';
   const blocked=g.action===(position==='input'?'block_input':'block_output');
-  return evidence(`蓝队${position==='input'?'输入':'输出'}审核 · ${blocked?'已拦截':'已审核'}`,[check.labelCn||check.label,...(check.categories||[])].filter(Boolean).join(' · '),'guard');
+  return evidence(`防护${position==='input'?'输入':'输出'}审核 · ${blocked?'已拦截':'已审核'}`,[check.labelCn||check.label,...(check.categories||[])].filter(Boolean).join(' · '),'guard');
 }
 
 function processHTML(t,u){
@@ -82,7 +84,7 @@ function processHTML(t,u){
   const heading=`<div class="ew-process-summary">${verdict(u)==='breach'?`<b>攻破轮：${budget(info.breachRound)}</b>`:''}<span>${UI.esc(u.method||t.techniqueName||'业务场景')}</span><span>轮次 ${status==='pending'?'—':`${budget(info.completedRounds)} / ${budget(info.maxRounds)}`}</span></div>`;
   const target=evidence(t.objectType==='agent'?'业务目标':'测试题目',u.target||u.goal);
   if(status==='pending')return heading+target+'<div class="ew-empty">待执行</div>';
-  const rounds=(u.history||[]).map(h=>`<article class="ew-round ${info.breachRound===h.round?'breached':''}"><h4>第 ${h.round} 轮 ${info.breachRound===h.round?'<span>已攻破</span>':''}</h4>${h.prompt?evidence('红队攻击',h.prompt,'attack'):''}${(h.steps||[]).map(s=>evidence(s.label||'提示变换',s.prompt,'attack')).join('')}${guardEvidence(h.guard,'input')}${h.guard?.action==='block_input'?'<div class="ew-blocked">输入被蓝队拦截，未进入靶标</div>':h.response||h.guard?.originalResponse?evidence('靶标响应',h.guard?.originalResponse||h.response,'target'):''}${guardEvidence(h.guard,'output')}${h.guard?.action==='block_output'&&h.response?evidence('最终返回',h.response,'guard'):''}${h.judgeReason||h.judge?.reason?evidence('本轮判定',h.judgeReason||h.judge.reason,'judge'):''}</article>`).join('');
+  const rounds=(u.history||[]).map(h=>`<article class="ew-round ${info.breachRound===h.round?'breached':''}"><h4>第 ${h.round} 轮 ${info.breachRound===h.round?'<span>已攻破</span>':''}</h4>${h.prompt?evidence('攻击内容',h.prompt,'attack'):''}${(h.steps||[]).map(s=>evidence(s.label||'提示变换',s.prompt,'attack')).join('')}${guardEvidence(h.guard,'input')}${h.guard?.action==='block_input'?'<div class="ew-blocked">输入被防护拦截，未进入靶标</div>':h.response||h.guard?.originalResponse?evidence('靶标响应',h.guard?.originalResponse||h.response,'target'):''}${guardEvidence(h.guard,'output')}${h.guard?.action==='block_output'&&h.response?evidence('最终返回',h.response,'guard'):''}${h.judgeReason||h.judge?.reason?evidence('本轮判定',h.judgeReason||h.judge.reason,'judge'):''}</article>`).join('');
   return heading+target+rounds+(status==='done'?evidence('单元最终判定',u.judgeReason,'judge'):'')+(status==='stopped'?'<div class="ew-blocked">本单元未完成，未计入有效判定。</div>':'');
 }
 
@@ -90,13 +92,14 @@ function logsHTML(t,type){
   const lines=t.executionMode==='replay'?store.taskEvents(t.id,type):(type==='agent'?store.agentLogLines(t.id):store.logLines(t.id));
   return lines.slice(-100).map(l=>`<div><time>${UI.esc(l.time||l.sourceTime||'')}</time><span>${UI.esc(l.text||'')}</span></div>`).join('')||'<div><span>配置已保存，等待启动演练。</span></div>';
 }
-const fallbackHTML=t=>`<div class="ew-flow-fallback"><span>${icon('layers',24)}红队</span>${guardPositions(t).includes('输入')?`<i>→</i><span>${icon('shield',24)}蓝队 · 输入</span>`:''}<i>→</i><span>${icon('cpu',24)}靶标</span>${guardPositions(t).includes('输出')?`<i>→</i><span>${icon('shield',24)}蓝队 · 输出</span>`:''}<i>→</i><span>${icon('check',24)}裁判</span></div>`;
+const fallbackHTML=t=>`<div class="ew-flow-fallback"><span>${icon('layers',24)}攻击生成</span>${guardPositions(t).includes('输入')?`<i>→</i><span>${icon('shield',24)}防护 · 输入</span>`:''}<i>→</i><span>${icon('cpu',24)}靶标</span>${guardPositions(t).includes('输出')?`<i>→</i><span>${icon('shield',24)}防护 · 输出</span>`:''}<i>→</i><span>${icon('check',24)}裁判</span></div>`;
 
 export function taskWorkspacePage(cur,type='model'){
   const t=getTask(cur.param,type);if(!t)return UI.pageHead('任务详情')+'<div class="empty">任务不存在</div>';
   const v=viewOf(t.id),u=selectedUnit(t,v);
   return `<div class="ew-workspace" data-workspace-task="${UI.esc(t.id)}" data-workspace-type="${type}">
     ${UI.backBtn()}${UI.pageHead(t.name,{extra:`<span data-ew-status>${UI.statusPill(t.status)}</span>`})}${configSummary(t,type)}
+    <section class="ew-task-metrics" data-ew-metrics aria-label="任务指标">${taskMetricCards(t)}</section>
     <section class="ew-execution" aria-label="演练进程">
       <header class="ew-execution-heading"><h2>演练进程</h2><div class="row-actions" data-ew-controls>${controlHTML(t,type)}</div></header>
       <div class="ew-grid">
@@ -161,6 +164,7 @@ export function mountTaskWorkspace(host=document){
     const process=q('[data-ew-process]'),list=q('[data-ew-table]'),logs=q('[data-ew-log]');
     const scroll={process:process.scrollTop,list:list.scrollTop,logs:logs.scrollTop,logEnd:logs.scrollHeight-logs.scrollTop-logs.clientHeight<25};
     patch('[data-ew-status]',UI.statusPill(t.status));patch('[data-ew-controls]',controlHTML(t,type));patch('[data-ew-results]',resultsHTML(t));
+    patch('[data-ew-metrics]',taskMetricCards(t));
     patch('[data-ew-rows]',rowsHTML(t,v));patch('[data-ew-process]',processHTML(t,u));patch('[data-ew-log]',logsHTML(t,type));patch('[data-ew-content]',contentHTML(t,u,v));
     patch('[data-ew-progress]',progressHTML(t));
     fitContent();

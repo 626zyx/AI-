@@ -35,20 +35,21 @@ export function reportDocument(sections) {
 export function mountReportDocument(host) {
   const report = host?.querySelector('.rr-document');
   if (!report) return () => {};
+  const scrollRoot = report.closest('.rr-report-scroll') || host;
   const sections = [...report.querySelectorAll('.rr-section')];
   const links = [...report.querySelectorAll('.rr-document-index button')];
   const update = () => {
-    const readingTop = host.getBoundingClientRect().top + 44;
-    const atEnd = host.scrollTop > 0 && host.scrollHeight - host.scrollTop - host.clientHeight <= 2;
+    const readingTop = scrollRoot.getBoundingClientRect().top + 44;
+    const atEnd = scrollRoot.scrollTop > 0 && scrollRoot.scrollHeight - scrollRoot.scrollTop - scrollRoot.clientHeight <= 2;
     const active = atEnd ? sections.at(-1) : sections.filter(section => section.getBoundingClientRect().top <= readingTop).at(-1) || sections[0];
     links.forEach(link => {
       if (link.getAttribute('aria-controls') === active?.id) link.setAttribute('aria-current', 'location');
       else link.removeAttribute('aria-current');
     });
   };
-  host.addEventListener('scroll', update, { passive: true });
+  scrollRoot.addEventListener('scroll', update, { passive: true });
   update();
-  return () => host.removeEventListener('scroll', update);
+  return () => scrollRoot.removeEventListener('scroll', update);
 }
 
 export const actions = {

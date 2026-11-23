@@ -1,0 +1,539 @@
+.ra-note {
+  color: var(--muted);
+  font-size: var(--t-support);
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.ra-entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.ra-entry-grid > button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 24px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.ra-entry-grid > button:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+.ra-entry-grid strong {
+  display: block;
+  font-size: var(--t-block);
+  margin-bottom: 12px;
+}
+.ra-entry-grid span {
+  font-size: var(--t-support);
+  line-height: 1.7;
+  color: var(--muted);
+}
+.ra-review-heading,
+.ra-review-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ra-review-heading {
+  justify-content: space-between;
+}
+.ra-candidates {
+  display: grid;
+  gap: 14px;
+}
+.ra-candidate {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 12px;
+}
+.ra-candidate-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ra-candidate-head label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ra-candidate-head select {
+  width: 125px;
+}
+.ra-candidate .field {
+  margin: 0;
+}
+.ra-details {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-top: 16px;
+}
+.ra-details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.ra-details pre {
+  font: 12px/1.7 var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ra-mono-input {
+  font: 12px/1.7 var(--font-mono) !important;
+}
+.ra-editor-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  font-size: var(--t-body);
+}
+.ra-editor-meta .link-btn {
+  margin-left: auto;
+}
+.ra-editor {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  height: 550px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  margin-bottom: 18px;
+}
+.ra-editor > aside {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+.ra-file-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ra-file-list {
+  overflow: auto;
+  padding: 8px 0;
+}
+.ra-file-list > button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  font: 12px var(--font-mono);
+  cursor: pointer;
+}
+.ra-file-list > button:hover {
+  background: var(--subtle);
+}
+.ra-file-list > button.active {
+  background: var(--selected);
+  border-left-color: var(--primary);
+  color: var(--primary);
+}
+.ra-editor > section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ra-code-toolbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  gap: 16px;
+  flex-shrink: 0;
+}
+.ra-code-toolbar > .mono {
+  font-size: var(--t-support);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ra-editor #ra-code {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  padding: 18px;
+  box-sizing: border-box;
+  font: 13px/1.8 var(--font-mono);
+  white-space: pre;
+  tab-size: 2;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+.ra-editor #ra-code[readonly] {
+  background: var(--subtle);
+}
+.ra-code-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  color: var(--muted);
+  font-size: var(--t-caption);
+  border-top: 1px solid var(--line);
+}
+.ra-checks {
+  display: grid;
+  gap: 12px;
+}
+.ra-checks > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ra-checks strong {
+  font-weight: 500;
+  font-size: var(--t-body);
+}
+.ra-checks .faint {
+  font-size: var(--t-support);
+}
+.ra-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ra-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.ra-preset.active {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+.ra-preset span {
+  font-size: var(--t-support);
+  color: var(--muted);
+  line-height: 1.6;
+}
+.ra-advanced {
+  margin: 12px 0;
+}
+.ra-advanced > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-size: var(--t-body);
+  padding: 8px 0;
+}
+@media (max-width: 1000px) {
+  .ra-entry-grid,
+  .ra-preset-grid {
+    grid-template-columns: 1fr;
+  }
+  .ra-editor {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .ra-editor-meta {
+    flex-wrap: wrap;
+  }
+}
+
+/* Viewport editor: each working surface owns its scroll position. */
+.strategy-form .form-sec h3 {
+  margin-bottom: 0;
+}
+.strategy-optional > summary {
+  color: var(--muted);
+  font-size: var(--t-support);
+  cursor: pointer;
+}
+.strategy-optional > .field {
+  margin-top: 10px;
+}
+.app-main:has(.ra-workspace) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.app-main:has(.ra-workspace) > .page {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ra-workspace {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+.ra-workspace > .page-heading {
+  flex: none;
+  margin-bottom: 0;
+}
+.ra-workspace .ra-editor-meta {
+  margin: 0;
+  flex: none;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ra-meta-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-left: auto;
+}
+.ra-question-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 0 2px;
+  min-height: 36px;
+}
+.ra-question-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+.ra-question-name > input {
+  max-width: 340px;
+  min-width: 140px;
+}
+.ra-question-name > .faint {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ra-workspace .ra-editor {
+  height: 0;
+  min-height: 0;
+  flex: 1 1 0;
+  grid-template-rows: minmax(0, 1fr);
+  margin: 0;
+  overflow: hidden;
+}
+.ra-workspace .ra-agent-editor {
+  grid-template-columns: minmax(170px, 22%) minmax(170px, 24%) minmax(0, 1fr);
+}
+.ra-workspace .ra-model-editor {
+  grid-template-columns: minmax(190px, 25%) minmax(0, 1fr);
+}
+.ra-workspace .ra-editor > aside,
+.ra-workspace .ra-editor > section {
+  min-height: 0;
+  overflow: hidden;
+}
+.ra-question-list {
+  flex: 1 1 0;
+  overflow: auto;
+  min-height: 0;
+  padding: 7px;
+}
+.ra-question-list > button {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 10px;
+  margin-bottom: 4px;
+  background: transparent;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.ra-question-list > button:hover {
+  background: var(--subtle);
+}
+.ra-question-list > button.active {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.ra-question-list > button > span:last-child {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+}
+.ra-question-number {
+  font: 12px var(--font-mono);
+  color: var(--muted);
+  padding-top: 3px;
+}
+.ra-question-list small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.ra-question-fields {
+  flex: 1 1 0;
+  overflow: auto;
+  min-height: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ra-question-fields .field {
+  margin: 0;
+}
+.ra-question-fields > * {
+  flex: none;
+}
+.ra-workspace .ra-file-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+.ra-workspace #ra-code {
+  flex: 1 1 0;
+  height: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.ra-workspace .ra-code-footer {
+  flex: none;
+}
+.ra-model-pane,
+.ra-code-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.ra-workspace #ra-report {
+  flex: none;
+  max-height: 100px;
+  overflow: auto;
+}
+.ra-validation-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.ra-loaded {
+  font-size: 12px;
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+.ra-form-error {
+  color: var(--danger, #bd4651);
+  font-size: 13px;
+  margin: 0;
+}
+.ra-judge-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.ra-judge-fields:disabled {
+  opacity: 0.65;
+}
+.ra-score-anchors {
+  display: grid;
+  gap: 8px;
+}
+.ra-score-anchors .field {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  margin: 0;
+}
+.ra-check-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+}
+.ra-check-label input {
+  width: auto;
+  height: auto;
+}
+@media (max-width: 1100px) {
+  .ra-workspace .ra-agent-editor {
+    grid-template-columns: 160px 180px minmax(0, 1fr);
+  }
+  .ra-meta-actions {
+    gap: 10px;
+  }
+  .ra-workspace .page-heading {
+    gap: 8px;
+  }
+  .ra-workspace .page-heading h1 {
+    font-size: 20px;
+  }
+  .ra-editor-meta {
+    font-size: 12px;
+  }
+  .ra-question-fields .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-height: 700px) {
+  .ra-workspace {
+    gap: 8px;
+  }
+  .ra-file-head,
+  .ra-code-toolbar {
+    height: 40px;
+  }
+  .ra-question-list > button {
+    padding: 8px;
+  }
+  .ra-question-fields {
+    padding: 14px;
+  }
+  .ra-question-toolbar {
+    min-height: 32px;
+  }
+}

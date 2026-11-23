@@ -14,19 +14,22 @@ export function buildAgentConfiguration(data, catalog, { draft = false } = {}) {
   if (method?.requiresRole && !attacker) throw new Error('演练策略的攻击生成模型不可用');
   const banks = (strategy?.banks || []).map(ref => {
     const bank = catalog.sceneBanks.find(item => item.id === ref.bankId);
-    if (!bank) throw new Error('演练策略引用的场景题库不可用');
+    if (!bank || bank.archived) throw new Error('演练策略引用的场景题库不可用');
     const count = ref.count == null ? bank.items.length : Math.min(ref.count, bank.items.length);
-    return { bankId: bank.id, name: bank.name, count, taskIds: bank.items.slice(0, count).map(item => item.taskId) };
+    return { bankId: bank.id, name: bank.name, version: bank.version || 'V1', count, taskIds: bank.items.slice(0, count).map(item => item.taskId) };
   });
   const taskIdSnapshot = [...new Set(banks.flatMap(bank => bank.taskIds))];
   if (!draft && !taskIdSnapshot.length) throw new Error('演练策略没有可用的场景题目');
   const requested = selectedAgentSurfaces(target, data.injectionSurfaceIds || []);
-  const requestedSurfaces = method?.id === 'baseline' ? [] : requested;
-  if (!draft && method?.id === 'universal' && !requestedSurfaces.length) throw new Error('请至少选择一个注入面文件');
+  const executionMethod = method?.baseMethod || method?.id;
+  const requestedSurfaces = executionMethod === 'baseline' ? [] : requested;
+  if (!draft && executionMethod === 'universal' && !requestedSurfaces.length) throw new Error('请至少选择一个注入面文件');
   return {
     objectType: 'agent', targetId: target?.id || '', targetName: target?.name || '',
-    strategyId: strategy?.id || '', strategyName: strategy?.name || '',
+    ...(target?.assetId && target.assetSnapshot ? { targetAssetId: target.assetId, targetAssetVersion: target.assetVersion, targetSnapshot: JSON.parse(JSON.stringify(target.assetSnapshot)) } : {}),
+    strategyId: strategy?.id || '', strategyName: strategy?.name || '', strategyVersion: strategy?.version || '1.0',
     technique: method?.id || '', techniqueName: method?.name || '',
+    ...(method?.authoringId ? { methodSnapshot: JSON.parse(JSON.stringify(method)), methodTemplate: method.template, executionMethod } : {}),
     attackerId: attacker?.id || null, attackerName: attacker?.name || null,
     banks, sceneBankId: banks.map(bank => bank.bankId).join(','), sceneBankName: banks.map(bank => bank.name).join('、'),
     taskIdSnapshot, total: taskIdSnapshot.length,

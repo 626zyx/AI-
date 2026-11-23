@@ -15,6 +15,7 @@
 .tw-content { padding: 26px 28px; min-height: 390px; }
 .tw-section { display: flex; flex-direction: column; gap: 22px; }
 .tw-section h2 { margin: 0; font-size: var(--t-block); font-weight: var(--w-strong); }
+.tw-section + .tw-section { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--line); }
 .tw-section > .tw-note { margin-top: -12px; }
 .tw-note { margin: 0; color: var(--muted); font-size: var(--t-support); line-height: var(--lh-body); }
 .tw-fields { display: flex; flex-direction: column; gap: 22px; }

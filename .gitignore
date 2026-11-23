@@ -1,5 +1,12 @@
 node_modules/
 __pycache__/
 *.pyc
-/方案/*
-!/方案/流程图/
+.DS_Store
+Thumbs.db
+/_tools/
+/_shots/
+/docs/
+/results/
+/scripts/
+/方案/
+*.log

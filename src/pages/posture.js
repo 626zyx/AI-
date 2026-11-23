@@ -26,7 +26,7 @@ function metricCell(m) {
 function metricsBand(b) {
   const seg = RANGES.map(([d, l]) => `<button class="${state.range === d ? 'active' : ''}" onclick="App.psRange(${d === null ? 'null' : d})">${l}</button>`).join('');
   return `<section class="ps-band">
-    <div class="ps-band-title"><span class="ps-mark"></span><h1>安全态势</h1><button class="link-btn ps-home-link" onclick="App.go('home','home')">初始首页</button></div>
+    <div class="ps-band-title"><span class="ps-mark"></span><h1>安全态势</h1><button class="link-btn ps-home-link" onclick="App.go('home','home')">返回工作台</button></div>
     <div class="ps-metrics" id="ps-metrics">${b.metrics.map(metricCell).join('')}</div>
     <div class="seg ps-seg">${seg}</div>
   </section>`;

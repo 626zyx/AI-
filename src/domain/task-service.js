@@ -3,9 +3,9 @@
  * 数据及仓库可注入，替换服务端 provider 时不改页面的任务契约。 */
 import { taskRepository } from './task-repository.js';
 import { buildReplayEvents, projectReplay } from './task-replay.js';
-import { replayMatchesConfiguration, resolveModelReplaySource } from './task-configuration.js';
+import { replayMatchesConfiguration, resolveModelReplaySource, bindTaskJudge } from './task-configuration.js';
 
-export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUnits, nowText, modelConfiguration, agentConfiguration, assertStrategyAvailable, repository: getRepository = taskRepository }) {
+export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUnits, nowText, modelConfiguration, agentConfiguration, assertStrategyAvailable, assertTargetAvailable, repository: getRepository = taskRepository }) {
   const replaySources = new Map();
   const runtimeErrors = new Map();
   const taskListeners = new Set();
@@ -81,7 +81,7 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
   }
 
   function configurationOf(source) {
-    const keys = ['objectType', 'targetId', 'targetName', 'strategyId', 'strategyName', 'judgeId', 'judgeName',
+    const keys = ['objectType', 'targetId', 'targetName', 'targetAssetId', 'targetAssetVersion', 'targetSnapshot', 'strategyId', 'strategyName', 'judgeId', 'judgeName',
       'guardId', 'guardName', 'guardStages', 'bankName', 'bankCount', 'concurrency', 'maxTokens',
       'sceneBankId', 'sceneBankName', 'technique', 'techniqueName', 'attackerId', 'attackerName', 'taskIdSnapshot', 'targetTimeout', 'total',
       'banks', 'guardEnabled', 'evaluationMetrics', 'maxRounds', 'stopRule', 'injectionSurfaceIds', 'requestedSurfaces',
@@ -119,8 +119,11 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
       if (old) {
         const sameId = key => String(nextInput[key] || '').replace(/^tgt-/, 'mdl-') === String(previousConfig[key] || '').replace(/^tgt-/, 'mdl-');
         const update = keys => keys.forEach(key => { config[key] = validated[key]; });
-        if (!sameId('targetId')) update(['targetId', 'targetName']);
-        if (!sameId('judgeId')) update(['judgeId', 'judgeName']);
+        if (!sameId('targetId') || validated.targetAssetId) update(['targetId', 'targetName', 'targetAssetId', 'targetAssetVersion', 'targetSnapshot']);
+        if (!sameId('judgeId')) {
+          update(['judgeId', 'judgeName']);
+          config.methods = bindTaskJudge(config.methods, { id: validated.judgeId, name: validated.judgeName });
+        }
         if (!sameId('strategyId')) update(['strategyId', 'strategyName', 'banks', 'bankName', 'bankCount', 'methods', 'total', 'attackerId', 'attackerName']);
         const sameGuard = (nextInput.guardEnabled ?? !!nextInput.guardId) === (previousConfig.guardEnabled ?? !!previousConfig.guardId)
           && String(nextInput.guardId || '') === String(previousConfig.guardId || '')
@@ -134,7 +137,7 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
       config = old ? copyTaskValue(previousConfig) : validated;
       if (old) {
         const update = keys => keys.forEach(key => { config[key] = validated[key]; });
-        if (nextInput.targetId !== previousConfig.targetId) update(['targetId', 'targetName']);
+        if (nextInput.targetId !== previousConfig.targetId || validated.targetAssetId) update(['targetId', 'targetName', 'targetAssetId', 'targetAssetVersion', 'targetSnapshot']);
         if (nextInput.judgeId !== previousConfig.judgeId) update(['judgeId', 'judgeName']);
         if (nextInput.strategyId !== previousConfig.strategyId) update(['strategyId', 'strategyName', 'banks', 'sceneBankId', 'sceneBankName', 'taskIdSnapshot', 'total', 'technique', 'techniqueName', 'attackerId', 'attackerName']);
         update(['injectionSurfaceIds', 'requestedSurfaces']);
@@ -148,7 +151,7 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     const id = old?.id || taskId(type);
     // Wizard position belongs to the draft, separate from its execution configuration.
     const savedStep = Number.isInteger(data.wizardStep) ? data.wizardStep : old?.wizardStep;
-    const lastStep = type === 'agent' ? 3 : 5;
+    const lastStep = 3;
     const wizardStep = Number.isInteger(savedStep) ? Math.max(0, Math.min(lastStep, savedStep)) : 0;
     const savedVisited = Number.isInteger(data.wizardVisited) ? data.wizardVisited : old?.wizardVisited;
     const wizardVisited = Number.isInteger(savedVisited) ? Math.max(wizardStep, Math.min(lastStep, savedVisited)) : wizardStep;
@@ -207,7 +210,8 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     if (record.status !== 'ready') throw new Error('只有待开始任务可以启动');
     // A saved snapshot preserves history, but does not authorize a new run with a removed strategy.
     try { assertStrategyAvailable?.(record.configSnapshot?.strategyId || record.strategyId, type); }
-    catch { throw new Error('该任务的演练策略已删除或不可用，请返回任务列表编辑红队配置后再开始'); }
+    catch { throw new Error('该任务的演练策略已删除或不可用，请返回任务列表编辑演练策略后再开始'); }
+    const executionTargetSnapshot = assertTargetAvailable?.(record.configSnapshot || record, type);
     let execution = record;
     if (record.configurationMode === 'selected') {
       // Configurations are already validated and snapshotted at save time. Asset edits do not rewrite them.
@@ -220,7 +224,7 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
           replayConfigMatches: type === 'agent' ? agentScore(source) === 6 && agentReplayScopeMatches(config, source) : replayMatchesConfiguration(config, source) };
     }
     sourceBundle(execution);
-    const next = { ...execution, status: 'running', startedAt: taskNow(), finishedAt: '', replayCursor: 1, updatedAt: taskNow() };
+    const next = { ...execution, ...(executionTargetSnapshot ? { executionTargetSnapshot } : {}), status: 'running', startedAt: taskNow(), finishedAt: '', replayCursor: 1, updatedAt: taskNow() };
     getRepository().put(next);
     runtimeErrors.delete(id);
     notifyTasks(id, type);
@@ -305,3 +309,4 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
 
   return { projectTask, listTaskTemplates, saveTask, copyTask, startTask, stopTask, deleteTask, restoreTask, subscribeTasks, advanceTaskReplay, initializeTaskRuntime };
 }
+

@@ -42,9 +42,13 @@ export function surfaceResponseTag(surface) {
   return `<span class="${cls}">${UI.esc(surfaceResponseLabel(surface))}${surface.inferred && surface.confidence ? ` · ${UI.esc(confidence[surface.confidence] || surface.confidence)}置信` : ''}</span>`;
 }
 export function injectionAlertHTML(unit) {
-  const surfaces = (unit.attack?.surfaces || []).filter(highlySuspectedSurface);
-  if (!surfaces.length) return '';
-  return `<aside class="agent-injection-alert" data-suspected-response="high"><strong>高度疑似响应 · ${UI.esc(surfaces.map(s => s.path).join('、'))}</strong><p>${UI.esc(surfaces.map(s => agentAssessmentText(s.reaction || surfaceResponseLabel(s))).join('\n'))}</p><small>${unit.verdict === 'breach' ? '本题已由产物确认受保护内容泄漏；注入因果归因为疑似。' : '结构或内容响应不等于泄漏；是否泄漏以独立语义判定为准。'}缺少完整轨迹，不据此确认加载或执行顺序。</small></aside>`;
+  const all = unit.attack?.surfaces || [];
+  if (!all.length) return '';
+  const suspected = all.filter(surface => surface.inferred && ['partial', 'adopted'].includes(surface.adopted));
+  const high = suspected.some(highlySuspectedSurface);
+  const level = high ? 'high' : suspected.some(surface => surface.confidence === 'medium') ? 'medium' : 'low';
+  const title = suspected.length ? `${high ? '高度疑似响应' : '疑似响应'} · ${confidence[level]}置信` : '注入响应概览';
+  return `<aside class="agent-injection-alert${high ? '' : ' is-neutral'}" data-suspected-response="${level}"><strong>${title}</strong><div class="agent-response-pills">${[['rejected', '拒绝'], ['partial', '部分采纳'], ['adopted', '采纳'], ['unknown', '待确认']].map(([key, label]) => `<span>${label} <b>${all.filter(surface => surface.adopted === key).length}</b></span>`).join('')}</div><small>${unit.verdict === 'breach' ? '已确认边界失守。' : '本题未确认攻破。'}注入交付、响应程度与安全后果分别判定。</small></aside>`;
 }
 export function injectionAssessmentHTML(unit) {
   const attack = unit.attack;

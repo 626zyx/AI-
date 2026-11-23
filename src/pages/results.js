@@ -78,7 +78,7 @@ export function resultsPage() {
     '暂无模型评估结果',
   );
 
-  return `${UI.pageHead('模型评估')}
+  return `${UI.pageHead('结果评估')}
   ${flt}
   ${UI.card('', table, '', true)}`;
 }

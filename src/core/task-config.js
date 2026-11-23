@@ -3,10 +3,13 @@
 import * as UI from './ui.js';
 import * as store from '../domain/store.js';
 import { TASK_STATUS, SURFACE_KIND } from '../domain/constants.js';
+import { releaseLabel } from '../domain/strategy-service.js';
 import { detailValue as value, detailFields as fields, detailBlock, detailTableField, methodConfigurationTable, openConfigDetail } from './config-detail.js';
 
 const configuration = task => ({ ...task, ...task.configSnapshot });
-const guardText = config => config.guardId ? `${config.guardName || '已启用'}${config.guardStages?.length ? ` · ${config.guardStages.join(' + ')}` : ''}` : '未启用';
+const strategyText = config => config.strategyName ? `${config.strategyName} · ${releaseLabel(config.strategyVersion || '1.0')}` : '';
+const guardName = config => `${config.guardName || '已启用'}${(config.guardSnapshot?.builtin ?? store.guardOf(config.guardId)?.builtin) ? '' : ` · ${releaseLabel(config.guardVersion || '1.0')}`}`;
+const guardText = config => config.guardId ? `${guardName(config)}${config.guardStages?.length ? ` · ${config.guardStages.map(stage=>stage+'审核').join(' + ')}` : ''}` : '未启用';
 
 export function configSummary(task, type = task.objectType || 'model') {
   const config = configuration(task);
@@ -14,9 +17,9 @@ export function configSummary(task, type = task.objectType || 'model') {
     <header class="tc-summary-heading"><h2>任务信息</h2><button class="link-btn tc-trigger" data-config-toggle aria-expanded="false" aria-haspopup="dialog">完整配置</button></header>
     <dl class="tc-overview${type === 'agent' ? ' tc-overview-agent' : ''}">
       <div><dt>靶标</dt><dd>${value(config.targetName)}</dd></div>
-      <div><dt>红队</dt><dd>${value(config.strategyName)}</dd></div>
-      ${type === 'agent' ? '' : `<div><dt>蓝队</dt><dd>${value(guardText(config))}</dd></div>`}
-      <div><dt>裁判</dt><dd>${value(config.judgeName)}</dd></div>
+      <div><dt>演练策略</dt><dd>${value(strategyText(config))}</dd></div>
+      ${type === 'agent' ? '' : `<div><dt>防护</dt><dd>${value(guardText(config))}</dd></div>`}
+      <div><dt>裁判模型</dt><dd>${value(config.judgeName)}</dd></div>
     </dl>
   </section>`;
 }
@@ -27,27 +30,26 @@ function methodRows(config) {
   return (config.methods || []).map(method => {
     const recorded = method.params;
     const params = recorded || strategy?.methods.find(m => m.name === method.name)?.params || [];
-    const auxiliary = method.auxiliaryModels || params.filter(([name]) => name.includes('模型')).map(([role, name]) => ({ role, name }));
-    return { ...method, params: params.filter(([name]) => !name.includes('模型')), auxiliary };
+    return { ...method, params };
   });
 }
 function bankScope(config, type) {
   if (type === 'agent') return `${config.sceneBankName || '场景题库'} · ${config.total || 0} 题`;
-  if (config.banks?.length) return config.banks.map(bank => `${bank.name || '攻击题库'} · ${bank.count} 题`).join('；');
+  if (config.banks?.length) return config.banks.map(bank => `${bank.name || '场景题库'} · ${bank.count} 题`).join('；');
   return config.bankName ? `${config.bankName} · ${config.bankCount ?? '—'} 题` : '—';
 }
 function detailedConfiguration(config, type) {
-  const red = fields([['策略名称', config.strategyName], ['题库范围', bankScope(config, type)]]);
+  const red = fields([['策略版本', strategyText(config)], ['题库范围', bankScope(config, type)]]);
   const methods = type === 'agent'
     ? fields([['攻击方法', config.techniqueName], ...(config.attackerName ? [['辅助模型', `攻击生成模型：${config.attackerName}`]] : [])])
     : detailTableField('攻击方法', methodConfigurationTable(methodRows(config)));
-  return `<section class="tc-config-group tc-config-object"><h4>被测对象</h4>${fields([['靶标名称', config.targetName]])}</section>
-    <section class="tc-config-group" data-config-red><h4>红队配置</h4>${red}${methods}${type === 'agent' ? fields([['注入面范围', config.technique === 'baseline' ? '不注入' : config.requestedSurfaces?.map(surface => `${SURFACE_KIND[surface.kind] || surface.kind} · ${surface.path}`).join('；') || '—']]) : ''}</section>
-    ${type === 'agent' ? '' : `<section class="tc-config-group" data-config-blue><h4>蓝队配置</h4>${fields([
+  return `<section class="tc-config-group tc-config-object"><h4>被测对象</h4>${fields([['靶标名称', config.targetName],['企业版本',config.targetSnapshot?.enterpriseVersion || config.targetAssetVersion || '当前版本']])}</section>
+    <section class="tc-config-group" data-config-red><h4>演练策略</h4>${red}${methods}${type === 'agent' ? fields([['注入面范围', config.technique === 'baseline' ? '不注入' : config.requestedSurfaces?.map(surface => `${SURFACE_KIND[surface.kind] || surface.kind} · ${surface.path}`).join('；') || '—']]) : ''}</section>
+    ${type === 'agent' ? '' : `<section class="tc-config-group" data-config-blue><h4>防护配置</h4>${fields([
       ['是否启用', config.guardId ? '已启用' : '未启用'],
-      ...(config.guardId ? [['防护策略', config.guardName], ['防护位置', (config.guardStages || []).join(' + ') || '未选择']] : []),
+      ...(config.guardId ? [['防护方法', guardName(config)], ['审核位置', (config.guardStages || []).map(stage=>stage+'审核').join(' + ') || '未选择']] : []),
     ])}</section>`}
-    <section class="tc-config-group"><h4>评估配置</h4>${fields([['裁判', config.judgeName], ['评估指标', type === 'agent' ? '攻击成功率（ASR）= 攻击成功数 / 总有效判定数' : '攻击成功率（ASR）']])}</section>
+    <section class="tc-config-group"><h4>评估配置</h4>${fields([['裁判模型', config.judgeName], ['评估指标', '攻破率（ASR）']])}</section>
     ${type === 'model' ? `<section class="tc-config-group"><h4>执行配置</h4>${fields([['并发数', config.concurrency ?? '—'], ['Token 限制', config.maxTokens ? `${config.maxTokens} tokens / 次` : '—']])}</section>` : ''}`;
 }
 function drawerBody(task, type) {

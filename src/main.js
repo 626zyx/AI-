@@ -5,52 +5,53 @@ import * as router from './core/router.js';
 import * as ui from './core/ui.js';
 import * as store from './domain/store.js';
 import { mountTaskConfig } from './core/task-config.js';
-import { taskWizardPage, warnOnUnsavedTask } from './pages/task-wizard.js';
+import { taskWizardPage, warnOnUnsavedTask, openTaskWizard } from './pages/task-wizard.js';
 import { actions as lifecycleActions } from './pages/task-list.js';
 import { mountTaskWorkspace } from './pages/task-workspace.js';
 import { actions as reportFormatActions, mountReportDocument } from './pages/report-format.js';
 
-import { posturePage, mountPosture, actions as postureActions } from './pages/posture.js';
-import { welcomePage, mountWelcome } from './pages/welcome.js';
+import { welcomePage, mountWelcome, actions as workbenchActions } from './pages/welcome.js';
 import { tasksPage, taskDetailPage, draftsPage, actions as taskActions } from './pages/tasks.js';
-import { resultsPage, comparePage, actions as resultActions } from './pages/results.js';
 import { reportsPage, reportDetailPage, actions as reportActions } from './pages/reports.js';
 import { attackStrategyPage, guardStrategyPage, actions as strategyActions } from './pages/strategy.js';
 import { methodsPage, banksPage, actions as libraryActions } from './pages/library.js';
-import { modelsPage, actions as assetActions } from './pages/assets.js';
-import { riskPage, actions as riskActions } from './pages/risk.js';
 import { rolesPage, riskRulePage, actions as platformActions } from './pages/platform.js';
 import { actions as editorActions } from './pages/strategy-editor.js';
 import { actions as wizardActions } from './pages/wizard.js';
 /* Agent 演练 */
 import { agentTasksPage, agentTaskDetailPage, agentDraftsPage, actions as agTaskActions } from './pages/agent-tasks.js';
-import { agentResultsPage, actions as agResultActions } from './pages/agent-results.js';
 import { agentReportsPage, agentReportDetailPage, actions as agReportActions } from './pages/agent-reports.js';
 import { agentStrategyPage, agentStrategyDetailPage, agentStrategyDraftsPage, actions as agStrategyActions } from './pages/agent-strategy.js';
 import { sceneBanksPage, actions as sceneBankActions } from './pages/scene-banks.js';
 import { agentMethodsPage, actions as agMethodActions } from './pages/agent-methods.js';
-import { agentsPage, agentAssetDetailPage, actions as agAssetActions } from './pages/agent-assets.js';
 import { actions as noticeActions } from './pages/notices.js';
 import { actions as guideActions } from './pages/user-guide.js';
+import { exerciseHubPage, actions as exerciseHubActions } from './pages/exercise-hub.js';
+import { assetIntakePage, actions as intakeActions } from './pages/asset-intake.js';
+import { initializeAssetBridge } from './domain/asset-bridge.js';
+import { resourceAuthoringPage, actions as authoringActions } from './pages/resource-authoring.js';
+import { actions as guardEditorActions } from './pages/guard-editor.js';
+import { captureCompletedTaskAssessment } from './domain/metrics.js';
 
-router.register('posture', 'home', posturePage);
+initializeAssetBridge();
+const captureCompletedAssessments = () => [...store.listTasks(), ...store.listAgentTasks()].forEach(captureCompletedTaskAssessment);
+captureCompletedAssessments();
+
 router.register('home', 'home', welcomePage);
-router.register('exercise', 'tasks', tasksPage);
-router.register('exercise', 'task-detail', taskDetailPage);
-router.register('exercise', 'drafts', draftsPage);
+router.register('exercise', 'tasks', exerciseHubPage);
+router.register('exercise', 'task-detail', exerciseHubPage);
+router.register('exercise', 'drafts', exerciseHubPage);
 router.register('exercise', 'task-create', taskWizardPage);
-router.register('exercise', 'results', resultsPage);
-router.register('exercise', 'compare', comparePage);
-router.register('exercise', 'reports', reportsPage);
-router.register('exercise', 'report-detail', reportDetailPage);
+router.register('exercise', 'reports', exerciseHubPage);
+router.register('exercise', 'report-detail', exerciseHubPage);
 /* Agent 演练：独立栏目，三个子页与模型演练同构但实现分离 */
-router.register('agent', 'ag-tasks', agentTasksPage);
-router.register('agent', 'ag-task-detail', agentTaskDetailPage);
-router.register('agent', 'ag-drafts', agentDraftsPage);
+router.register('agent', 'ag-tasks', exerciseHubPage);
+router.register('agent', 'ag-task-detail', exerciseHubPage);
+router.register('agent', 'ag-drafts', exerciseHubPage);
 router.register('agent', 'ag-task-create', taskWizardPage);
-router.register('agent', 'ag-results', agentResultsPage);
-router.register('agent', 'ag-reports', agentReportsPage);
-router.register('agent', 'ag-report-detail', agentReportDetailPage);
+router.register('agent', 'ag-reports', exerciseHubPage);
+router.register('agent', 'ag-report-detail', exerciseHubPage);
+router.register('strategy', 'authoring', resourceAuthoringPage);
 router.register('strategy', 'attack', attackStrategyPage);
 router.register('strategy', 'methods', methodsPage);
 router.register('strategy', 'banks', banksPage);
@@ -60,46 +61,46 @@ router.register('strategy', 'ag-strategy-detail', agentStrategyDetailPage);
 router.register('strategy', 'ag-strategy-drafts', agentStrategyDraftsPage);
 router.register('strategy', 'ag-methods', agentMethodsPage);
 router.register('strategy', 'scenebanks', sceneBanksPage);
-router.register('assets', 'models', modelsPage);
-router.register('assets', 'agents', agentsPage);
-router.register('assets', 'agent-detail', agentAssetDetailPage);
-router.register('risk', 'events', riskPage);
+router.register('assets', 'intake', assetIntakePage);
+router.register('assets', 'models', assetIntakePage);
+router.register('assets', 'agents', assetIntakePage);
 router.register('platform', 'roles', rolesPage);
 router.register('platform', 'riskrule', riskRulePage);
+router.register('platform', 'grading', riskRulePage);
 
 /* 全局命名空间：页面内 onclick 只调 App / UI / Shell 三个 */
 window.App = Object.assign(
   {
     go: (p, s, param) => router.nav(p, s, param),
     back: () => router.back(),
-    /* 删除全站只有一个实现：demo 不真正删除 */
+    v3Create: (kind='model', id, version) => openTaskWizard(kind, id ? { targetId: version ? id+'@'+version : id } : {}),
+    /* Compatibility for archived read-only resources. */
     deleteBlocked() {
-      ui.toast('demo 不支持真实删除功能');
+      ui.toast('当前记录正在被引用，无法删除');
     },
   },
-  postureActions,
+  workbenchActions,
   taskActions,
-  resultActions,
   reportActions,
   reportFormatActions,
   strategyActions,
   libraryActions,
-  assetActions,
-  riskActions,
   platformActions,
   wizardActions,
   editorActions,
   /* Agent 演练 */
   agTaskActions,
-  agResultActions,
   agReportActions,
   agStrategyActions,
   sceneBankActions,
   agMethodActions,
-  agAssetActions,
   noticeActions,
   guideActions,
   lifecycleActions,
+  intakeActions,
+  exerciseHubActions,
+  authoringActions,
+  guardEditorActions,
 );
 window.UI = ui;
 window.Shell = shell.api;
@@ -119,8 +120,8 @@ router.setRenderer(() => {
   disposePage();
   shell.render(router.state());
   const host=document.getElementById('app-main');
-  const configCleanup=mountTaskConfig(host),workspaceCleanup=mountTaskWorkspace(host),postureCleanup=mountPosture(host),welcomeCleanup=mountWelcome(host),reportCleanup=mountReportDocument(host);
-  disposePage=()=>{reportCleanup();welcomeCleanup();postureCleanup();workspaceCleanup();configCleanup();};
+  const configCleanup=mountTaskConfig(host),workspaceCleanup=mountTaskWorkspace(host),welcomeCleanup=mountWelcome(host),reportCleanup=mountReportDocument(host);
+  disposePage=()=>{reportCleanup();welcomeCleanup();workspaceCleanup();configCleanup();};
 });
 // The runtime outlives routes. Page subscriptions are explicitly disposed.
 const stopRuntime=store.initializeTaskRuntime();
@@ -133,6 +134,7 @@ const refreshTaskList=()=>{
   if(taskListActive())router.nav(cur.page,cur.sub,cur.param,{replace:true});
 };
 store.subscribeTasks(() => {
+  captureCompletedAssessments();
   if(!taskListActive())return;
   if(listInteractionActive()){pendingTaskListRefresh=true;return;}
   refreshTaskList();

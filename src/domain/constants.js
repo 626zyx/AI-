@@ -11,17 +11,25 @@ export const TASK_STATUS = {
 
 /* 模型在平台里承担的角色。资产中心与平台设置共用这一份定义。 */
 export const MODEL_ROLE = {
-  target: '靶标',
   attack: '攻击生成',
   judge: '裁判',
-  agentBase: '智能体基座',
+  generation: '题库生成',
+  guard: '防护',
+  embedding: '文本嵌入',
+  image: '图像生成',
+  vision: '视觉理解',
 };
 /* 角色说明：平台管理 · 模型管理里展示。一个角色可同时服务模型演练与 Agent 演练 */
 export const MODEL_ROLE_DESC = {
   靶标: '模型演练中被演练的对象，新建模型演练任务时可选',
   攻击生成: '模型演练中 PAIR 等方法改写攻击提示词；Agent 演练中间接注入方法的攻击者',
-  裁判: '模型演练的过程裁判与最终判定；Agent 演练对产物做泄漏判读',
+  裁判: '按场景评判标准进行判定',
   智能体基座: '接入智能体时可选为智能体背后调用的模型',
+  题库生成: '生成智能体场景题目',
+  防护: '输入与输出审核',
+  文本嵌入: '为演练方法提供向量检索',
+  图像生成: '生成多模态演练素材',
+  视觉理解: '理解图像与文本内容',
 };
 /* 接口类型：OpenRT 目前只有 OpenAI 兼容的 Chat Completions 实现 */
 export const API_TYPE = [
@@ -32,8 +40,8 @@ export const API_TYPE = [
 
 export const MODEL_STATUS = {
   connected: '已连通',
-  planned: '未连通',
-  error: '连接异常',
+  planned: '待连通',
+  error: '连通失败',
 };
 
 export const OBJECT_TYPE = {
@@ -132,16 +140,15 @@ export const GUARD_NONE = '未配置';
 
 export const NAV = [
   { id: 'home', label: '首页', icon: 'chart' },
+  { id: 'assets', label: '靶标状态', icon: 'box' },
   { id: 'exercise', label: '模型演练', icon: 'shield' },
-  { id: 'agent', label: 'Agent 演练', icon: 'box' },
-  { id: 'strategy', label: '策略中心', icon: 'layers' },
-  { id: 'assets', label: '资产中心', icon: 'box' },
-  { id: 'risk', label: '风险中心', icon: 'alert' },
+  { id: 'agent', label: '智能体演练', icon: 'box' },
+  { id: 'strategy', label: '演练策略', icon: 'layers' },
 ];
 
 /* 详情类子页在侧栏高亮其所属的列表项 */
 /* 不在顶栏、由右上角设置进入的栏目 */
-export const EXTRA_PAGES = { platform: '平台管理' };
+export const EXTRA_PAGES = { platform: '设置' };
 
 export const SUB_PARENT = {
   'task-detail': 'tasks', 'task-create': 'tasks', drafts: 'tasks', compare: 'results',
@@ -152,36 +159,32 @@ export const SUB_PARENT = {
   /* 策略中心 · Agent 演练策略 */
   'ag-strategy-detail': 'ag-strategy', 'ag-strategy-drafts': 'ag-strategy',
   /* 资产中心 · 智能体 */
-  'agent-detail': 'agents',
+  'agent-detail': 'intake',
+  authoring: 'banks',
 };
 
 export const SIDE_NAV = {
   exercise: [
     { id: 'tasks', label: '演练任务', icon: 'shield' },
     { id: 'reports', label: '演练报告', icon: 'file' },
-    { id: 'results', label: '模型评估', icon: 'chart' },
   ],
   agent: [
     { id: 'ag-tasks', label: '演练任务', icon: 'shield' },
     { id: 'ag-reports', label: '演练报告', icon: 'file' },
-    { id: 'ag-results', label: 'Agent 评估', icon: 'chart' },
   ],
   strategy: [
     { id: 'attack', label: '模型演练策略', icon: 'layers' },
-    { id: 'methods', label: '攻击方法', child: true },
-    { id: 'banks', label: '攻击题库', child: true },
-    { id: 'guard', label: '防护策略', child: true },
-    { id: 'ag-strategy', label: 'Agent 演练策略', icon: 'box' },
-    { id: 'ag-methods', label: '攻击方法', child: true },
+    { id: 'methods', label: '演练方法', child: true },
+    { id: 'banks', label: '场景题库', child: true },
+    { id: 'guard', label: '防护方法', child: true },
+    { id: 'ag-strategy', label: '智能体演练策略', icon: 'box' },
+    { id: 'ag-methods', label: '演练方法', child: true },
     { id: 'scenebanks', label: '场景题库', child: true },
   ],
-  assets: [
-    { id: 'models', label: '模型', icon: 'cpu' },
-    { id: 'agents', label: '智能体', icon: 'box' },
-  ],
+  assets: [],
   risk: [],
   platform: [
-    { id: 'roles', label: '模型管理', icon: 'cpu' },
-    { id: 'riskrule', label: '风险管理', icon: 'alert' },
+    { id: 'roles', label: '功能模型', icon: 'cpu' },
+    { id: 'grading', label: '数据等级规则', icon: 'chart' },
   ],
 };

@@ -6,7 +6,7 @@ export const detailFields = pairs => `<dl class="tc-fields">${pairs.map(([label,
 export const detailBlock = (title, body) => `<section class="tc-detail-block"><h3>${UI.esc(title)}</h3>${body}</section>`;
 export const detailContent = body => `<div class="tc-drawer-content">${body}</div>`;
 export const detailTableField = (title, body) => `<dl class="tc-fields tc-methods"><div><dt>${UI.esc(title)}</dt><dd>${body}</dd></div></dl>`;
-export const auxiliaryRole = role => role === '攻击者模型' ? '攻击生成模型' : role || '攻击生成模型';
+export const auxiliaryRole = role => /^(?:过程|最终)?裁判(?:模型)?$/.test(role || '') ? '裁判模型' : role === '攻击者模型' ? '攻击生成模型' : role || '攻击生成模型';
 
 export function methodConfigurationTable(methods) {
   return UI.table([
@@ -15,8 +15,9 @@ export function methodConfigurationTable(methods) {
     { title: '辅助模型', render: m => m.auxiliary.length ? m.auxiliary.map(model => `${detailValue(auxiliaryRole(model.role))}：${detailValue(model.name)}`).join('、') : '无需' },
   ], methods.map(m => {
     const params = m.params || [];
+    const auxiliary = [...new Map([...params.filter(([name]) => name.includes('模型')).map(([role, name]) => ({ role, name })), ...(m.auxiliary || m.auxiliaryModels || [])].map(model => [auxiliaryRole(model.role), model])).values()];
     return { ...m, params: params.filter(([name]) => !name.includes('模型')),
-      auxiliary: m.auxiliary || m.auxiliaryModels || params.filter(([name]) => name.includes('模型')).map(([role, name]) => ({ role, name })) };
+      auxiliary };
   }));
 }
 
