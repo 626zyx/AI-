@@ -1,109 +1,167 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
-import { getAsset, listAssetVersions, validateAsset, supplementAssetConnection } from '../domain/asset-intake.js';
-import { listAssetStates, assetState, assetAssessments, compareAssessments } from '../domain/asset-assessments.js';
-import * as Sync from '../domain/asset-sync.js';
-const e=UI.esc;
-const FILTER={kind:'all',status:'all',sourceStatus:'all',exercise:'all',grade:'all',query:''},selected=new Set();
-const CONNECTION={pending:['未检查','gray'],ready:['已连通','green'],failed:['连接失败','red'],incomplete:['待补齐连接','amber']};
-const EXERCISE={untested:['待演练','gray'],retest:['待复测','amber'],running:['演练中','blue'],done:['已完成','green']};
-const SYNC_STATUS={connected:['已连接','green'],syncing:['同步中','blue'],error:['同步异常','red'],partial:['部分成功','amber']};
-const CHANGE={added:['新增','blue'],updated:['更新','amber'],unchanged:['未变化','gray'],failed:['失败','red']};
-const FIELD_LABELS={name:'名称',sourceStatus:'企业状态',enterpriseVersion:'企业版本',baseUrl:'接口地址',runtimeEndpoint:'运行地址',image:'镜像',owner:'负责人',department:'部门',credentialRef:'凭据引用'};
-const date=value=>value?new Date(value).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'—';
-const q=value=>e(JSON.stringify(String(value??'')));
-const gradeBadge=grade=>`<span title="${e(['资产综合等级',grade.ruleName,grade.metricLabel,grade.condition].filter(Boolean).join(' · '))}">${UI.badge(grade.label,grade.cls)}</span>`;
-const label=kind=>kind==='agent'?'智能体':'模型';
-const badge=asset=>asset.busy?UI.badge('检查中','blue'):UI.badge(...(CONNECTION[asset.status]||CONNECTION.pending));
-const refresh=()=>{const cur=router.state();router.nav(cur.page,cur.sub,cur.param,{replace:true});};
-const field=(title,body,note='')=>`<label class="field"><span>${title}</span>${body}${note?`<small>${note}</small>`:''}</label>`;
-const input=(id,value,extra='')=>`<input id="${id}" value="${e(value||'')}" ${extra}>`;
-const options=(rows,current)=>rows.map(([value,text])=>`<option value="${e(value)}" ${value===current?'selected':''}>${e(text)}</option>`).join('');
-let selectedConnectionId='',wizard=null,detailTab='overview',detailId='',detailVersion='',batchBusy=false,comparisonRows=[];
-function connectionActions(c){return `${UI.linkBtn('连接配置',{onclick:`App.aiConnect(${q(c.id)})`})}${UI.linkBtn('同步记录',{onclick:`App.aiSyncHistory(${q(c.id)})`})}${UI.btn(c.status==='error'?'重试同步':c.status==='syncing'?'同步中…':'立即同步',{onclick:`App.aiSync(${q(c.id)})`,disabled:c.status==='syncing',ico:'refresh'})}`;}
-function connectionStrip(){
- const connections=Sync.listConnections(),c=connections.find(item=>item.id===selectedConnectionId)||connections[0];
- if(!c)return `<section class="ai-connection-strip ai-connection-empty"><span class="ai-connector-symbol">⇄</span><strong>企业平台连接</strong><span>尚未连接</span>${UI.btn('连接资产平台',{kind:'primary',onclick:'App.aiConnect()'})}</section>`;
- selectedConnectionId=c.id;
- return `<section class="ai-connection-strip" aria-label="企业平台连接"><span class="ai-connector-symbol">⇄</span><div class="ai-connection-identity"><span>企业平台连接${connections.length>1?` · ${connections.length} 个`:''}</span><select aria-label="选择企业平台连接" onchange="App.aiChooseConnection(this.value)">${options(connections.map(item=>[item.id,item.name]),c.id)}</select></div>${UI.badge(...(SYNC_STATUS[c.status]||SYNC_STATUS.connected))}<div class="ai-connection-facts"><div><span>同步靶标</span><strong>${c.lastCount||0}<small> 项</small></strong></div><div><span>同步频率</span><strong>${c.interval}<small> 分钟</small></strong></div><div><span>最近同步</span><strong>${date(c.lastSync)}</strong></div></div><div class="ai-connection-actions">${connectionActions(c)}</div>${c.error?`<p class="ai-connection-error">${e(c.error)}</p>`:''}</section>`;
+import { listAssets, listModelResources, deleteModelResource, getAsset, getAssetSnapshot, listAssetVersions, listTestableAssets, selectAssetVersion, saveAsset, validateAsset, importAssets, importManualAgents, previewManualAgents, assetVersionLabel, manualAgentDeleteError, deleteManualAgent, previewAssets, parseAssetImport, ASSET_IMPORT_EXAMPLE, listPlatformConnections, listPlatformSyncedAssets, getPlatformConnection, platformCatalog, importPlatformAssets } from '../domain/asset-intake.js';
+import { syncPlatformConnection } from '../domain/platform-connection.js';
+import { openAgentIntake } from './agent-intake.js';
+import { openModelIntake, modelDetail } from './model-intake.js';
+const TABS=[['connection','企业资产平台连接'],['manual','人工上传'],['models','模型接入配置']];
+let activeTab='connection',catalogConnectionId='',catalogSelection=new Set();
+export function selectIntakeTab(tab){if(TABS.some(([id])=>id===tab))activeTab=tab;}
+const FILTER={kind:'all',status:'all',sourceStatus:'all',query:''},selected=new Set();
+const STATUS={pending:['待测试','amber'],ready:['已连通','green'],failed:['连通失败','red']};
+const e=UI.esc, val=id=>document.getElementById(id)?.value?.trim()||'', typeName=k=>k==='agent'?'Agent':'模型';
+const routeKey=()=>{const r=router.state();return [r.page,r.sub,r.param||''].join('/');};
+const key=x=>x.id+'@'+x.version, refresh=()=>router.nav(router.state().page==='platform'?'platform':'assets','intake'), message=error=>UI.toast(error.message||String(error));
+let preview=[],pageRows=[],batchBusy=false,detailKey='';
+const badge=x=>x.sourceStatus==='已停用'?UI.badge('源已停用','gray'):x.busy?UI.badge('检查中','blue'):UI.badge(...STATUS[x.status]);
+const surfaceTypes=[['instruction','指令文件'],['rule','规则文件'],['skill','技能文件'],['command','命令文件'],['memory:long_term','长期记忆'],['memory:conversation','会话历史'],['memory:task_state','任务状态'],['configuration','配置文件']];
+function splitKey(value){const index=value.lastIndexOf('@');return[value.slice(0,index),value.slice(index+1)];}
+function selectedAssets(){return[...selected].map(x=>getAsset(...splitKey(x))).filter(Boolean);}
+function currentRows(){
+ if(activeTab==='models'){const query=FILTER.query.trim().toLowerCase();return listModelResources().filter(x=>(FILTER.status==='all'||x.status===FILTER.status)&&(!query||[x.name,x.apiModel,x.baseUrl].join(' ').toLowerCase().includes(query)));}
+ const query=FILTER.query.trim().toLowerCase();
+ return listAssets({kind:'agent'}).flatMap(asset=>listAssetVersions(asset.id)).filter(asset=>!asset.platformConnectionId&&
+  (FILTER.sourceStatus==='all'||asset.sourceStatus===FILTER.sourceStatus)&&
+  (!query||[asset.name,asset.id,asset.owner].join(' ').toLowerCase().includes(query)));
 }
-export function assetIntakePage(cur={}){
- const rows=listAssetStates(FILTER),pg=UI.paginate('asset-intake',rows);
- const filters=UI.filters({search:{label:'搜索',id:'ai-search',value:FILTER.query,placeholder:'靶标名称、企业 ID、负责人',oninput:'App.aiFilter("query",this.value)'},selects:[
- {label:'类型',id:'ai-kind',value:FILTER.kind,onchange:'App.aiFilter("kind",this.value)',options:[['all','全部类型'],['model','模型'],['agent','智能体']]},
- {label:'企业状态',id:'ai-source',value:FILTER.sourceStatus,onchange:'App.aiFilter("sourceStatus",this.value)',options:[['all','全部状态'],...['已上线','未上线','已停用','已移除'].map(x=>[x,x])]},
- {label:'连接',id:'ai-status',value:FILTER.status,onchange:'App.aiFilter("status",this.value)',options:[['all','全部状态'],...Object.entries(CONNECTION).map(([k,[v]])=>[k,v])]},
- {label:'演练',id:'ai-exercise',value:FILTER.exercise,onchange:'App.aiFilter("exercise",this.value)',options:[['all','全部状态'],['pending','待演练 / 待复测'],...Object.entries(EXERCISE).map(([k,[v]])=>[k,v])]},
- {label:'等级',id:'ai-grade',value:FILTER.grade,onchange:'App.aiFilter("grade",this.value)',options:[['all','全部等级'],['fatal','致命'],['critical','致命'],['high','高危'],['medium','中危'],['low','低危'],['safe','安全'],['unknown','未评估']].filter((x,i)=>i!==1)}]});
- const bulk=`<div class="ai-bulk"><span>已选 <strong>${selected.size}</strong> 项</span>${UI.linkBtn('清空',{onclick:'App.aiClearSelection()',disabled:!selected.size})}<div class="ai-bulk-right">${UI.btn('批量检查',{onclick:'App.aiValidateSelected()',disabled:!selected.size||batchBusy})}${UI.btn('结果对比',{onclick:'App.aiCompareSelected()',disabled:!selected.size})}</div></div>`;
+function manualMore(x){return UI.moreMenu([
+ ['新版本',"App.aiNewVersion('"+x.id+"','"+x.version+"')"],
+ ['删除',"App.aiDeleteAgent('"+x.id+"','"+x.version+"')",{danger:true,disabled:Boolean(manualAgentDeleteError(x.id,x.version))}]
+]);}
+const sourceBadge=x=>UI.badge(x.sourceStatus,({'已发布':'green','未发布':'amber','已停用':'gray'})[x.sourceStatus]||'gray');
+const displayTime=value=>value?e(new Date(value).toLocaleString('zh-CN',{hour12:false})):'—';
+function manualTable(){
+ const rows=currentRows(),pg=UI.paginate('asset-intake',rows);
+ const filters=UI.filters({search:{label:'搜索',id:'ai-search',value:FILTER.query,placeholder:'Agent 名称、ID、负责人',oninput:'App.aiFilter("query",this.value)'},selects:[{label:'资产状态',id:'ai-source-filter',value:FILTER.sourceStatus,onchange:'App.aiFilter("sourceStatus",this.value)',options:[['all','全部状态'],...['未发布','已发布','已停用'].map(value=>[value,value])]}],right:'<div class="ai-filter-actions">'+UI.btn('批量上传',{onclick:'App.aiImport()',ico:'upload'})+UI.btn('快捷上传',{kind:'primary',onclick:"App.aiUpload('agent')",ico:'plus'})+'</div>'});
  const table=UI.table([
- {title:`<input type="checkbox" aria-label="选择当前页" ${pg.slice.length&&pg.slice.every(a=>selected.has(a.id))?'checked':''} onchange="App.aiSelectPage(this.checked)">`,raw:true,width:'36px',render:a=>`<input type="checkbox" aria-label="选择 ${e(a.name)}" ${selected.has(a.id)?'checked':''} onchange="App.aiSelect(${q(a.id)},this.checked)">`},
- {title:'靶标名称 / 类型',render:a=>UI.linkBtn(a.name,{onclick:`App.aiDetail(${q(a.id)})`})+`<div class="ai-subtext">${label(a.kind)} · ${e(a.department)}</div>`},
- {title:'企业状态 / 版本',width:'145px',render:a=>UI.badge(a.sourceStatus,['已停用','已移除'].includes(a.sourceStatus)?'gray':a.sourceStatus==='已上线'?'green':'blue')+`<div class="ai-subtext mono">${e(a.enterpriseVersion||'—')}</div>`},
- {title:'连通状态',width:'116px',render:badge},
- {title:'演练状态',width:'108px',render:a=>UI.badge(...EXERCISE[a.exercise])},
- {title:'当前评估',width:'150px',render:a=>gradeBadge(a.grade)+`<div class="ai-subtext">${a.latest?`ASR ${UI.pct(a.latest.value)}${a.latest.guarded?' · 含防护':''}`:a.results.length?'旧版本结果已保留':'尚无有效结果'}</div>`},
- {title:'最近同步',width:'112px',render:a=>`<span class="ai-time">${date(a.syncedAt)}</span>`},
- {title:'操作',width:'172px',render:a=>`<div class="row-actions">${UI.linkBtn(a.status==='ready'?'开始演练':a.status==='incomplete'?'补齐连接':'检查连通',{onclick:a.status==='ready'?`App.v3Create('${a.kind}',${q(a.id)},${q(a.version)})`:a.status==='incomplete'?`App.aiSupplement(${q(a.id)})`:`App.aiValidate(${q(a.id)})`,disabled:a.busy||['已停用','已移除'].includes(a.sourceStatus)})}${UI.moreMenu([['详情',`App.aiDetail(${q(a.id)})`],['重新检查',`App.aiValidate(${q(a.id)})`]])}</div>`}
- ],pg.slice,'暂无匹配靶标，请连接企业资产平台并同步。');
- return `<div class="ai-root">${UI.pageHead('靶标状态',{actions:UI.btn('连接资产平台',{kind:'primary',ico:'plus',onclick:'App.aiConnect()'})})}${connectionStrip()}${filters}${UI.card('',bulk+table+UI.pager(pg,"UI.setPage('asset-intake',{p})"),'',true)}</div>`;
+  {title:'资产名称/ID',render:x=>UI.linkBtn(x.name,{onclick:'App.aiDetail(\''+x.id+'\',\''+x.version+'\')'})+'<div class="ai-subtext">'+e(x.id)+'</div>'},
+  {title:'类型',width:'80px',render:()=> '智能体'},
+  {title:'配置版本',width:'120px',render:x=>e(assetVersionLabel(x))},
+  {title:'资产状态',width:'120px',render:sourceBadge},
+  {title:'更新时间',width:'170px',render:x=>displayTime(x.updatedAt)},
+  {title:'操作',width:'200px',render:x=>'<div class="row-actions">'+UI.linkBtn('详情',{onclick:'App.aiDetail(\''+x.id+'\',\''+x.version+'\')'})+UI.linkBtn('编辑',{onclick:'App.aiEdit(\''+x.id+'\',\''+x.version+'\')'})+manualMore(x)+'</div>'}
+ ],pg.slice,'暂无匹配 Agent，可快捷上传或批量上传配置。');
+ return '<section class="ai-asset-panel ai-manual-panel" aria-label="人工上传">'+filters+UI.card('',table+UI.pager(pg,"UI.setPage('asset-intake',{p})"),'',true)+'</section>';
 }
-export function connectionsPage(){return assetIntakePage();}
-function manageConnections(){
- const connections=Sync.listConnections();
- UI.drawer('企业平台连接',`<div class="ai-connections">${connections.map(c=>`<article class="ai-connector"><div class="ai-connector-head"><span class="ai-connector-symbol">⇄</span><div><h2>${e(c.name)}</h2><span>${e(c.baseUrl)}</span></div>${UI.badge(...(SYNC_STATUS[c.status]||SYNC_STATUS.connected))}</div><div class="ai-connector-facts"><div><span>同步靶标</span><strong>${c.lastCount||0}</strong></div><div><span>同步频率</span><strong>${c.interval} 分钟</strong></div><div><span>最近同步</span><strong>${date(c.lastSync)}</strong></div></div>${c.error?`<p class="ai-error">${e(c.error)}</p>`:''}<footer>${connectionActions(c)}</footer></article>`).join('')||'<div class="empty">暂无企业平台连接</div>'}</div>`,UI.btn('关闭',{onclick:'UI.closeDrawer()'})+UI.btn('连接资产平台',{kind:'primary',onclick:'App.aiConnect()'}));
+function agentDetail(x){
+ detailKey=key(x);
+ const surfaces=UI.table([{title:'分类',render:s=>e(surfaceTypes.find(([value])=>value===(s.subtype?s.kind+':'+s.subtype:s.kind))?.[1]||s.kind)},{title:'文件路径',render:s=>'<code>'+e(s.path)+'</code>'}],x.surfaceDeclarations||[],'暂无注入面');
+
+ UI.drawer(x.name,'<div class="ai-detail"><h3 class="ai-section-title">资产信息</h3>'+UI.kvTable([
+  ['资产 ID',e(x.id)],['资产名称',e(x.name)],['企业源状态',sourceBadge(x)],['配置版本',e(assetVersionLabel(x))],['负责人',e(x.owner)]
+ ])+'<h3 class="ai-section-title">Agent 运行配置</h3>'+UI.kvTable([
+  ['镜像引用',e(x.image)],['可执行命令','<code>'+e(x.command[0]||'—')+'</code>'],['启动参数','<code>'+e(x.command.slice(1).join('; ')||'—')+'</code>'],['任务输入协议',e(x.taskInput)],['任务参数标记',e(x.promptFlag||'—')]
+ ])+'<h3 class="ai-section-title">文件注入面</h3>'+surfaces+'</div>',UI.btn('关闭',{onclick:'UI.closeDrawer()'})+UI.btn('编辑',{onclick:'App.aiEdit(\''+x.id+'\',\''+x.version+'\')'})+manualMore(x));
 }
-function overview(a){return `<div class="ai-detail-states">${a.version!==a.latestVersion?UI.badge('历史企业版本','gray'):''}${badge(a)}${UI.badge(...EXERCISE[a.exercise])}${gradeBadge(a.grade)}</div><h3 class="ai-section-title">企业资产信息</h3>${UI.kvTable([['来源平台',e(a.source)],['企业资产 ID',e(a.sourceId||a.id)],['资产类型',label(a.kind)],['企业状态',e(a.sourceStatus)],['企业版本',e(a.enterpriseVersion)],['所属部门 / 环境',e(a.department+' / '+a.environment)],['负责人',e(a.owner)],['接口 / 运行地址',e(a.baseUrl||a.runtimeEndpoint||a.image)],['最近同步',date(a.syncedAt)]])}<h3 class="ai-section-title">平台评估</h3>${a.latest?`<div class="ai-result-summary"><strong>${UI.pct(a.latest.value)}<small>ASR · ${a.latest.breach} / ${a.latest.judged}</small></strong><div>${gradeBadge(a.grade)}<p>${a.latest.guarded?'含防护链路':'资产本体'} · ${date(a.latest.at)}</p>${UI.linkBtn('查看报告',{onclick:`App.aiReport(${q(a.latest.id)},'${a.kind}')`})}</div></div>`:`<div class="ai-empty">${a.results.length?'企业版本已变化，历史结果保留，当前版本待复测。':'当前企业版本尚无有效演练结果。'}</div>`}<div class="ai-help">企业资产信息由来源平台维护。</div>`;}
-function assessments(a){const rows=a.results;return `<div class="ai-detail-toolbar"><span>${rows.length} 份评估记录</span>${UI.btn('结果对比',{onclick:`App.aiCompare(${q(a.id)})`,disabled:rows.length<2})}</div>${UI.table([{title:'评估范围',render:r=>`<strong>${e(r.business)}</strong><div class="ai-subtext">${r.guarded?'含防护链路':'资产本体'} · ${r.version===a.latestVersion?'当前企业版本':'历史企业版本'}</div>`},{title:'企业版本',render:r=>e(r.enterpriseVersion)},{title:'结果',render:r=>`<span class="num">${UI.pct(r.value)}</span> ${gradeBadge(r.grade)}<div class="ai-subtext">${r.breach} / ${r.judged} 有效判定</div>`},{title:'评估时间',render:r=>date(r.at)},{title:'操作',render:r=>UI.linkBtn('报告',{onclick:`App.aiReport(${q(r.id)},'${a.kind}')`})}],rows,'当前资产还没有已完成的评估。')}`;}
-function history(a){const versions=listAssetVersions(a.id).reverse(),runs=Sync.listSyncRuns(a.sourceConnectionId).flatMap(batch=>batch.rows.filter(r=>r.assetId===a.id).map(row=>({...row,at:batch.at})));return `<h3 class="ai-section-title">企业版本记录</h3><div class="ai-version-list">${versions.map(v=>`<button onclick="App.aiDetail(${q(a.id)},${q(v.version)},'overview')"><strong>${e(v.enterpriseVersion||'—')}</strong><span>${v.version===a.latestVersion?'当前版本':'历史快照'} · ${date(v.syncedAt||v.createdAt)}</span>${UI.badge(...(CONNECTION[v.status]||CONNECTION.pending))}</button>`).join('')}</div><h3 class="ai-section-title">同步变更</h3>${runs.length?runs.map(row=>`<div class="ai-change"><header>${UI.badge(...CHANGE[row.operation])}<time>${date(row.at)}</time></header>${changesMarkup(row.changes)}</div>`).join(''):'<div class="ai-empty">暂无新增变更记录。</div>'}`;}
-function detail(id,version=null,tab='overview'){
- const raw=getAsset(id,version);if(!raw)return UI.toast('资产不存在');const a=assetState(raw);detailId=id;detailVersion=raw.version;detailTab=tab;
- const nav=`<div class="ai-page-tabs ai-detail-tabs">${[['overview','概览'],['assessments','评估结果'],['history','版本与同步历史']].map(([key,title])=>`<button class="${tab===key?'active':''}" onclick="App.aiDetail(${q(id)},${q(raw.version)},'${key}')">${title}</button>`).join('')}</div>`;
- UI.drawer(a.name,`<div class="ai-detail">${nav}${tab==='history'?history(a):tab==='assessments'?assessments(a):overview(a)}</div>`,UI.btn('关闭',{onclick:'UI.closeDrawer()'})+UI.btn(a.status==='incomplete'?'补齐连接':'检查连通',{onclick:a.status==='incomplete'?`App.aiSupplement(${q(id)},${q(raw.version)})`:`App.aiValidate(${q(id)},${q(raw.version)})`,disabled:a.busy})+UI.btn('开始演练',{kind:'primary',onclick:`UI.closeDrawer();App.v3Create('${a.kind}',${q(id)},${q(raw.version)})`,disabled:a.status!=='ready'||['已停用','已移除'].includes(a.sourceStatus)}));
+function assetTable(){
+ if(activeTab==='manual')return manualTable();
+ const rows=currentRows(),pg=UI.paginate('asset-intake',rows);pageRows=pg.slice;
+ const count=selected.size,all=pageRows.length&&pageRows.every(x=>selected.has(key(x)));
+ const filters=UI.filters({search:{label:'搜索',id:'ai-search',value:FILTER.query,placeholder:'模型名称、请求标识、API 地址',oninput:'App.aiFilter("query",this.value)'},selects:[{label:'接入状态',id:'ai-status-filter',value:FILTER.status,onchange:'App.aiFilter("status",this.value)',options:[['all','全部状态'],...Object.entries(STATUS).map(([key,[name]])=>[key,name])]}],right:UI.btn('接入模型',{kind:'primary',onclick:"App.aiUpload('model')",ico:'plus'})});
+ const bulk='<div class="ai-bulk"><span>已选 <strong>'+count+'</strong> 个模型</span>'+UI.linkBtn('选择全部匹配（'+rows.length+'）',{onclick:'App.aiSelectMatching()'})+UI.linkBtn('仅选待测试',{onclick:'App.aiSelectPending()'})+UI.linkBtn('清空选择',{onclick:'App.aiClearSelection()',disabled:!count})+'<div class="ai-bulk-right">'+UI.btn('测试连通',{onclick:'App.aiValidateSelected()',disabled:!count||batchBusy})+'</div></div>';
+ const table=UI.table([
+ {title:'<input type="checkbox" aria-label="全选当前页" '+(all?'checked':'')+' onchange="App.aiSelectPage(this.checked)">',raw:true,width:'38px',render:x=>'<input type="checkbox" aria-label="选择 '+e(x.name)+'" '+(selected.has(key(x))?'checked':'')+' onchange="App.aiSelect(\''+x.id+'\',\''+x.version+'\',this.checked)">'},
+ {title:'模型名称',render:x=>UI.linkBtn(x.name,{onclick:'App.aiDetail(\''+x.id+'\')'})},
+ {title:'请求标识',render:x=>e(x.apiModel)},
+ {title:'API 地址',render:x=>'<span class="ai-api-address">'+e(x.baseUrl)+'</span>'},
+ {title:'接入状态',width:'100px',render:badge},
+ {title:'操作',width:'230px',render:x=>'<div class="row-actions">'+UI.linkBtn('测试连通',{disabled:x.busy,onclick:'App.aiValidate(\''+x.id+'\',\''+x.version+'\')'})+UI.linkBtn('编辑信息',{onclick:'App.aiEdit(\''+x.id+'\')'})+UI.linkBtn('删除',{danger:true,disabled:x.busy,onclick:'App.aiDeleteModel(\''+x.id+'\')'})+'</div>'}
+ ],pageRows,'暂无模型，请点击接入模型添加 API 配置。');
+ return '<section class="ai-asset-panel ai-model-panel" aria-label="模型接入配置">'+filters+UI.card('',bulk+table+UI.pager(pg,"UI.setPage('asset-intake',{p})"),'',true)+'</section>';
 }
-function supplement(id,version){const a=getAsset(id,version);UI.modal('补齐演练连接',`<div class="ai-form"><div class="ai-readonly-row"><strong>${e(a.name)}</strong><span>${e(a.baseUrl||a.runtimeEndpoint||a.image)}</span></div>${field('调用凭据',input('ai-target-secret','','type="password" autocomplete="new-password" placeholder="填入资产调用凭据"'))}${field('或凭据引用',input('ai-target-ref',a.credentialRef||'','placeholder="例如 vault://ai-assets/customer-service"'))}<p class="ai-help">此处用于本平台调用靶标，企业平台的读取凭据单独保存。</p><p id="ai-supplement-error" class="ai-error"></p></div>`,UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('保存并检查',{kind:'primary',onclick:`App.aiSaveSupplement(${q(id)},${q(a.version)})`}));}
-function checkMarkup(a){return `<div class="ai-verify-header">${badge(a)}<span>${a.busy?'正在检查演练连接':date(a.validation.checkedAt)}</span></div><ol class="ai-checks">${a.validation.steps.map(s=>`<li class="${s.state}"><span class="ai-check-icon">${s.state==='passed'?'✓':s.state==='failed'?'!':'·'}</span><div><strong>${e(s.name)}</strong><p>${e(s.detail)}</p></div></li>`).join('')}</ol>`;}
-async function check(id,version){const a=getAsset(id,version);if(!a)return;if(a.status==='incomplete')return supplement(id,version);UI.drawer('连通检查 · '+a.name,`<div id="ai-verification">${checkMarkup(a)}</div>`,UI.btn('关闭',{onclick:'UI.closeDrawer()'}));try{await validateAsset(id,{version:a.version,onProgress:next=>{const host=document.getElementById('ai-verification');if(host)host.innerHTML=checkMarkup(next);}});if(router.state().page==='assets'){const body=document.querySelector('#drawer .modal-body')?.innerHTML;refresh();UI.drawer('连通检查 · '+a.name,body,UI.btn('资产详情',{onclick:`App.aiDetail(${q(id)})`})+UI.btn('关闭',{onclick:'UI.closeDrawer()'}));}}catch(error){UI.toast(error.message);}}
-function connectionForm(c){return `<div class="ai-form-grid">${field('连接名称 *',input('ac-name',c.name,'oninput="App.aiConnField(\'name\',this.value)" placeholder="企业资产平台"'))}${field('连接器',`<select onchange="App.aiConnField('connector',this.value)">${options([['rest','通用 REST API'],['standard','企业 AI 资产标准接口']],c.connector)}</select>`)}${field('API 地址 *',input('ac-url',c.baseUrl,'oninput="App.aiConnField(\'baseUrl\',this.value)" placeholder="https://assets.company.cn/api"'))}${field('资源路径 *',input('ac-path',c.resourcePath,'oninput="App.aiConnField(\'resourcePath\',this.value)"'))}${field('鉴权方式',`<select onchange="App.aiConnField('authType',this.value)">${options([['bearer','Bearer Token'],['apikey','API Key'],['none','无需认证']],c.authType)}</select>`)}${field(c.credentialConfigured?'平台读取凭据（留空保留）':'平台读取凭据 *',input('ac-secret',c.credential||'','type="password" autocomplete="new-password" oninput="App.aiConnField(\'credential\',this.value)"'))}</div><details class="ai-advanced"><summary>高级连接配置</summary><div class="ai-form-grid">${field('超时（秒）',input('ac-timeout',c.timeout,'type="number" min="5" max="120" oninput="App.aiConnField(\'timeout\',Number(this.value))"'))}${field('分页方式',`<select onchange="App.aiConnField('pageMode',this.value)">${options([['cursor','游标分页'],['page','页码分页'],['none','不分页']],c.pageMode)}</select>`)}</div></details><div class="ai-connect-test">${UI.btn(wizard.testing?'检查中…':'测试连接',{onclick:'App.aiTestConnection()',disabled:wizard.testing})}<div>${wizard.testResult?`<span class="ai-test-ok">✓ 读取权限正常 · ${wizard.testResult.count} 项资产 · ${wizard.testResult.latency} ms</span>`:'<span class="muted">连接后读取资产目录</span>'}</div></div>`;}
-function mappingForm(c){return `${field('响应列表路径',input('ac-listpath',c.listPath,'oninput="App.aiConnField(\'listPath\',this.value)"'))}<div class="ai-mapping-head"><span>平台字段</span><span>企业来源字段</span><span>样本值</span></div>${Object.entries(Sync.DEFAULT_MAPPING).map(([key])=>{const sample=Sync.connectionRecords(c)[0];return `<div class="ai-mapping-row"><strong>${e({id:'企业唯一 ID *',name:'资产名称 *',kind:'类型 *',status:'企业状态 *',version:'企业版本 *',endpoint:'地址 / 镜像 *',updatedAt:'更新时间 *'}[key])}</strong><select onchange="App.aiMapField('${key}',this.value)">${options([['','请选择'],...Sync.SOURCE_FIELDS.map(x=>[x,x])],c.mapping[key])}</select><code>${e(sample?.[c.mapping[key]]||'—')}</code></div>`;}).join('')}<details class="ai-advanced"><summary>企业状态枚举映射</summary><div class="ai-form-grid">${Object.entries(c.statusMap).map(([source,target])=>field(source,`<select onchange="App.aiStatusMap('${source}',this.value)">${options(['已上线','未上线','已停用'].map(x=>[x,x]),target)}</select>`)).join('')}</div></details>`;}
-function scopeForm(c){const rows=Sync.filteredSourceRows(c),selectedIds=c.selectedIds||rows.map(r=>r.id);return `<div class="ai-scope-filters"><span>资产类型</span>${['model','agent'].map(kind=>`<label><input type="checkbox" ${c.kinds.includes(kind)?'checked':''} onchange="App.aiScopeKind('${kind}',this.checked)"> ${label(kind)}</label>`)}<select aria-label="环境" onchange="App.aiScopeFilter('environment',this.value)">${options(['全部','生产','预发布'].map(x=>[x,x==='全部'?'全部环境':x]),c.environment)}</select><select aria-label="部门" onchange="App.aiScopeFilter('department',this.value)">${options(['全部','模型研发部','智能应用部'].map(x=>[x,x==='全部'?'全部部门':x]),c.department)}</select></div><div class="ai-scope-count">${UI.linkBtn('选择当前范围',{onclick:'App.aiScopeAll(true)'})}${UI.linkBtn('清空',{onclick:'App.aiScopeAll(false)'})}<span>已选 ${rows.filter(r=>selectedIds.includes(r.id)).length} / ${rows.length} 项</span></div>${UI.table([{title:'选择',width:'44px',render:r=>`<input type="checkbox" aria-label="纳入 ${e(r.name)}" ${selectedIds.includes(r.id)?'checked':''} onchange="App.aiScopeSelect(${q(r.id)},this.checked)">`},{title:'资产',render:r=>e(r.name)},{title:'类型',render:r=>label(r.kind)},{title:'企业版本',render:r=>e(r.version)},{title:'企业状态',render:r=>e(r.status)}],rows,'当前范围没有可同步的资产。')}`;}
-function rulesForm(c){return `<div class="ai-form-grid">${field('增量同步间隔',`<select onchange="App.aiConnField('interval',Number(this.value))">${options([[5,'每 5 分钟'],[15,'每 15 分钟'],[30,'每 30 分钟'],[60,'每小时'],[360,'每 6 小时']],c.interval)}</select>`)}${field('完整核对频率',`<select onchange="App.aiConnField('reconcile',this.value)">${options(['每日','每周'].map(x=>[x,x]),c.reconcile)}</select>`)}</div><div class="ai-rule-options">${[['autoInclude','自动纳入当前范围内的新资产'],['notifyChanges','资产变化时发送消息提醒'],['webhook','接收资产变化 Webhook']].map(([key,title])=>`<label><input type="checkbox" ${c[key]?'checked':''} onchange="App.aiConnField('${key}',this.checked)"><span>${title}</span></label>`).join('')}</div><div class="ai-sync-policy"><span>首次全量导入</span><i>→</i><span>定期增量同步</span><i>→</i><span>${e(c.reconcile)}完整核对</span></div><p class="ai-help">企业版本与调用地址变化后标记待复测，历史结果保留。同步失败保留上次成功数据。</p>`;}
-function previewForm(c){const rows=Sync.previewConnection(c);return `<div class="ai-preview-summary">${Object.entries(CHANGE).map(([key,[title,tone]])=>UI.badge(title+' '+rows.filter(r=>r.operation===key).length,tone)).join('')}</div>${UI.table([{title:'资产',render:r=>e(r.data.name||r.sourceId)},{title:'处理',render:r=>UI.badge(...CHANGE[r.operation])},{title:'变化 / 校验',render:r=>r.errors.length?`<span class="ai-error">${e(r.errors.join('；'))}</span>`:r.changes.length?r.changes.map(x=>`${e(FIELD_LABELS[x.field]||x.field)}：${e(x.before)} → ${e(x.after)}`).join('<br>'):'—'}],rows,'未选择可同步资产。')}<p class="ai-help">导入后可独立检查演练连接。缺少靶标调用凭据的资产将保留为待补齐连接。</p>`;}
-function renderWizard(){if(!wizard)return;const steps=['连接平台','映射字段','选择范围','同步规则','预览并导入'],c=wizard.form;
- UI.modal(c.id?'编辑企业平台连接':'连接企业资产平台',`<div class="ai-wizard"><ol class="ai-wizard-steps">${steps.map((title,i)=>`<li class="${i===wizard.step?'active':i<wizard.step?'done':''}"><span>${i<wizard.step?'✓':i+1}</span>${title}</li>`).join('')}</ol><div class="ai-wizard-content ai-form">${[connectionForm,mappingForm,scopeForm,rulesForm,previewForm][wizard.step](c)}<p id="ai-connection-error" class="ai-error" role="alert">${e(wizard.error||'')}</p></div></div>`,UI.btn('取消',{onclick:'App.aiConnectionCancel()'})+(wizard.step?UI.btn('上一步',{onclick:'App.aiConnectionPrev()'}):'')+UI.btn(wizard.step===4?'确认并同步':'下一步',{kind:'primary',onclick:'App.aiConnectionNext()',disabled:wizard.testing}),{wide:true,cls:'ai-connection-modal'});
+function connectionsPanel(){
+ const rows=listPlatformConnections();
+ return '<section class="ai-connection-panel" aria-label="企业资产平台连接"><div class="ai-connection-toolbar">'+UI.btn('连接资产平台',{kind:'primary',onclick:'App.aiConnectPlatform()',ico:'plus'})+UI.btn('人工上传 →',{kind:'ai-manual-link',onclick:"App.aiTab('manual')"})+'</div>'+UI.card('',UI.table([
+  {title:'平台名称',render:x=>'<span class="ai-platform-name">'+UI.linkBtn(x.name,{onclick:'App.aiPlatformDetail(\''+x.id+'\')'})+'</span>'},
+  {title:'API 地址',render:x=>'<span class="ai-api-address">'+e((x.endpoint||'').replace(/\/$/,'')+(x.resourcePath||''))+'</span>'},
+  {title:'连接状态',width:'110px',render:x=>UI.badge(...(x.state==='error'?['同步异常','red']:x.state==='partial'?['部分成功','amber']:['已连通','green']))},
+  {title:'最近同步时间',width:'170px',render:x=>x.lastSyncedAt?e(new Date(x.lastSyncedAt).toLocaleString('zh-CN',{hour12:false})):'—'},
+  {title:'操作',width:'210px',render:x=>'<div class="row-actions ai-connection-actions">'+UI.linkBtn('立刻同步',{onclick:'App.aiSyncPlatform(\''+x.id+'\')'})+UI.linkBtn('编辑连接',{onclick:'App.aiConnectPlatform(\''+x.id+'\')'})+'</div>'}
+ ],rows,'尚未连接资产平台，点击右上角“连接资产平台”添加连接。'),' ',true)+'</section>';
 }
-function changesMarkup(changes=[]){return changes.length?`<div class="ai-change-fields">${changes.map(c=>`<div><span>${e(FIELD_LABELS[c.field]||c.field)}</span><del>${e(Array.isArray(c.before)?c.before.join('、'):c.before||'—')}</del><i>→</i><strong>${e(Array.isArray(c.after)?c.after.join('、'):c.after||'—')}</strong></div>`).join('')}</div>`:'<p class="ai-help">资产信息已纳入同步。</p>';}
-function syncBatch(batch){return `<div class="ai-preview-summary">${Object.entries(CHANGE).map(([key,[title,tone]])=>UI.badge(title+' '+batch.counts[key],tone)).join('')}</div>${batch.error?`<p class="ai-error">${e(batch.error)}</p>`:''}${batch.rows.map(row=>`<div class="ai-change"><header>${UI.badge(...CHANGE[row.operation])}<strong>${e(row.data.name||row.sourceId)}</strong>${row.assetId?UI.linkBtn('资产详情',{onclick:`App.aiDetail(${q(row.assetId)})`}):''}</header>${row.errors?.length?`<p class="ai-error">${e(row.errors.join('；'))}</p>`:changesMarkup(row.changes)}${row.requiresRetest?'<p class="ai-help">当前企业版本待复测，历史评估已保留。</p>':''}</div>`).join('')}`;}
-function syncHistory(id){const c=Sync.getConnection(id),runs=Sync.listSyncRuns(id);UI.drawer(c.name+' · 同步记录',`<div class="ai-detail">${runs.map((batch,index)=>`<details class="ai-sync-run" ${index===0?'open':''}><summary><strong>${date(batch.at)}</strong>${UI.badge(batch.status==='failed'?'失败':batch.status==='partial'?'部分成功':'同步完成',batch.status==='done'?'green':'amber')}</summary>${syncBatch(batch)}</details>`).join('')||'<div class="ai-empty">最近成功同步 '+date(c.lastSync)+'，尚无新增变更批次。</div>'}</div>`,UI.btn('关闭',{onclick:'UI.closeDrawer()'})+UI.btn(runs[0]?.counts.failed?'重试失败项':'立即同步',{onclick:`App.aiSync(${q(id)},${Boolean(runs[0]?.counts.failed)})`,disabled:c.status==='syncing'})+UI.btn('调整连接',{onclick:`UI.closeDrawer();App.aiConnect(${q(id)})`}));}
-async function sync(id,retryOnly=false){const c=Sync.getConnection(id);UI.modal('同步企业资产',`<div class="ai-sync-progress"><span class="ai-sync-spinner"></span><strong>${e(c.name)}</strong><p id="ai-sync-progress">正在读取企业资产目录…</p></div>`,UI.btn('后台继续',{onclick:'UI.closeModal()'}));const off=Sync.subscribeAssetSync(event=>{const host=document.getElementById('ai-sync-progress');if(event.connectionId===id&&host&&event.type==='sync-progress')host.textContent=`正在同步 ${event.done} / ${event.total} 项资产`;});try{await Sync.synchronizeConnection(id,{retryOnly});UI.closeModal();refresh();syncHistory(id);}catch(error){UI.closeModal();refresh();syncHistory(id);UI.toast(error.message);}finally{off();}}
-function compare(ids){const assets=listAssetStates().filter(a=>ids.includes(a.id));comparisonRows=assets.flatMap(a=>assetAssessments(a));if(comparisonRows.length<2)return UI.toast('至少需要两份已完成评估，可选择其他资产或历史版本');const option=r=>[r.id,`${r.assetName} · ${r.enterpriseVersion} · ${date(r.at)}${r.guarded?' · 含防护':''}`];UI.modal('选择评估结果',`<div class="ai-form"><div class="ai-form-grid">${field('基准结果',`<select id="ai-compare-a">${options(comparisonRows.map(option),comparisonRows[0].id)}</select>`)}${field('对照结果',`<select id="ai-compare-b">${options(comparisonRows.map(option),comparisonRows[1].id)}</select>`)}</div><p class="ai-help">同资产版本变化或不同资产均可对比；条件不同会列出差异。</p><p id="ai-compare-error" class="ai-error"></p></div>`,UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('开始对比',{kind:'primary',onclick:'App.aiRunCompare()'}),{wide:true});}
-function compareResult(result){const {left,right,differences,comparable,delta}=result;UI.modal('资产评估对比',`<div class="ai-comparison">${comparable?'<div class="ai-comparable">✓ 题库、方法、判定与防护条件一致</div>':`<div class="ai-notice">条件不同：${e(differences.join('、'))}。以下展示并列结果，不据此判断资产提升。</div>`}<div class="ai-compare-grid">${[left,right].map((r,i)=>`<section><span>${i?'对照结果':'基准结果'}</span><h3>${e(r.assetName)}</h3><p>企业版本 ${e(r.enterpriseVersion)}</p><strong class="ai-compare-value">${UI.pct(r.value)}</strong>${gradeBadge(r.grade)}<p>${r.breach} / ${r.judged} 有效判定 · ${r.guarded?'含防护链路':'资产本体'}</p><small>${date(r.at)}</small>${UI.linkBtn('查看报告',{onclick:`UI.closeModal();App.aiReport(${q(r.id)},'${r.kind}')`})}</section>`).join('')}</div>${comparable&&delta!==null?`<div class="ai-compare-delta">ASR 变化 <strong>${delta>0?'+':''}${(delta*100).toFixed(1)} 个百分点</strong></div>`:''}</div>`,UI.btn('重新选择',{onclick:'App.aiCompareSelected()'})+UI.btn('关闭',{onclick:'UI.closeModal()'}),{wide:true,cls:'ai-compare-modal'});}
+function platformDetail(id){
+ const connection=getPlatformConnection(id);if(!connection)return;
+ const rows=listPlatformSyncedAssets(id),time=value=>value?e(new Date(value).toLocaleString('zh-CN',{hour12:false})):'—';
+ const body='<div class="ai-platform-detail"><div class="ai-platform-overview"><span>已同步资产</span><span>'+rows.length+' 项</span></div>'+UI.table([
+  {title:'资产名称/ID',width:'180px',render:x=>e(x.name)+'<div class="ai-subtext">企业 ID：'+e(x.sourceRecordId)+'</div>'},
+  {title:'类型',width:'80px',render:x=>x.kind==='agent'?'智能体':'模型'},
+  {title:'企业版本',width:'90px',render:x=>e(x.enterpriseVersion||'—')},
+  {title:'地址 / 镜像',render:x=>'<span class="ai-api-address">'+e(x.kind==='model'?x.baseUrl:x.image||x.runtimeEndpoint||'—')+'</span>'},
+  {title:'企业资产状态',width:'110px',render:x=>UI.badge(x.sourceStatus,({'已发布':'green','未发布':'amber','已停用':'gray'})[x.sourceStatus]||'gray')},
+  {title:'最近同步时间',width:'170px',render:x=>time(x.lastSyncedAt)},
+ ],rows,'尚未同步资产。')+'</div>';
+ UI.drawer(connection.name,body,UI.btn('关闭',{onclick:'UI.closeDrawer()'}));
+ document.querySelector('#drawer .drawer')?.classList.add('ai-platform-drawer');
+}
+export function assetIntakePage(options={}){
+ if(options.tab)selectIntakeTab(options.tab);
+ const tabs='<div class="ai-tabs" role="tablist" aria-label="资产接入方式">'+TABS.map(([id,label])=>'<button type="button" role="tab" aria-selected="'+(id===activeTab)+'" class="'+(id===activeTab?'active':'')+'" onclick="App.aiTab(\''+id+'\')">'+label+'</button>').join('')+'</div>';
+ return UI.pageHead('资产接入')+tabs+(activeTab==='connection'?connectionsPanel():assetTable());
+}
+function renderPlatformCatalog(){
+ const connection=getPlatformConnection(catalogConnectionId);if(!connection)return;const rows=platformCatalog(catalogConnectionId);
+ const bulk='<div class="ai-bulk"><span>已选 '+catalogSelection.size+' 项</span>'+UI.linkBtn('全选',{onclick:'App.aiPlatformSelectAll()'})+UI.linkBtn('清空',{onclick:'App.aiPlatformClear()'})+'</div>';
+ UI.modal('选择资产导入 · '+connection.name,bulk+UI.table([
+  {title:'选择',width:'50px',render:x=>'<input type="checkbox" aria-label="导入 '+e(x.name)+'" '+(catalogSelection.has(x.id)?'checked':'')+' onchange="App.aiPlatformSelect(\''+x.id+'\',this.checked)">'},
+  {title:'资产名称',render:x=>e(x.name)+'<div class="ai-subtext">'+e(x.sourceRecordId)+'</div>'},{title:'类型',render:x=>typeName(x.kind)},
+  {title:'来源',render:x=>e(x.source)},{title:'导入状态',render:x=>UI.badge(x.imported?'已导入':'待导入',x.imported?'green':'gray')},
+  {title:'操作',render:x=>UI.linkBtn(x.imported?'同步配置':'导入',{onclick:'App.aiImportPlatformRow(\''+x.id+'\')'})}
+ ],rows),UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('导入所选（'+catalogSelection.size+'）',{kind:'primary',onclick:'App.aiImportPlatformSelection()',disabled:!catalogSelection.size}),{wide:true,cls:'ai-modal ai-import-modal'});
+}
+function finishPlatformImport(ids){
+ try{const result=importPlatformAssets(catalogConnectionId,ids);catalogSelection.clear();renderPlatformCatalog();refresh();UI.toast('已导入 '+result.imported.length+' 项'+(result.addedDependencies.length?'（含关联基座模型）':'')+(result.errors.length?'；'+result.errors.length+' 项需修正':''));}catch(error){message(error);}
+}
+function checkBlock(x){const v=x.validation,done=v.steps.filter(s=>s.state==='passed').length;return'<div class="ai-verify-header">'+badge(x)+'<span>'+(x.busy?done+' / '+v.steps.length+' 步完成':v.checkedAt?'最近检查 '+new Date(v.checkedAt).toLocaleString('zh-CN',{hour12:false}):'尚未进行连通检查')+'</span></div>'+(v.steps.length?'<ol class="ai-checks">'+v.steps.map(s=>'<li class="'+s.state+'"><span class="ai-check-icon">'+(s.state==='passed'?'✓':s.state==='failed'?'!':s.state==='running'?'…':'·')+'</span><div><strong>'+e(s.name)+'</strong><p>'+e(s.detail)+'</p></div></li>').join('')+'</ol>':'<div class="ai-empty">检查配置、连接和最小响应，连通后可用于演练。</div>');}
+function detail(id,version){
+ const asset=getAsset(id,version);if(!asset)return;
+ detailKey=key(asset);
+ if(asset.kind==='agent')return agentDetail(asset);
+ modelDetail(id,{onEdit:()=>actions.aiEdit(id),onDelete:()=>actions.aiDeleteModel(id),onTest:()=>actions.aiValidate(id,asset.version)});
+}
+function manualExample(){return ASSET_IMPORT_EXAMPLE.filter(x=>x.kind==='agent').map(({baseModelId,baseModelVersion,source,...x})=>({...x,enterpriseVersion:'1.0.0'}));}
+function openImport(){preview=[];UI.modal('批量上传 Agent','<div class="ai-import"><div class="ai-import-file-section"><div class="ai-import-heading"><label for="ai-import-file">上传 JSON / CSV</label><div class="ai-import-heading-actions">'+UI.linkBtn('JSON 模板',{onclick:"App.aiTemplate('json')"})+UI.linkBtn('CSV 模板',{onclick:"App.aiTemplate('csv')"})+'</div></div><div class="ai-import-tools"><input id="ai-import-file" type="file" accept=".json,.csv" onchange="App.aiReadFile(this)"></div></div><div class="ai-import-paste"><div class="ai-import-paste-heading ai-import-heading"><label for="ai-import-content">或粘贴清单内容</label>'+UI.linkBtn('填入示例',{onclick:'App.aiFillExample()'})+'</div><textarea id="ai-import-content" class="ai-code" rows="8" oninput="App.aiResetPreview()" placeholder="带稳定 id 的 JSON 数组或 CSV"></textarea></div><p id="ai-import-error" class="ai-error" role="alert"></p><div id="ai-import-preview"></div></div>',UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('校验预览',{onclick:'App.aiPreview()'})+'<button id="ai-import-confirm" class="btn w-lg primary" disabled onclick="App.aiConfirmImport()">导入有效行</button>',{wide:true,cls:'ai-modal ai-import-modal'});}
+
+async function runCheck(id,version){const x=getAsset(id,version);if(!x)return;const originRoute=routeKey();detail(id,x.version);try{const result=await validateAsset(id,{version:x.version,onProgress:a=>{if(detailKey===key(a)&&document.getElementById('drawer')?.classList.contains('open')){const host=document.getElementById('ai-verification');if(host)host.innerHTML=checkBlock(a);}}});const open=detailKey===key(x)&&document.getElementById('drawer')?.classList.contains('open');if(routeKey()===originRoute){if(!document.getElementById('drawer')?.classList.contains('open')||open)refresh();if(open)detail(id,x.version);}UI.toast(result.status==='ready'?'连通测试通过（本地模拟）':'连通测试失败，请查看配置');}catch(error){message(error);}}
 export const actions={
- aiSection(value){value==='connections'?actions.aiConnections():actions.aiShowAssets();},
- aiConnections(){router.nav('assets','intake');manageConnections();},
- aiChooseConnection(id){selectedConnectionId=id;refresh();},
- aiFilter(key,value){FILTER[key]=value;UI.resetPage('asset-intake');refresh();},
- aiShowAssets(kind='all',exercise='all'){Object.assign(FILTER,{kind,exercise,status:'all',sourceStatus:'all',grade:'all',query:''});router.nav('assets','intake');},
- aiSelect(id,checked){checked?selected.add(id):selected.delete(id);refresh();},
- aiSelectPage(checked){const rows=UI.paginate('asset-intake',listAssetStates(FILTER)).slice;rows.forEach(a=>checked?selected.add(a.id):selected.delete(a.id));refresh();},
+ aiTab(tab){selectIntakeTab(tab);selected.clear();Object.assign(FILTER,{kind:'all',status:'all',sourceStatus:'all',query:''});UI.resetPage('asset-intake');refresh();},
+ aiPlatformDetail:platformDetail,
+ aiConnectPlatform(id){activeTab='connection';router.nav('platform',id?'connection-edit':'connection-create',id||'');},
+ aiSyncPlatform(id){try{const result=syncPlatformConnection(id);refresh();UI.toast('同步完成：'+result.imported.length+' 项资产'+(result.errors.length?'；'+result.errors.length+' 项需修正':''));}catch(error){message(error);}},
+
+ aiPlatformCatalog(id){catalogConnectionId=id;catalogSelection.clear();renderPlatformCatalog();},
+ aiPlatformSelect(id,checked){checked?catalogSelection.add(id):catalogSelection.delete(id);renderPlatformCatalog();},
+ aiPlatformSelectAll(){platformCatalog(catalogConnectionId).forEach(row=>catalogSelection.add(row.id));renderPlatformCatalog();},
+ aiPlatformClear(){catalogSelection.clear();renderPlatformCatalog();},
+ aiImportPlatformRow(id){finishPlatformImport([id]);},
+ aiImportPlatformSelection(){finishPlatformImport([...catalogSelection]);},
+ aiUpload(kind='agent'){UI.closeModal();if(kind==='agent'){activeTab='manual';return openAgentIntake();}activeTab='models';return openModelIntake({onSaved:()=>{selected.clear();refresh();}});},
+ aiEdit(id,version){const asset=getAsset(id,version);if(!asset)return;if(asset.kind==='agent'){activeTab='manual';UI.closeDrawer();return openAgentIntake({id,version:asset.version,mode:asset.immutable?'connection':'edit'});}activeTab='models';openModelIntake({id,onSaved:()=>{selected.clear();refresh();}});},
+ aiNewVersion(id,version){const asset=getAsset(id,version);if(!asset)return;if(asset.kind==='model')return actions.aiEdit(id);activeTab='manual';UI.closeDrawer();openAgentIntake({id,version:asset.version,mode:'new-version'});},
+ aiDeleteModel(id){const asset=listModelResources().find(row=>row.id===id);if(!asset)return;UI.modal('删除模型','<p>确认删除 '+e(asset.name)+'？</p>',UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('删除',{kind:'danger',onclick:"App.aiConfirmDeleteModel('"+id+"')"}));},
+ aiConfirmDeleteModel(id){try{deleteModelResource(id);for(const value of [...selected])if(splitKey(value)[0]===id)selected.delete(value);UI.closeModal();if(detailKey.startsWith(id+'@'))UI.closeDrawer();refresh();UI.toast('已删除模型');}catch(error){message(error);}},
+ aiFilter(k,v){if(activeTab==='connection')activeTab='manual';FILTER[k]=v;UI.resetPage('asset-intake');refresh();if(k==='query'){const x=document.getElementById('ai-search');x?.focus();x?.setSelectionRange(v.length,v.length);}},
+
+ aiDeleteAgent(id,version){
+  const reason=manualAgentDeleteError(id,version);if(reason)return UI.toast(reason);
+  const asset=getAsset(id,version);
+  UI.modal('删除资产配置','<p>确认删除 '+e(asset.name)+' · '+e(assetVersionLabel(asset))+'？</p>',UI.btn('取消',{onclick:'UI.closeModal()'})+UI.btn('删除',{kind:'danger',onclick:"App.aiConfirmDeleteAgent('"+id+"','"+version+"')"}));
+ },
+ aiConfirmDeleteAgent(id,version){try{deleteManualAgent(id,version);selected.delete(key({id,version}));UI.closeModal();if(detailKey===key({id,version}))UI.closeDrawer();refresh();UI.toast('已删除资产配置');}catch(error){message(error);}},
+ aiChooseVersion(id,version){selectAssetVersion(id,version);refresh();},
+ aiSelect(id,version,checked){checked?selected.add(id+'@'+version):selected.delete(id+'@'+version);refresh();},
+ aiSelectPage(checked){pageRows.forEach(x=>checked?selected.add(key(x)):selected.delete(key(x)));refresh();},
+ aiSelectMatching(){currentRows().forEach(x=>selected.add(key(x)));refresh();},
+ aiSelectPending(){selected.clear();currentRows().filter(x=>x.status==='pending'&&!x.busy).forEach(x=>selected.add(key(x)));refresh();},
  aiClearSelection(){selected.clear();refresh();},
- aiDetail:detail,aiSupplement:supplement,aiValidate:check,
- aiReport(id,kind){UI.closeDrawer();router.nav(kind==='agent'?'agent':'exercise',kind==='agent'?'ag-report-detail':'report-detail',id);},
- aiSaveSupplement(id,version){try{supplementAssetConnection(id,version,{apiKey:document.getElementById('ai-target-secret').value,credentialRef:document.getElementById('ai-target-ref').value});UI.closeModal();check(id,version);}catch(error){document.getElementById('ai-supplement-error').textContent=error.message;}},
- async aiValidateSelected(){if(batchBusy)return;batchBusy=true;const rows=listAssetStates().filter(a=>selected.has(a.id));UI.modal('批量连通检查','<div id="ai-batch-result"></div>',UI.btn('关闭',{onclick:'UI.closeModal()'}));const outcomes=[];try{for(const row of rows){if(row.status==='incomplete')outcomes.push([row.name,'待补齐凭据']);else{const result=await validateAsset(row.id,{version:row.version});outcomes.push([row.name,result.status==='ready'?'已连通':'检查失败']);}const host=document.getElementById('ai-batch-result');if(host)host.innerHTML=UI.table([{title:'资产',render:r=>e(r[0])},{title:'结果',render:r=>e(r[1])}],outcomes);}UI.toast('批量检查完成');}finally{batchBusy=false;}},
- aiCompare(id){compare([id]);},aiCompareSelected(){compare(selected.size?[...selected]:listAssetStates().map(a=>a.id));},
- aiRunCompare(){try{compareResult(compareAssessments(comparisonRows.find(r=>r.id===document.getElementById('ai-compare-a').value),comparisonRows.find(r=>r.id===document.getElementById('ai-compare-b').value)));}catch(error){document.getElementById('ai-compare-error').textContent=error.message;}},
- aiConnect(id){UI.closeDrawer();const form=id?Sync.getConnection(id):Sync.newConnectionDraft();wizard={form,step:0,testResult:null,error:'',testing:false};renderWizard();},
- aiConnField(key,value){wizard.form[key]=value;wizard.error='';if(['name','baseUrl','resourcePath','authType','credential','timeout','pageMode'].includes(key))wizard.testResult=null;if(['webhook'].includes(key))renderWizard();},
- aiMapField(key,value){wizard.form.mapping[key]=value;renderWizard();},aiStatusMap(key,value){wizard.form.statusMap[key]=value;},
- aiScopeKind(kind,checked){wizard.form.kinds=checked?[...new Set([...wizard.form.kinds,kind])]:wizard.form.kinds.filter(k=>k!==kind);renderWizard();},
- aiScopeFilter(key,value){wizard.form[key]=value;renderWizard();},
- aiScopeSelect(id,checked){const ids=new Set(wizard.form.selectedIds||Sync.filteredSourceRows(wizard.form).map(r=>r.id));checked?ids.add(id):ids.delete(id);wizard.form.selectedIds=[...ids];renderWizard();},
- aiScopeAll(checked){wizard.form.selectedIds=checked?Sync.filteredSourceRows(wizard.form).map(r=>r.id):[];renderWizard();},
- async aiTestConnection(){wizard.testing=true;wizard.error='';renderWizard();try{wizard.testResult=await Sync.testConnection(wizard.form);}catch(error){wizard.error=error.message;wizard.testResult=null;}finally{wizard.testing=false;renderWizard();}},
- aiConnectionPrev(){wizard.step=Math.max(0,wizard.step-1);wizard.error='';renderWizard();},
- async aiConnectionNext(){try{if(wizard.step===0&&!wizard.testResult)throw Error('请先测试连接并确认读取成功');if(wizard.step===1){const errors=Sync.connectionErrors(wizard.form,{mapping:true});if(errors.length)throw Error(errors.join('；'));}if(wizard.step===2&&!Sync.filteredSourceRows(wizard.form).some(r=>wizard.form.selectedIds===null||wizard.form.selectedIds.includes(r.id)))throw Error('请至少选择一项资产');if(wizard.step===4){const c=Sync.saveConnection(wizard.form);selectedConnectionId=c.id;wizard=null;UI.closeModal();await sync(c.id);return;}wizard.step++;wizard.error='';renderWizard();}catch(error){wizard.error=error.message;renderWizard();}},
- aiConnectionCancel(){wizard=null;UI.closeModal();},aiSync:sync,aiSyncHistory:syncHistory,
- // Compatibility links now lead to enterprise synchronization rather than local target creation.
- aiUpload(){actions.aiConnect();},aiImport(){actions.aiConnect();}
+ aiDetail:detail,aiValidate:runCheck,
+ async aiValidateSelected(){if(batchBusy)return;const originRoute=routeKey();const rows=selectedAssets().filter(x=>!x.busy).sort((a,b)=>(a.kind==='model'?0:1)-(b.kind==='model'?0:1));if(!rows.length)return UI.toast('请选择需要测试的模型');batchBusy=true;UI.modal('测试连通','<div id="ai-batch-progress"></div>',UI.btn('关闭',{onclick:'UI.closeModal()'}),{wide:true,cls:'ai-modal'});let passed=0;const update=()=>{const host=document.getElementById('ai-batch-progress');if(host)host.innerHTML=UI.table([{title:'模型名称',render:x=>e(x.name)},{title:'状态',render:badge},{title:'当前步骤',render:x=>e(x.validation.steps.find(s=>['running','failed'].includes(s.state))?.name||(x.status==='ready'?'全部通过':'等待检查'))}],rows.map(x=>getAsset(x.id,x.version)));};update();try{for(const row of rows){const x=await validateAsset(row.id,{version:row.version,onProgress:update});if(x.status==='ready')passed++;}selected.clear();if(routeKey()===originRoute&&!document.getElementById('drawer')?.classList.contains('open'))refresh();UI.toast('测试完成：'+passed+' 项已连通，'+(rows.length-passed)+' 项连通失败');}catch(error){message(error);}finally{batchBusy=false;}},
+ aiVersion(id,version){const x=getAssetSnapshot(id,version);if(!x)return;UI.modal(x.name+' · '+x.version+' 快照','<pre class="ai-snapshot">'+e(JSON.stringify(x,null,2))+'</pre>',UI.btn('关闭',{onclick:'UI.closeModal()'})+UI.btn('导出快照',{onclick:'App.aiExport(\''+id+'\',\''+version+'\')'}),{wide:true,cls:'ai-modal'});},
+ aiExport(id,version){const x=getAssetSnapshot(id,version);if(x)UI.download(id+'-'+x.version+'.json',JSON.stringify(x,null,2));},
+ aiImport(){activeTab='manual';openImport();},
+ aiTemplate(format){if(format==='json')return UI.download('Agent配置模板.json',JSON.stringify(manualExample(),null,2));const fields=['id','kind','name','enterpriseVersion','owner','sourceStatus','image','command','taskInput','promptFlag','surfaceDeclarations'];const quote=x=>'"'+String(x??'').replaceAll('"','""')+'"';UI.download('Agent配置模板.csv','\uFEFF'+fields.join(',')+'\r\n'+manualExample().map(x=>fields.map(k=>quote(Array.isArray(x[k])?JSON.stringify(x[k]):x[k])).join(',')).join('\r\n'));},
+ aiFillExample(){document.getElementById('ai-import-content').value=JSON.stringify(manualExample(),null,2);actions.aiResetPreview();},
+ async aiReadFile(input){const file=input.files?.[0];if(!file)return;if(file.size>5*1024*1024){document.getElementById('ai-import-error').textContent='清单文件请控制在 5 MB 内';return;}document.getElementById('ai-import-content').value=await file.text();actions.aiResetPreview();actions.aiPreview();},
+ aiResetPreview(){preview=[];document.getElementById('ai-import-preview').innerHTML='';document.getElementById('ai-import-error').textContent='';document.getElementById('ai-import-confirm').disabled=true;},
+ aiPreview(){try{const content=val('ai-import-content'),rows=parseAssetImport(content,content.startsWith('[')||content.startsWith('{')?'json':'csv');if(!rows.length||rows.length>1000)throw Error('单次请上传 1—1000 项资产');const agentPreview=previewManualAgents(rows.filter(row=>row.kind==='agent'));let agentIndex=0;preview=rows.map((raw,index)=>raw.kind==='agent'?{...agentPreview[agentIndex++],row:index+1}:{row:index+1,id:String(raw.id??''),data:raw,raw,operation:'不支持',errors:['人工上传仅支持 Agent；模型请前往模型接入配置']});const valid=preview.filter(x=>!x.errors.length).length;document.getElementById('ai-import-error').textContent='';document.getElementById('ai-import-preview').innerHTML='<div class="ai-preview-summary">'+UI.badge(valid+' 项可导入','green')+UI.badge((rows.length-valid)+' 项需修正',valid===rows.length?'gray':'red')+'</div>'+UI.table([{title:'行',width:'42px',key:'row'},{title:'ID / 名称',render:x=>e(x.id)+'<div class="ai-subtext">'+e(x.data.name)+'</div>'},{title:'处理方式',width:'110px',key:'operation'},{title:'校验结果',render:x=>x.errors.length?'<span class="ai-error">'+e(x.errors.join('；'))+'</span>':UI.badge('配置通过','green')}],preview);document.getElementById('ai-import-confirm').disabled=!valid;}catch(error){preview=[];document.getElementById('ai-import-error').textContent=error.message;document.getElementById('ai-import-preview').innerHTML='';document.getElementById('ai-import-confirm').disabled=true;}},
+ aiConfirmImport(){if(!preview.length)return;const result=importManualAgents(preview.filter(x=>!x.errors.length).map(x=>x.raw));preview=[];UI.closeModal();selected.clear();FILTER.status='all';FILTER.kind='all';FILTER.query='';FILTER.sourceStatus='all';UI.resetPage('asset-intake');refresh();UI.toast('已导入 '+result.imported.length+' 项，其中 '+result.changed.length+' 项新增或更新'+(result.errors.length?'；'+result.errors.length+' 项失败':''));}
 };

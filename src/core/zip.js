@@ -75,7 +75,7 @@ export async function downloadZip(zipName, files) {
       missing.push(f.name);
     }
   }
-  if (!entries.length) return UI.toast('结果文件读取失败，请重新打开页面');
+  if (!entries.length) return UI.toast('结果文件读取失败，请通过本地服务打开 demo');
   const url = URL.createObjectURL(buildZip(entries));
   const a = document.createElement('a');
   a.href = url; a.download = zipName;

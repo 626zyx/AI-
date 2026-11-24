@@ -1,0 +1,12 @@
+{
+  "name": "auton-arena-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test _tools/*.test.mjs",
+    "check": "node _tools/check.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}

@@ -9,25 +9,22 @@ import { agentUnits as importedAgentUnits } from '../data/agent-units.js';
 import { sceneBanks } from '../data/scene-banks.js';
 import { agentMetricExampleTasks, agentMetricExampleUnits, agentMetricExampleBank, agentMetricExampleStrategy } from '../data/agent-metric-example.js';
 import { fiveTaskStrategies } from '../data/five-task-batch.js';
+import { withAgentBusinessAssessment } from '../data/agent-business-assessments.js';
+import { withAgentInjectionAssessment } from '../data/agent-injection-assessments.js';
 import {
   asr, meanTaskAsr, byMethod, distribution, progress, riskLevel, verdictCounts as vc,
   agentAsr, agentVerdictCounts, byRiskLabel, errorStats, agentRiskRule, riskRule, riskTypes, agentMetricLabel,
 } from './metrics.js';
 import { MODEL_STATUS } from './constants.js';
-import { scenes as rawScenes, advbench } from '../data/catalog.js';
-import { modelMethodCatalog as methodCatalog } from './method-catalog.js';
-import { functionalModels, saveFunctionalModel, removeFunctionalModel } from './functional-models.js';
-import { guardMethods as guards } from './system-guard.js';
-export { guardMethods as guards, guardMethod as guardOf, guardCapability, GUARD_STAGES } from './system-guard.js';
-import { activityNotifications } from './notifications.js';
+import { methodCatalog, scenes as rawScenes, advbench } from '../data/catalog.js';
 import { taskRepository } from './task-repository.js';
 import { createTaskService } from './task-service.js';
-import { createReportService } from './report-service.js';
 import { buildModelConfiguration } from './task-configuration.js';
 import { buildAgentConfiguration } from './agent-configuration.js';
-import { copyStrategyRecord, createStrategyVersion, freezeStrategyDependencies, withoutTaskJudge } from './strategy-service.js';
+import { copyStrategyRecord, createStrategyVersion } from './strategy-service.js';
 import { ATTACK_SURFACE_CATALOG } from './attack-surfaces.js';
 import { AGENT_ASSETS } from './agent-assets-catalog.js';
+import { guardCatalog } from './guard-catalog.js';
 export { selectableAgentSurfaces as agentInjectionFiles } from './agent-surfaces.js';
 import { roundInfo } from './task-rounds.js';
 export { roundInfo, roundAnalysis } from './task-rounds.js';
@@ -36,7 +33,7 @@ export { roundInfo, roundAnalysis } from './task-rounds.js';
 export const agentConfigurationOf = (data, options = { draft: true }) => buildAgentConfiguration(data, { agents, agentStrategies, models, agentMethods, sceneBanks }, options);
 export { ATTACK_SURFACE_CATALOG };
 // An imported semantic review is a judge provenance, not a connected model endpoint.
-export const agentReviewJudges = [{ id: 'judge-codex-semantic-review', name: '语义裁判', roles: ['裁判'], reviewOnly: true }];
+export const agentReviewJudges = [{ id: 'judge-codex-semantic-review', name: '历史离线语义复核', roles: ['裁判'], reviewOnly: true }];
 
 /* ---------------------------------------------------------------- 模型资产 */
 export const models = [
@@ -47,27 +44,34 @@ export const models = [
     note: '非推理模型，响应无 reasoning_tokens',
   },
   {
+    id: 'mdl-deepseek-flash', name: 'DeepSeek-V3-Flash', vendor: 'DeepSeek',
+    apiModel: 'deepseek-flash', baseUrl: 'https://api.deepseek.com',
+    roles: ['攻击生成', '裁判', '智能体基座', '题库生成'], reasoning: true, status: 'connected',
+    note: '推理模型；裁判要求输出 JSON，需留足 max_tokens',
+  },
+  {
+    id: 'mdl-deepseek-v4-pro', name: 'DeepSeek-V4-Pro', vendor: 'DeepSeek',
+    apiModel: 'deepseek-v4-pro', baseUrl: 'https://api.deepseek.com',
+    roles: ['攻击生成', '裁判'], reasoning: true, status: 'connected',
+    note: 'Agent 演练的攻击生成与泄漏判读模型',
+  },
+  {
     id: 'mdl-qwen-flash', name: 'Qwen-Flash', vendor: 'Alibaba',
     apiModel: 'qwen-flash', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     roles: ['靶标'], reasoning: false, status: 'connected',
     note: '已通过 extra_body 关闭思考模式',
   },
 ].map((m) => ({ apiType: 'openai', apiKey: '', ...m, statusLabel: MODEL_STATUS[m.status] || m.status }));
-// Compatibility projection. Functional records are owned by functional-models,
-// while enterprise target records are owned by asset-intake / asset-bridge.
-models.push(...functionalModels);
 
-// Demo task configuration uses an actual platform judge. Imported review attribution
-// remains separate from this selected configuration and never changes unit evidence.
-const demoAgentJudge = models.find(model => model.status === 'connected' && model.roles.includes('裁判'));
+// Keep archive attribution immutable; a configured endpoint did not perform this review.
 const rawAgentUnits = [...importedAgentUnits, ...agentMetricExampleUnits];
 const rawAgentTasks = [...agentMetricExampleTasks, ...importedAgentTasks].map(task => {
-  if (!agentReviewJudges.some(judge => judge.id === task.judgeId) || !demoAgentJudge) return task;
-  return { ...task, judgeId: demoAgentJudge.id, judgeName: demoAgentJudge.name,
+  if (!agentReviewJudges.some(judge => judge.id === task.judgeId)) return task;
+  return { ...task, judgeName: '历史离线语义复核', evaluationMode: 'llm',
     recordedJudge: { id: task.judgeId, name: task.judgeName, provenance: task.judgeProvenance || '' } };
 });
-// Keep the source for historical task evidence while removing it from the active catalog.
-sceneBanks.push({ ...agentMetricExampleBank, archived: true });
+const DEMO_AGENT_IDS = new Set(['task-agt-b5-dc-baseline', 'task-agt-b5-dc-universal']);
+sceneBanks.push(agentMetricExampleBank);
 
 const {
   projectTask, listTaskTemplates, saveTask, copyTask, startTask, stopTask, deleteTask, restoreTask,
@@ -79,22 +83,22 @@ const {
   assertTargetAvailable: (config, type) => {
     if (!config.targetAssetId) return null;
     const target = (type === 'agent' ? agents : models).find(row => row.id === config.targetId);
-    if (!target || target.status !== 'connected') throw new Error('被测资产版本尚未连通，请先到被测资产检查连通后再发起');
+    if (!target || target.status !== 'connected') throw new Error('被测资产版本尚未连通，请先到被测资产测试连通后再发起');
     const testFields = ['kind','apiModel','apiType','image','command','taskInput','promptFlag','baseModelId','baseModelVersion','surfaceDeclarations'];
     if (testFields.some(key => JSON.stringify(target.assetSnapshot?.[key] ?? null) !== JSON.stringify(config.targetSnapshot?.[key] ?? null))) throw new Error('此被测版本配置已更新，请重新编辑任务并选择版本后保存');
     if(type==='agent') {
-      const base=target.assetSnapshot?.baseModelSnapshot;
-      if(!base)throw new Error('智能体运行配置不完整，请更新企业资产连接');
-      if(testFields.some(key=>JSON.stringify(base[key]??null)!==JSON.stringify(config.targetSnapshot?.baseModelSnapshot?.[key]??null)))throw new Error('智能体运行配置已更新，请重新选择企业版本');
+      const base=models.find(row=>row.id===(config.targetModelId || `${target.baseModelId}@${target.baseModelVersion}`));
+      if(!base||base.status!=='connected')throw new Error('本次选择的Agent基模尚未连通，请先测试连通');
+      if(config.targetModelSnapshot && testFields.some(key=>JSON.stringify(base.assetSnapshot?.[key]??null)!==JSON.stringify(config.targetModelSnapshot?.[key]??null)))throw new Error('本次Agent基模配置已更新，请重新选择后保存');
+      return structuredClone({ ...target.assetSnapshot, baseModelId: base.assetId || base.id,
+        baseModelVersion: base.assetVersion || null, baseModelName: base.name,
+        baseModelSnapshot: base.assetSnapshot || { id: base.id, apiModel: base.apiModel, apiType: base.apiType } });
     }
     return JSON.parse(JSON.stringify(target.assetSnapshot));
   },
   assertStrategyAvailable: (id, type) => {
     const catalog = type === 'agent' ? agentStrategies : strategies;
-    const strategy = catalog.find(strategy => strategy.id === id && strategy.status === 'published');
-    if (!strategy) throw new Error('演练策略已删除或不可用，请编辑任务并重新选择已发布策略');
-    const questionBanks = type === 'agent' ? sceneBanks : banks;
-    if ((strategy.banks || []).some(ref => questionBanks.find(bank => bank.id === ref.bankId)?.archived)) throw new Error('演练策略中的题库已移除，请重新选择策略');
+    if (!catalog.some(strategy => strategy.id === id && strategy.status === 'published')) throw new Error('演练策略已删除或不可用，请编辑任务并重新选择已发布策略');
   } });
 
 
@@ -104,19 +108,18 @@ const VENDOR_HOSTS = [['deepseek', 'DeepSeek'], ['dashscope', 'Alibaba'], ['aliy
 export const vendorOf = (url) => (VENDOR_HOSTS.find(([h]) => url.toLowerCase().includes(h)) || [0, '自定义'])[1];
 
 export function saveModel(data) {
-  const rec = saveFunctionalModel({ ...data, vendor: vendorOf(data.baseUrl) });
-  if (!models.some(model => model.id === rec.id)) models.push(rec);
-  return rec.id;
+  const old = data.id && models.find((m) => m.id === data.id);
+  const rec = { ...data, vendor: vendorOf(data.baseUrl), name: data.name || data.apiModel, statusLabel: MODEL_STATUS[data.status] || data.status };
+  if (old) Object.assign(old, rec);
+  else models.push({ roles: [], reasoning: false, note: '', ...rec, id: `mdl-u${Date.now().toString(36)}` });
 }
 export function deleteModel(id) {
-  if (modelUsage(id).length) throw new Error('模型正在被引用，请先调整相关配置');
-  removeFunctionalModel(id);
   const i = models.findIndex((m) => m.id === id);
   if (i >= 0) models.splice(i, 1);
 }
 /* 某角色下可用的模型：平台管理里配置了该角色的 */
-export const platformModels = () => [...functionalModels];
-export const modelsWithRole = role => (role === '靶标' ? models.filter(model => model.roles.includes('靶标') && (model.assetId || !models.some(v => v.assetId === model.id))) : functionalModels.filter(model => model.status === 'connected')).filter(model => model.roles.includes(role));
+export const platformModels = () => models.filter(m => m.isCurrentResource!==false&&(m.assetId || !models.some(v => v.assetId === m.id)));
+export const modelsWithRole = (_role) => platformModels().filter(m => m.apiType === 'openai' || !m.apiType);
 
 /* 模型被哪些任务、智能体、策略引用。被引用后接入参数锁定，只能改 API Key（轮换凭据），也不能删除：
  * 已完成任务的结果依赖当时的模型标识与地址，改了会让历史结果无法追溯。 */
@@ -129,24 +132,21 @@ export function modelUsage(id) {
     if (t.judgeId === id) out.push(`模型演练「${t.name}」· 裁判`);
   }
   for (const s of strategies) {
-    if (s.methods.some((x) => (x.params || []).some(([, v]) => v === m.name || v === id))) out.push(`模型演练策略「${s.name}」· 攻击生成`);
+    if (s.methods.some((x) => (x.params || []).some(([, v]) => v === m.name))) out.push(`攻击策略「${s.name}」· 攻击生成`);
   }
-  for (const guard of guards) if (!guard.builtin && guard.modelId === id) out.push(`防护方法「${guard.name}」· 防护`);
   for (const t of rawAgentTasks) {
     if (t.judgeId === id) out.push(`Agent 演练「${t.name}」· 裁判`);
     if (t.attackerId === id) out.push(`Agent 演练「${t.name}」· 攻击者`);
   }
   for (const a of agents) if (a.baseModelId === id) out.push(`智能体「${a.name}」· 基座`);
-  for (const s of agentStrategies) {
-    if (s.attackerModelId === id) out.push(`智能体演练策略「${s.name}」· 攻击生成`);
-  }
+  for (const s of agentStrategies) if (s.attackerModelId === id) out.push(`Agent 策略「${s.name}」· 攻击者`);
   return out;
 }
 
 /* ---------------------------------------------------------------- 攻击策略 */
 export const strategies = [
   {
-    id: 'stg-advbench-base', familyId: 'stg-advbench-base', source: 'system', version: '1.0', guardId: null, guardStages: [],
+    id: 'stg-advbench-base', source: 'system',
     name: 'AdvBench 基线四方法',
     desc: '同一题库上对比直接提问、越狱模板、嵌套场景与自动迭代改写的攻破能力',
     /* banks：引用的题库与选题数量；count 为 null 表示全部题目 */
@@ -156,7 +156,7 @@ export const strategies = [
       { name: 'Direct', order: 1, params: [] },
       { name: 'JailBroken', order: 2, params: [['预置变体', 'prefix_injection、refusal_suppression']] },
       { name: 'DeepInception', order: 3, params: [['情境类型', 'stage scene'], ['嵌套层数', 5], ['角色数量', 8]] },
-      { name: 'PAIR', order: 4, params: [['最大迭代轮数', 5], ['攻击生成模型', 'DeepSeek-V3-Flash']], aux: { generator: 'mdl-deepseek-flash' } },
+      { name: 'PAIR', order: 4, params: [['最大迭代轮数', 5], ['攻击生成模型', 'DeepSeek-V3-Chat']] },
     ],
     /* status：published 已发布（锁定不可编辑）/ draft 待发布 */
     status: 'published',
@@ -164,7 +164,7 @@ export const strategies = [
     updatedAt: '2026-11-03 09:27',
   },
 ];
-export const STRATEGY_STATUS = { published: '已发布', draft: '草稿', disabled: '已停用' };
+export const STRATEGY_STATUS = { published: '已发布', draft: '草稿' };
 
 /* 策略引用的题库，一行一套：名称·前 N 题 / 名称·全部 N 题 */
 export function strategyBankLines(s) {
@@ -184,42 +184,83 @@ export function nowText() {
 /* 保存策略：id 为空则新建；已发布的策略不可再改 */
 export function saveStrategy(data) {
   const old = data.id && strategies.find((x) => x.id === data.id);
-  if (old && ['published', 'disabled'].includes(old.status)) return null;
-  const rec = withoutTaskJudge({ taskCount: 0, source: 'custom', version: '1.0', ...old, ...data, updatedAt: nowText() });
-  if (rec.status === 'published') Object.assign(rec, freezeStrategyDependencies(rec, { banks, guards, models }));
-  if (old) { delete old.judgeId; Object.assign(old, rec); }
-  else { rec.id = `stg-${globalThis.crypto.randomUUID()}`; rec.familyId ||= rec.id; strategies.push(rec); }
+  if (data.id && !old) throw new Error('策略不存在');
+  if (old?.status === 'published') throw new Error('已发布的组合攻击策略不可修改，请新建策略');
+  const rec = structuredClone({ taskCount: 0, ...old, ...data, source: old?.source || 'custom', updatedAt: nowText() });
+  for (const key of ['version', 'familyId', 'parentId', 'copiedFrom']) delete rec[key];
+  rec.name = String(rec.name || '').trim();
+  rec.status ||= 'draft'; rec.methods ||= []; rec.banks ||= [];
+  if (!rec.name) throw new Error('请输入策略名称');
+  if (!['draft', 'published'].includes(rec.status)) throw new Error('策略状态无效');
+  if (strategies.some(strategy => strategy.id !== old?.id && strategy.name === rec.name)) throw new Error('策略名称重复，请修改');
+  if (rec.status === 'published') {
+    if (!rec.methods.length) throw new Error('请至少选择一种攻击方法');
+    for (const method of rec.methods) {
+      const definition = methods.find(item => item.name.toLowerCase() === String(method.name).toLowerCase());
+      if (!definition || definition.available === false) throw new Error('所选攻击方法不可用，请重新选择');
+      for (const [key, label] of [['generator', '攻击生成模型'], ['process', '过程裁判']]) {
+        if (!definition[key]) continue;
+        const selectedId = method.aux?.[key];
+        const selectedName = Array.isArray(method.params) ? method.params.find(([name]) => name === label)?.[1] : '';
+        const model = models.find(item => selectedId ? item.id === selectedId || item.assetId === selectedId : item.name === selectedName);
+        if (!model || model.status !== 'connected' || model.testable === false) throw new Error(`请为 ${definition.name} 选择可用的${label}`);
+      }
+    }
+    if (!rec.banks.length) throw new Error('请至少选择一套已发布攻击题库');
+    for (const ref of rec.banks) {
+      const bank = getBank(ref.bankId);
+      if (!bank || bank.status === 'draft' || !bank.items.length) throw new Error('攻击策略引用的题库尚未发布或不可用');
+      if (ref.count != null && (!Number.isInteger(ref.count) || ref.count < 1 || ref.count > bank.items.length)) throw new Error('题库选题数量无效');
+    }
+  }
+  if (old) { Object.assign(old, rec); for (const key of ['version', 'familyId', 'parentId', 'copiedFrom']) delete old[key]; }
+  else { rec.id = `stg-${globalThis.crypto.randomUUID()}`; strategies.push(rec); }
   return rec.id;
 }
 
 // Deleted definitions remain available only for older task records lacking parameter snapshots.
 const deletedModelStrategySnapshots = new Map();
 export const recordedModelStrategy = id => strategies.find(strategy => strategy.id === id) || deletedModelStrategySnapshots.get(id);
+const exercisedModelStrategies = new Map();
+const modelTaskWasStarted = task => Boolean(task.startedAt) || ['starting', 'running', 'done', 'stopped'].includes(task.status) || Number(task.replayCursor) > 0;
+function rememberModelStrategyUse(task) {
+  if (!task || task.objectType === 'agent' || !modelTaskWasStarted(task)) return;
+  const id = task.configSnapshot?.strategyId || task.strategyId;
+  if (!id) return;
+  if (!exercisedModelStrategies.has(id)) exercisedModelStrategies.set(id, new Set());
+  exercisedModelStrategies.get(id).add(task.id);
+}
+export function modelStrategyUsage(id) {
+  const repository = taskRepository();
+  const archived = repository.deleted().filter(task => task.objectType === 'model').map(task => repository.get(task.id, { includeDeleted: true }));
+  [...rawTasks, ...repository.list('model'), ...archived].forEach(rememberModelStrategyUse);
+  const taskIds = [...(exercisedModelStrategies.get(id) || [])];
+  return { used: taskIds.length > 0, count: taskIds.length, taskIds };
+}
+subscribeTasks(({ id, type }) => { if (type === 'model') rememberModelStrategyUse(taskRepository().get(id, { includeDeleted: true })); });
 export function deleteStrategy(id) {
   const i = strategies.findIndex((x) => x.id === id);
   if (i >= 0) {
+    if (modelStrategyUsage(id).used) throw new Error('已参与演练的组合攻击策略不可删除');
     deletedModelStrategySnapshots.set(id, structuredClone(strategies[i]));
     strategies.splice(i, 1);
   }
 }
 
 export function copyStrategy(id) {
-  const source = strategies.find(strategy => strategy.id === id && ['published', 'disabled'].includes(strategy.status));
-  if (!source) throw new Error('仅已发布策略可复制');
-  return saveStrategy(copyStrategyRecord(source, strategies));
+  const source = strategies.find(strategy => strategy.id === id && strategy.status === 'published');
+  if (!source) throw new Error('仅已发布策略可复制配置');
+  return saveStrategy({ ...copyStrategyRecord(source, strategies), authoringStep: 0, authoringVisited: 0 });
 }
 export function newStrategyVersion(id) {
-  const next = createStrategyVersion(strategies.find(s => s.id === id), strategies);
-  return next.id || saveStrategy(next);
-}
-export function setStrategyStatus(id, enabled, type = 'model') {
-  const strategy = (type === 'agent' ? agentStrategies : strategies).find(row => row.id === id);
-  if (!strategy || !['published', 'disabled'].includes(strategy.status)) throw new Error('请选择已发布的策略版本');
-  strategy.status = enabled ? 'published' : 'disabled';
-  return strategy;
+  throw new Error('组合攻击策略不维护版本，请新建策略');
 }
 
-/* Built-in protection is a read-only system capability, outside model intake. */
+/* ---------------------------------------------------------------- 防护策略（蓝队） */
+/* 系统防护模型，各自保留原生风险分类与输出约定。 */
+export const GUARD_STAGES = ['输入', '输出'];
+export const guards = guardCatalog;
+export const guardOf = (id) => guards.find((g) => g.id === id);
 export const guardStageText = (t) => (t.guardStages?.length ? t.guardStages.join(' + ') : '输入 + 输出');
 
 /* ---------------------------------------------------------------- 攻击方法 */
@@ -413,7 +454,7 @@ export const agentStrategies = [
     updatedAt: '2026-11-13 13:20',
   },
 ];
-export const AG_STRATEGY_STATUS = STRATEGY_STATUS;
+export const AG_STRATEGY_STATUS = { published: '已发布', draft: '待发布' };
 
 export const getAgentStrategy = (id) => agentStrategies.find((s) => s.id === id) || null;
 
@@ -451,10 +492,9 @@ export function agentStrategyTaskIds(s) {
 
 export function saveAgentStrategy(data) {
   const old = data.id && agentStrategies.find((x) => x.id === data.id);
-  if (old && ['published', 'disabled'].includes(old.status)) return null;
-  const rec = withoutTaskJudge({ taskCount: 0, source: 'custom', version: '1.0', banks: [], methodId: 'baseline', attackerModelId: null, ...old, ...data, updatedAt: nowText() });
-  if (rec.status === 'published') Object.assign(rec, freezeStrategyDependencies(rec, { banks: sceneBanks, guards, models }));
-  if (old) { delete old.judgeId; Object.assign(old, rec); return old.id; }
+  if (old && old.status === 'published') return null;
+  const rec = { taskCount: 0, source: 'custom', version: '1.0', banks: [], methodId: 'baseline', attackerModelId: null, ...old, ...data, updatedAt: nowText() };
+  if (old) { Object.assign(old, rec); return old.id; }
   rec.id = `agstg-${globalThis.crypto.randomUUID()}`;
   rec.familyId ||= rec.id;
   agentStrategies.push(rec);
@@ -467,7 +507,7 @@ export function deleteAgentStrategy(id) {
 }
 
 export function copyAgentStrategy(id) {
-  const source = agentStrategies.find(strategy => strategy.id === id && ['published', 'disabled'].includes(strategy.status));
+  const source = agentStrategies.find(strategy => strategy.id === id && strategy.status === 'published');
   if (!source) throw new Error('仅已发布策略可复制');
   return saveAgentStrategy(copyStrategyRecord(source, agentStrategies));
 }
@@ -485,13 +525,14 @@ saveAgentStrategy({ name: '客服正常流程回归', desc: '确认业务流程�
 /* ---------------------------------------------------------------- Agent 任务 */
 function decorateAgentTask(task) {
   const projection = task.sourceTaskId || task.configurationMode === 'selected' ? projectTask(task) : null;
-  const own = projection?.units || rawAgentUnits.filter((u) => u.taskId === task.id);
+  const reviewed = unit => unit.executionStatus && unit.executionStatus !== 'done' ? unit : withAgentInjectionAssessment(withAgentBusinessAssessment(unit));
+  const own = (projection?.units || rawAgentUnits.filter((u) => u.taskId === task.id)).map(reviewed);
   const agg = agentAsr(own);
   return {
     ...task,
     ...projection,
     units: own,
-    executionUnits: projection?.executionUnits || own.map((u) => ({ ...u, executionStatus: 'done', roundInfo: roundInfo(task, u) })),
+    executionUnits: projection?.executionUnits?.map(reviewed) || own.map((u) => ({ ...u, executionStatus: 'done', roundInfo: roundInfo(task, u) })),
     agg,
     asr: agg.value,
     judged: agg.judged,
@@ -504,7 +545,7 @@ function decorateAgentTask(task) {
 }
 
 export function listAgentTasks() {
-  return [...rawAgentTasks.filter(t => !taskRepository().isDeleted(t.id)), ...taskRepository().list('agent')].map(decorateAgentTask);
+  return [...rawAgentTasks.filter(t => DEMO_AGENT_IDS.has(t.id) && !taskRepository().isDeleted(t.id)), ...taskRepository().list('agent')].map(decorateAgentTask);
 }
 
 export function getAgentTask(id) {
@@ -576,7 +617,7 @@ export function agentResultRows() {
 
 /* Agent 演练报告：一任务一份 */
 export function listAgentReports() {
-  return listAgentTasks().filter((t) => t.status === 'done' && !isReportDeleted(t.id, 'agent')).map((t) => ({
+  return listAgentTasks().filter((t) => t.status === 'done').map((t) => ({
     id: `agrpt-${t.id}`,
     taskId: t.id,
     name: t.name,
@@ -741,11 +782,13 @@ export function notifications() {
     add({ type: 'start', kind, at: String(t.startedAt).slice(0, 16), title: `${t.name} 开始执行`, meta: `${src} · ${t.total} 个${kind === 'agent' ? '题目' : '攻击单元'}`, go: open });
     if (t.status === 'done') {
       add({ type: 'done', kind, at: String(t.finishedAt).slice(0, 16), title: `${t.name} 已完成`, meta: `${src} · ${agentMetricLabel(t, true)} ${(t.agg.value * 100).toFixed(1)}%`, go: open });
-      add({ type: 'report', kind, at: plus(t.finishedAt, 1), title: `${t.name} 报告已生成`, meta: `${src} · 评估等级 ${t.risk.label}`, go: report });
+      add({ type: 'report', kind, at: plus(t.finishedAt, 1), title: `${t.name} 报告已生成`, meta: `${src} · 风险等级 ${t.risk.label}`, go: report });
     }
   }
-  for (const message of activityNotifications()) add(message);
-  return out.sort((a, b) => b.sort - a.sort);
+  for (const e of riskEvents()) {
+    add({ type: 'risk', kind: e.source, riskKey: e.risk.key, at: String(e.at).slice(0, 16), title: `${e.targetName} 触发${e.risk.label}风险`, meta: `${e.typeName} · ${agentMetricLabel(e.source === 'agent' ? getAgentTask(e.id) : null, true)} ${(e.asr * 100).toFixed(1)}%`, go: e.source === 'agent' ? `App.openAgTask('${e.id}')` : `App.openTask('${e.id}')` });
+  }
+  return out.sort((a, b) => b.sort - a.sort || (a.type === 'risk' ? -1 : 1));
 }
 
 export function getUnit(taskId, unitId) {
@@ -833,7 +876,7 @@ export function logText(taskId) {
 
 /* 报告：一条任务一份，内容由真实单元生成 */
 export function listReports() {
-  return listTasks().filter((t) => t.status === 'done' && !isReportDeleted(t.id, 'model')).map((t) => ({
+  return listTasks().filter((t) => t.status === 'done').map((t) => ({
     id: `rpt-${t.id}`,
     taskId: t.id,
     name: t.name,
@@ -846,7 +889,6 @@ export function listReports() {
 }
 
 /* Task service commands are assembled once; pages keep using the store facade. */
-export const { deleteReport, restoreReport, isReportDeleted, subscribeReports } = createReportService({ getTask: (id, type) => type === 'agent' ? getAgentTask(id) : getTask(id) });
 export { listTaskTemplates, saveTask, copyTask, startTask, stopTask, deleteTask, restoreTask, subscribeTasks, advanceTaskReplay, initializeTaskRuntime };
 
 export function taskEvents(id, type = 'model') {

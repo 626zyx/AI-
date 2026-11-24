@@ -1,129 +1,64 @@
-/* 策略中心 · 场景题库：列表 + 右侧抽屉详情。
- * 一个 domain 一套题库，与 openart_mid_by_domain 的 14 个包一一对应。
- * 场景标签是题目属性，用于结果归因；这里只展示，不参与任务创建。 */
+/* 环境库按环境展示；发布题与草稿使用同一领域接口。 */
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
-import * as store from '../domain/store.js';
+import { getAgentQuestions, getAgentQuestion, deleteAgentQuestion, exportAgentQuestionsZip } from '../domain/agent-environments.js';
 import { RISK_LABEL } from '../domain/constants.js';
-import { detailFields, detailBlock, detailContent, openConfigDetail } from '../core/config-detail.js';
-import { authoringListRows, authoringState, authoringRowActions } from './resource-authoring.js';
-
-const view = { q: '' };
-
-/* ---------------------------------------------------------------- 列表 */
+const view = { q:'', source:'', business:'', risk:'', status:'published' };
+const selected = new Set();
+let pageRows = [], pendingDelete = [];
+const arg = value => encodeURIComponent(value).replace(/'/g, '%27');
+const refresh = () => router.nav('strategy', 'scenebanks');
+const selection = () => [...selected].map(getAgentQuestion).filter(Boolean);
+function filteredRows() {
+  const query = view.q.trim().toLowerCase();
+  return getAgentQuestions({status:'all'}).filter(q => (!view.status || q.status === view.status)
+    && (!view.source || q.source === view.source) && (!view.business || q.business === view.business)
+    && (!view.risk || q.riskLabels.includes(view.risk))
+    && (!query || `${q.title} ${q.taskId} ${q.business} ${q.riskLabels.map(label => RISK_LABEL[label]?.label || label).join(' ')}`.toLowerCase().includes(query)));
+}
+function renderTable(rows) {
+  const pg = UI.paginate('agent-environments', rows); pageRows = pg.slice;
+  const all = pageRows.length > 0 && pageRows.every(q => selected.has(q.id));
+  const columns = [
+    { title:`<input type="checkbox" aria-label="全选当前页" ${all?'checked':''} ${pageRows.length?'':'disabled'} onchange="App.sbSelectPage(this.checked)">`, raw:true, width:'42px', render:q=>`<input type="checkbox" aria-label="选择 ${UI.esc(q.title)}" ${selected.has(q.id)?'checked':''} onchange="App.sbSelect('${q.id}',this.checked)">` },
+    { title:'环境名称', width:'340px', render:q=>`<button class="link-btn ae-title" onclick="App.aeOpen('${q.id}')">${UI.esc(q.title)}</button><div class="faint text-support mono">${UI.esc(q.taskId)}</div>` },
+    { title:'来源', width:'72px', render:q=>UI.badge(q.source==='system'?'系统':'自建',q.source==='system'?'blue':'gray') },
+    { title:'业务类型', width:'135px', render:q=>UI.esc(q.business) },
+    { title:'风险场景', width:'190px', render:q=>`<div class="ae-risk-summary" title="${UI.esc(q.riskLabels.map(label=>RISK_LABEL[label]?.label||label).join('、'))}">${UI.esc(q.riskLabels.slice(0,2).map(label=>RISK_LABEL[label]?.label||label).join('、'))}${q.riskLabels.length>2?` 等${q.riskLabels.length}项`:''}</div>` },
+    { title:'状态', width:'85px', render:q=>UI.badge(q.status==='draft'?'草稿':'已发布',q.status==='draft'?'gray':'green') },
+    { title:'更新时间', width:'110px', render:q=>UI.esc(q.updatedAt?new Date(q.updatedAt).toLocaleDateString('zh-CN'):'—') },
+    { title:'操作', width:'130px', render:q=>`<div class="row-actions">${UI.linkBtn(q.status==='draft'?'编辑':'查看',{onclick:`App.aeOpen('${q.id}')`})}${UI.moreMenu([['复制为草稿',`App.aeCopy('${q.id}')`],['导出 ZIP',`App.aeExport('${q.id}')`],...(q.source==='custom'?[['删除',`App.aeDelete('${q.id}')`]]:[])])}</div>` },
+  ];
+  return UI.table(columns,pg.slice,view.status==='draft'?'暂无匹配草稿，可导入文件包或生成草稿':'暂无匹配环境')+UI.pager(pg,"UI.setPage('agent-environments',{p})");
+}
 export function sceneBanksPage() {
-  let rows = [...store.sceneBanks.filter(bank => !bank.archived && !bank.authoringId && bank.items?.length), ...authoringListRows('agent')];
-  if (view.q.trim()) {
-    const q = view.q.trim().toLowerCase();
-    rows = rows.filter((b) => (b.name + b.code).toLowerCase().includes(q));
-  }
-
-  const flt = UI.filters({
-    search: { label: '搜索', id: 'sb-q', value: view.q, placeholder: '搜索题库名称', oninput: 'App.sbSearch(this.value)' },
-  });
-
-  const table = UI.pagedTable(
-    'scenebanks',
-    [
-      { title: '题库名称', render: (b) => `<button class="link-btn" onclick="App.${b.userResource ? 'raOpen' : 'openSceneBank'}('${b.id}')">${UI.esc(b.name)}</button>` },
-      { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', 'gray') },
-      { title: '题目数', width: '90px', cls: 'num', render: (b) => `<span class="num">${b.items.length || b.total}</span>` },
-      { title: '版本', width: '145px', render: b => b.userResource ? authoringState(b) : '—' },
-      {
-        title: '覆盖场景',
-        render: (b) => {
-          const cov = store.bankLabelCoverage(b);
-          const keys = Object.keys(cov);
-          if (!keys.length) return '<span class="faint">明细未加载</span>';
-          return UI.tagList(keys.sort((x, y) => cov[y] - cov[x]).map((k) => RISK_LABEL[k]?.label || k));
-        },
-      },
-      {
-        title: '操作', width: '120px', cls: 'actions',
-        render: (b) => b.userResource ? authoringRowActions(b) : `<div class="row-actions">
-          ${UI.linkBtn('详情', { onclick: `App.openSceneBank('${b.id}')` })}
-          ${UI.linkBtn('导出', { onclick: `App.sbExport('${b.id}')` })}
-        </div>`,
-      },
-    ],
-    rows,
-    '暂无场景题库',
-  );
-
-  return `${UI.pageHead('场景题库', { actions: UI.btn('新建题库', { kind: 'primary', ico: 'plus', onclick: "App.raCreate('agent')" }) })}${flt}${UI.card('', table, '', true)}`;
+  const allQuestions=getAgentQuestions({status:'all'});
+  for(const id of selected)if(!allQuestions.some(q=>q.id===id))selected.delete(id);
+  const rows=filteredRows(),picked=selection(),customCount=picked.filter(q=>q.source==='custom').length;
+  const businesses=[...new Set(allQuestions.map(q=>q.business))];
+  const filter=(key,label,options)=>({label,id:`sb-${key}`,value:view[key],options,onchange:`App.sbFilter('${key}',this.value)`});
+  const filters=UI.filters({search:{label:'搜索',id:'sb-q',value:view.q,placeholder:'搜索环境、编号或风险',oninput:'App.sbSearch(this.value)'},selects:[
+    filter('source','来源',[['','全部来源'],['system','系统'],['custom','自建']]),
+    filter('business','业务类型',[['','全部业务'],...businesses.map(b=>[b,b])]),
+    filter('risk','风险场景',[['','全部风险'],...Object.entries(RISK_LABEL).map(([id,value])=>[id,value.label])]),
+    filter('status','状态',[['','全部状态'],['published','已发布'],['draft','草稿']]),
+  ]});
+  const batch=`<div class="ae-batch-toolbar"><div class="ae-selection"><span>已选 <strong>${picked.length}</strong> 个环境${picked.length?`（自建 ${customCount}，系统 ${picked.length-customCount}）`:''}</span>${UI.linkBtn('选择全部筛选结果',{onclick:'App.sbSelectMatching()'})}${UI.linkBtn('清空选择',{onclick:'App.sbClearSelection()'})}</div><div class="row-actions">${UI.btn('批量导出',{disabled:!picked.length,onclick:'App.sbExportSelected()'})}${UI.btn('批量删除',{disabled:!customCount,onclick:'App.sbDeleteSelected()'})}</div></div>`;
+  const tools=UI.btn('导入环境',{onclick:'App.aeImportDialog()'})+UI.btn('自动生成环境',{kind:'primary',ico:'plus',onclick:'App.aeGenerateDialog()'});
+  return UI.pageHead('环境库',{actions:tools})+`<div class="ae-library"><section><div class="ae-list-toolbar">${filters}</div>${batch}<div class="ae-library-table">${UI.card('',renderTable(rows),'',true)}</div></section></div>`;
 }
-
-/* ---------------------------------------------------------------- 题库详情（右侧抽屉） */
-const PAGE = UI.PAGE_SIZE;
-const dView = { id: null, q: '', label: 'all', page: 1 };
-
-function bankBody(b) {
-  const cov = store.bankLabelCoverage(b);
-  const count = b.items.length || b.total;
-  const base = detailBlock('题库基础信息', detailFields([
-    ['题库名称', b.name], ['来源', b.source === 'system' ? '系统' : '自建'], ['题目数', count],
-    ['场景标签', Object.keys(cov).map(k => RISK_LABEL[k]?.label || k).join('、')],
-  ]));
-  if (!b.items.length) return detailContent(base + detailBlock('题目内容', '<div class="empty"><strong>题目明细待导入</strong></div>'));
-
-  let items = b.items;
-  if (dView.label !== 'all') items = items.filter((i) => (i.labels || []).includes(dView.label));
-  if (dView.q.trim()) {
-    const q = dView.q.trim().toLowerCase();
-    items = items.filter((i) => (i.taskId + i.goal).toLowerCase().includes(q));
-  }
-  const pages = Math.max(1, Math.ceil(items.length / PAGE));
-  dView.page = Math.min(dView.page, pages);
-  const slice = items.slice((dView.page - 1) * PAGE, dView.page * PAGE);
-
-  /* 与模型演练题库详情同一形态：编号 / 题目 + 标签（灰色） */
-  const table = UI.table(
-    [
-      { title: '编号 / 任务目标', render: (i) => `<div class="mono faint text-support">${UI.esc(i.taskId)}</div>${UI.esc(i.goal || '—')}` },
-      { title: '场景标签', width: '32%', render: (i) => UI.tagList((i.labels || []).map((k) => RISK_LABEL[k]?.label || k)) },
-    ],
-    slice,
-    '该筛选条件下暂无题目',
-  );
-  return detailContent(base + detailBlock('题目内容', UI.filters({
-    search: { label: '搜索', id: 'sbd-q', value: dView.q, placeholder: '搜索编号或任务目标', oninput: 'App.sbdSearch(this.value)' },
-    selects: [{
-      label: '场景标签', id: 'sbd-label', value: dView.label, onchange: 'App.sbdLabel(this.value)',
-      options: [['all', '全部标签'], ...Object.keys(cov).map((k) => [k, RISK_LABEL[k]?.label || k])],
-    }],
-  }) + table + UI.pager({ total: items.length, page: dView.page, count: pages }, 'App.sbdPage({p})')));
-}
-
-/* 抽屉内局部重绘：只换 body，保留输入焦点 */
-function redrawBank() {
-  const b = store.getSceneBank(dView.id);
-  const el = document.querySelector('#drawer .modal-body');
-  if (!b || !el) return;
-  const f = document.activeElement?.id;
-  const pos = document.activeElement?.selectionStart;
-  el.innerHTML = bankBody(b);
-  const n = f && document.getElementById(f);
-  if (n) { n.focus(); if (pos != null && n.setSelectionRange) n.setSelectionRange(pos, pos); }
-}
-
 export const actions = {
-  sbSearch(v) { view.q = v; UI.resetPage('scenebanks'); router.nav('strategy', 'scenebanks'); },
-
-  openSceneBank(id) {
-    const b = store.getSceneBank(id);
-    if (!b) return;
-    Object.assign(dView, { id, q: '', label: 'all', page: 1 });
-    openConfigDetail('场景题库详情', bankBody(b), UI.btn('导出', { onclick: `App.sbExport('${id}')` }) + UI.btn('关闭', { onclick: 'UI.closeDrawer()' }));
-  },
-
-  sbdSearch(v) { dView.q = v; dView.page = 1; redrawBank(); },
-  sbdLabel(v) { dView.label = v; dView.page = 1; redrawBank(); },
-  sbdPage(p) { dView.page = p; redrawBank(); },
-
-  sbExport(id) {
-    const b = store.getSceneBank(id);
-    if (!b) return;
-    if (!b.items.length) return UI.toast('题目明细未加载');
-    UI.download(`${b.name}.json`, JSON.stringify(b.items, null, 2));
-  },
+  sbSearch(value){const active=document.getElementById('sb-q'),position=active?.selectionStart;view.q=value;UI.resetPage('agent-environments');refresh();const input=document.getElementById('sb-q');if(input&&active){input.focus();if(position!=null)input.setSelectionRange(position,position);}},
+  sbFilter(key,value){if(!['source','business','risk','status'].includes(key))return;view[key]=value;UI.resetPage('agent-environments');refresh();},
+  sbCategory(value){view.business='';view.status=value==='draft'?'draft':'published';UI.resetPage('agent-environments');refresh();},
+  sbSelect(id,checked){if(!getAgentQuestion(id))return;checked?selected.add(id):selected.delete(id);refresh();},
+  sbSelectPage(checked){pageRows.forEach(q=>checked?selected.add(q.id):selected.delete(q.id));refresh();},
+  sbSelectMatching(){filteredRows().forEach(q=>selected.add(q.id));refresh();},
+  sbClearSelection(){selected.clear();refresh();},
+  sbExportSelected(){try{const questions=selection();if(!questions.length)return UI.toast('请先选择环境');const bytes=exportAgentQuestionsZip(questions.map(q=>q.id)),url=URL.createObjectURL(new Blob([bytes],{type:'application/zip'})),link=document.createElement('a');link.href=url;link.download=`Agent环境-${questions.length}个环境.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);UI.toast(`已导出${questions.length}个环境的ZIP文件包，每个环境独立目录`);}catch(error){UI.toast(error.message);}},
+  sbDeleteSelected(){const rows=selection(),custom=rows.filter(q=>q.source==='custom');if(!custom.length)return UI.toast('系统环境不可删除，请选择自建环境');pendingDelete=custom.map(q=>q.id);const skipped=rows.length-custom.length;UI.modal('批量删除自建环境',`<p>确认删除所选的 ${custom.length} 个自建环境？</p>${skipped?`<p>已自动排除 ${skipped} 个系统环境，它们会继续保留。</p>`:''}<ul class="ae-delete-preview">${custom.map(q=>`<li>${UI.esc(q.title)}</li>`).join('')}</ul>`,UI.btn('取消',{onclick:'App.sbDeleteCancel()'})+UI.btn('确认删除',{kind:'danger',onclick:'App.sbDeleteConfirm()'}));},
+  sbDeleteCancel(){pendingDelete=[];UI.closeModal();},
+  sbDeleteConfirm(){const ids=pendingDelete.filter(id=>getAgentQuestion(id)?.source==='custom');pendingDelete=[];ids.forEach(id=>{deleteAgentQuestion(id);selected.delete(id);});UI.closeModal();UI.resetPage('agent-environments');refresh();UI.toast(`已删除${ids.length}个自建环境`);},
+  openSceneBank(id){const question=getAgentQuestion(id)||getAgentQuestions({bankId:id})[0];if(question)router.nav('strategy','authoring',question.id);},
+  sbExport(id){globalThis.App?.aeExport(getAgentQuestion(id)?.id||getAgentQuestions({bankId:id})[0]?.id);},
 };

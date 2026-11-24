@@ -2,6 +2,7 @@
  * 与模型演练的攻击方法页同一形态：名称 / 说明、依赖模型、操作。 */
 import * as UI from '../core/ui.js';
 import * as store from '../domain/store.js';
+import { authoringListRows, authoringState, authoringRowActions } from './resource-authoring.js';
 import { SURFACE_GROUPS, SURFACE_TYPES } from '../domain/attack-surfaces.js';
 import { detailFields, detailBlock, detailContent, detailTableField, parameterTable, openConfigDetail } from '../core/config-detail.js';
 
@@ -17,24 +18,33 @@ function surfaceCatalogHTML() {
 }
 
 export function agentMethodsPage() {
-  const table = UI.pagedTable('ag-methods', [
-    { title: '名称 / 说明', render: m => `<button class="link-btn" onclick="App.openAgMethod('${m.id}')">${UI.esc(m.name)}</button><div class="faint text-support">${UI.esc(m.desc || '')}</div>` },
-    { title: '来源', width: '90px', render: () => UI.badge('系统', 'gray') },
-    { title: '类别', width: '150px', render: m => m.id === 'baseline' ? '基线验证' : '环境注入' },
-    { title: '依赖模型', width: '240px', render: m => m.id === 'baseline' ? '裁判模型' : '攻击生成模型、裁判模型' },
-    { title: '操作', width: '90px', cls: 'actions', render: m => UI.linkBtn('详情', { onclick: `App.openAgMethod('${m.id}')` }) },
-  ], store.agentMethods.filter(m => !m.authoringId), '暂无演练方法');
-  return `${UI.pageHead('演练方法')}${UI.card('', table, '', true)}`;
+  const category = (m) => m.id === 'universal' ? '间接注入' : '直接执行';
+  const table = UI.pagedTable(
+    'ag-methods',
+    [
+      {
+        title: '名称 / 说明',
+        render: (m) => `<button class="link-btn" onclick="App.openAgMethod('${m.id}')">${UI.esc(m.name)}</button><div class="faint text-support">${UI.esc(m.desc || '—')}</div>`,
+      },
+      { title: '来源', width: '80px', render: () => UI.badge('系统', 'blue') },
+      { title: '类别', width: '150px', render: (m) => UI.esc(category(m)) },
+      { title: '依赖模型', width: '220px', render: (m) => UI.esc(store.agentMethodDeps(m)) },
+      { title: '操作', width: '90px', cls: 'actions', render: (m) => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openAgMethod('${m.id}')` })}</div>` },
+    ],
+    store.agentMethods.filter(m => !m.authoringId),
+    '暂无攻击方法',
+  );
+  return `${UI.pageHead('攻击方法')}${UI.card('', table, '', true)}`;
 }
 
 export const actions = {
   openAgMethod(id) {
     const m = store.agentMethodOf(id);
     if (!m) return;
-    openConfigDetail('演练方法详情', detailContent(
-      detailBlock('方法基础信息', detailFields([['方法名称', m.name], ['说明', m.desc], ['来源', '系统'], ['类别', m.id === 'baseline' ? '基线验证' : '环境注入']]))
+    openConfigDetail('攻击方法详情', detailContent(
+      detailBlock('方法基础信息', detailFields([['方法名称', m.name], ['说明', m.desc], ['来源', '系统']]))
       + detailBlock('详细配置信息', detailFields([
-        ['依赖模型', m.id === 'baseline' ? '裁判模型' : '攻击生成模型、裁判模型'],
+        ['依赖模型', store.agentMethodDeps(m)],
         ...(m.defaultModelId ? [['推荐模型', `攻击生成模型：${store.modelName(m.defaultModelId)}`]] : []),
       ]) + detailTableField('方法参数', parameterTable(m.params, '说明'))
       + (m.id === 'universal' ? detailTableField('攻击面分类与文件示例', surfaceCatalogHTML()) : ''))));

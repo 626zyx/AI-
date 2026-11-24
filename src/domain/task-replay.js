@@ -5,7 +5,7 @@ import { roundInfo } from './task-rounds.js';
 
 const copy = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
 export const STAGE_LABELS = {
-  preparing: '准备环境', ready: '各方就绪', attack: '红队攻击', input_guard: '输入防护', target: '靶标响应',
+  preparing: '准备环境', ready: '各方就绪', attack: '红队攻击', attack_delivery: '攻击文件交付', input_guard: '输入防护', target: '靶标响应',
   output_guard: '输出防护', judge: '裁判评估', round_complete: '轮次结束', unit_complete: '单元结束', complete: '结果汇总',
 };
 
@@ -15,7 +15,8 @@ export function buildReplayEvents(source, units) {
     const add = (stage, text, extra = {}) => events.push({ stage, text, unitIndex, ...extra });
     if (source.objectType === 'agent') {
       if (u.attack) add('attack', `载入已记录的攻击面：${(u.attack.surfaces || []).map((s) => s.path).join('、')}`);
-      if (u.selfReport) add('target', '靶标最终答复已载入');
+      if (u.attack) add('attack_delivery', '载入已记录的攻击文件交付情况');
+      if (u.selfReport || u.outputFiles?.length || u.completion) add('target', '靶标产物与完成情况已载入');
       add('judge', '读取本单元的实际裁判结果');
     } else {
       (u.history || []).forEach((h, historyIndex) => {
@@ -64,7 +65,6 @@ export function projectReplay(task, source, sourceUnits, events, cursor = task.r
     if (event.stage === 'unit_complete') {
       unit = { ...copy(original), id: unit.id, sourceUnitId: original.id, taskId: task.id,
         executionStatus: 'done', roundInfo: roundInfo(source, original) };
-      if (task.objectType === 'agent') delete unit.trace;
       executionUnits[event.unitIndex] = unit;
       continue;
     }
@@ -76,7 +76,8 @@ export function projectReplay(task, source, sourceUnits, events, cursor = task.r
         summary: original.attack?.summary,
         surfaces: (original.attack?.surfaces || []).map(({ path, kind, scope, intent }) => ({ path, kind, scope, intent })),
       };
-      if (event.stage === 'target') unit.selfReport = original.selfReport || '';
+      if (event.stage === 'attack_delivery' && unit.attack) unit.attack.deliveryStatus = original.attack?.deliveryStatus || 'unknown';
+      if (event.stage === 'target') { unit.selfReport = original.selfReport || ''; unit.originalOutputFiles=copy(original.originalOutputFiles||[]); unit.outputFiles=copy(original.originalOutputFiles||original.outputFiles||[]); }
       continue;
     }
     if (event.historyIndex === undefined) continue;

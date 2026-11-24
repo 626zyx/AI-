@@ -8,3 +8,11 @@
 .agm-file-example { overflow-wrap:anywhere; word-break:break-word; line-height:1.65; }
 .agm-file-example+.agm-file-example { margin-top:4px; }
 .agm-surface-group table { table-layout:fixed; }
+.agm-description { margin:0; color:var(--text); font-size:var(--t-body); line-height:1.8; }
+.agm-surface-group:first-child { margin-top:0; }
+.agm-prompt-source { margin:0 0 14px; font-size:var(--t-support); color:var(--muted); }
+.agm-prompt-section + .agm-prompt-section { margin-top:20px; }
+.agm-prompt-section h4 { margin:0 0 8px; font-size:var(--t-body); font-weight:600; }
+.agm-prompt-section ul { margin:0; padding-left:20px; color:var(--text); font-size:var(--t-support); line-height:1.85; }
+.agm-prompt-section li + li { margin-top:8px; }
+.agm-prompt code { overflow-wrap:anywhere; white-space:normal; }

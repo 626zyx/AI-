@@ -2,9 +2,8 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
-import { compareValues } from '../core/table-sort.js';
-import { verdictOf, taskMetricValues } from '../domain/metrics.js';
-import { taskMetricMarkdown, metricGrade } from './task-metrics.js';
+import { verdictOf } from '../domain/metrics.js';
+import { taskMetricsMd } from './task-metrics.js';
 import { resultPanel, baseInfoRows, configRows } from './tasks.js';
 import { mdToHtml, emit, closePops, fmtOf } from '../core/export.js';
 import { gtag, mtag, field, text, mod } from '../core/detail.js';
@@ -12,7 +11,6 @@ import { configSummary } from '../core/task-config.js';
 import { roundInfo } from '../domain/task-rounds.js';
 import { roundCountText, breachRoundText, methodRoundMetrics, methodRoundColumns, methodRoundNote, methodPerformanceMd } from './report-rounds.js';
 import { reportQuestionCell, reportSection, reportDocument } from './report-format.js';
-import { actions as reportManagementActions } from './report-management.js';
 
 const view = { q: '', targetId: 'all', sortDesc: true };
 const detail = { tab: 'analysis', method: 'all', verdict: 'all', scene: 'all' };
@@ -31,7 +29,7 @@ export function reportsPage() {
     const q = view.q.trim().toLowerCase();
     rows = rows.filter((r) => r.name.toLowerCase().includes(q));
   }
-  rows.sort((a, b) => compareValues(a.createdAt, b.createdAt, view.sortDesc));
+  rows.sort((a, b) => (view.sortDesc ? String(b.createdAt || '').localeCompare(a.createdAt || '') : String(a.createdAt || '').localeCompare(b.createdAt || '')));
   const targets = [...new Map(store.listTasks().map((t) => [t.targetId, t.targetName])).entries()];
 
   const flt = UI.filters({
@@ -54,7 +52,7 @@ export function reportsPage() {
         title: '操作', width: '120px', cls: 'actions',
         render: (r) => `<div class="row-actions">
           ${UI.linkBtn('详情', { onclick: `App.openReport('${r.taskId}')` })}
-          ${UI.linkBtn('删除', { danger: true, onclick: `App.rpDeleteReport('${r.taskId}','model')` })}
+          ${UI.linkBtn('删除', { danger: true, onclick: 'App.deleteBlocked()' })}
         </div>`,
       },
     ],
@@ -92,7 +90,7 @@ export function reportDetailPage(cur) {
     </div>
   </div>`;
 
-  return `<div class="rr-report">${head}${configSummary(t)}${resultPanel(t)}${toggle}<div class="rr-report-scroll" id="rp-body">${detail.tab === 'analysis' ? analysisHTML(t) : detailHTML(t)}</div></div>`;
+  return `<div class="rr-report">${head}${configSummary(t)}${toggle}<div id="rp-body">${detail.tab === 'analysis' ? analysisHTML(t) : detailHTML(t)}</div></div>`;
 }
 
 /* 报告导出：先多选内容，再选格式 */
@@ -123,7 +121,7 @@ function findings(t) {
   return [
     { title: '方法表现', text: methodText },
     ...(scene?.breach ? [{ title: '重点场景', text: `「${scene.label}」的攻破率最高，为 ${UI.pct(scene.value)}（${scene.breach}/${scene.judged}）；各场景的覆盖量与结果见下文。` }] : []),
-    { title: `评估等级：${metricGrade(t, 'asr', taskMetricValues(t).asr).label}`, text: '按本次有效判定与数据等级规则形成结论，适用于当前题库、方法及防护条件。' },
+    { title: `风险判断：${t.risk.label}`, text: `按平台 ASR 阈值判定：≥${UI.pct(store.riskRule.critical, 0)} 为高危、≥${UI.pct(store.riskRule.high, 0)} 为中危、>${UI.pct(store.riskRule.trigger, 0)} 为低危。结论适用于本次题库和方法组合。` },
   ];
 }
 
@@ -169,7 +167,7 @@ function riskBlock(title, firstCol, allDims, rows, task = null) {
     rankedRows,
   );
   return reportSection(title, `<div class="risk-charts">
-      <div><div class="sub-label">各${firstCol}攻破率（共 ${allDims.length} 个维度，本次覆盖 ${rows.filter((r) => r.judged).length} 个）</div>${UI.bars(rankedRows.slice(0, 8).map(row => ({ label: row.label, value: row.value, color: 'var(--primary)' })), { max: 1 })}</div>
+      <div><div class="sub-label">各${firstCol}攻破率（共 ${allDims.length} 个维度，本次覆盖 ${rows.filter((r) => r.judged).length} 个）</div>${UI.radar(radarItems)}</div>
       <div><div class="sub-label">攻破占比 Top ${top.length || 3}（占全部 ${totalBreach} 次攻破）</div>${bar}</div>
     </div>
     <div class="mt-16">${task ? `<p class="rr-note">${UI.esc(methodRoundNote(task))}</p>` : ''}${table}</div>`);
@@ -183,9 +181,9 @@ const methodRows = (t) => {
 const allSceneDims = () => store.scenes.map((s) => ({ key: s.id, label: s.label }));
 const allMethodDims = () => store.methods.filter((m) => m.family !== '多模态').map((m) => ({ key: m.name.toLowerCase(), label: m.name }));
 
-/* 防护表现：只描述本任务内防护做了什么，不做防护前后对比（对比在任务外层的结果对比里做）。
- * 统计口径与攻防明细的「防护结果」一致：每条单元只看最后一轮。
- * 从上往下：核心数据（单元去向）→ 拦截涉及的攻击方法 → 拦截涉及的审核维度。 */
+/* 蓝队防护分析：只描述本任务内蓝队做了什么，不做防护前后对比（对比在任务外层的结果对比里做）。
+ * 统计口径与攻防明细的「蓝队结果」一致：每条单元只看最后一轮。
+ * 从上往下：核心数据（单元去向）→ 拦截涉及的攻击方法 → 拦截涉及的风险类别。 */
 function guardStats(t) {
   const flow = { in: 0, out: 0, self: 0, leak: 0 };
   const byMethod = new Map(), byCat = new Map();
@@ -235,12 +233,12 @@ function guardBlock(t) {
   const methodItems = allMethodDims().map((d) => ({ label: d.label, value: s.byMethod.get(d.label) || 0, covered: taskMethods.has(d.label) }));
   const catItems = (store.guardOf(t.guardId)?.dims || []).map(([label]) => ({ label, value: s.byCat.get(label) || 0, covered: true }));
   const radarOpt = { count: true, color: 'var(--vd-safe)' };
-  return reportSection('防护表现', `
-    <div class="sub-label">攻击单元去向（共 ${all} 条，防护拦截 ${s.blocked} 条）</div>
+  return reportSection('蓝队防护分析', `
+    <div class="sub-label">攻击单元去向（共 ${all} 条，蓝队拦截 ${s.blocked} 条）</div>
     <div class="gd-flow">${donut}${funnel}</div>
     <div class="risk-charts mt-16">
       <div><div class="sub-label">拦截涉及的攻击方法（共 ${methodItems.length} 种，本次使用 ${taskMethods.size} 种）</div>${UI.radar(methodItems, radarOpt)}</div>
-      <div><div class="sub-label">拦截涉及的审核维度（共 ${catItems.length} 类）</div>${UI.radar(catItems, radarOpt)}</div>
+      <div><div class="sub-label">拦截涉及的风险类别（共 ${catItems.length} 类）</div>${UI.radar(catItems, radarOpt)}</div>
     </div>`);
 }
 
@@ -252,9 +250,10 @@ function analysisHTML(t) {
     .map(x => `<li class="conc-item"><b>${UI.esc(x.title)}</b><p>${UI.esc(x.text)}</p></li>`)
     .join('');
   return reportDocument([
+    reportSection('演练结果', resultPanel(t)),
     reportSection('核心发现', `<ol class="conclusions">${f}</ol>`),
     riskBlock('攻击方法表现', '攻击方法', allMethodDims(), methodRows(t), t),
-    riskBlock('场景表现', '攻击场景', allSceneDims(), sceneRows(t)),
+    riskBlock('场景风险分析', '攻击场景', allSceneDims(), sceneRows(t)),
     guardBlock(t),
     reportSection('下一步建议', `<ol class="conclusions">${s}</ol>`),
   ]);
@@ -331,7 +330,7 @@ function detailHTML(t) {
 /* ---------------------------------------------------------------- 抽屉：攻防明细详情 */
 /* 四个模块：① 摘要（短字段）② 攻击题目 ③ 攻击过程（按方法换形态）④ 判定依据。
  * 同一层级的内容用同一种呈现：字段名一律 ud-label；短值为纯文本；自然语言长文本一律 ud-text 文本框。
- * 结果有两套：裁判判定（全站通用的着色文字）与防护结果（带边框底色的 gtag 标签），靠形态区分而非颜色。 */
+ * 结果有两套：裁判判定（全站通用的着色文字）与蓝队结果（带边框底色的 gtag 标签），靠形态区分而非颜色。 */
 const GUARD_RESULT = {
   block_input: { key: 'block', label: '输入拦截' },
   block_output: { key: 'block', label: '输出拦截' },
@@ -339,7 +338,7 @@ const GUARD_RESULT = {
   pass: { key: 'pass', label: '放行' },
 };
 
-/* 防护结果是对外结论，只看最后一轮；中间轮的拦截只在攻击过程里体现 */
+/* 蓝队结果是对外结论，只看最后一轮；中间轮的拦截只在攻击过程里体现 */
 function guardResult(u) {
   const g = u.history[u.history.length - 1]?.guard;
   if (!g) return null;
@@ -354,7 +353,7 @@ const methodText = (t, u) => {
 const checkLine = (label, x, blocked) => field(label,
   `<span>${UI.esc(x.labelCn)}${x.categories.length ? ` · ${UI.esc(x.categories.join('、'))}` : ''}</span>${gtag(blocked ? { key: 'block', label: '已拦截' } : GUARD_RESULT.pass)}`);
 
-/* 单轮内容：攻击提示词 →（防护输入审核）→ 靶标回复 →（防护输出审核）→（被拦截时）最终返回。
+/* 单轮内容：攻击提示词 →（蓝队输入审核）→ 靶标回复 →（蓝队输出审核）→（被拦截时）最终返回。
  * JailBroken 的最后一步变换就是送给靶标的提示词，已在变换步骤里展示，不再重复。 */
 function roundBody(h) {
   const g = h.guard;
@@ -363,9 +362,9 @@ function roundBody(h) {
   const inB = g.action === 'block_input', outB = g.action === 'block_output';
   return [
     p,
-    checkLine('防护输入审核', g.input, inB),
-    inB ? text('靶标回复', '', '已被防护拦截，未到达靶标') : text('靶标回复', g.originalResponse ?? h.response),
-    g.output ? checkLine('防护输出审核', g.output, outB) : '',
+    checkLine('蓝队输入审核', g.input, inB),
+    inB ? text('靶标回复', '', '已被蓝队拦截，未到达靶标') : text('靶标回复', g.originalResponse ?? h.response),
+    g.output ? checkLine('蓝队输出审核', g.output, outB) : '',
     inB || outB ? text('最终返回', h.response) : '',
   ].join('');
 }
@@ -378,7 +377,7 @@ function summaryMod(t, u) {
     ${field('判定结果', UI.verdictText(verdictOf(u)))}
     ${field('完成/总轮数', roundCountText(t, u))}
     ${field('攻破轮次', breachRoundText(t, u))}
-    ${gr ? field('防护结果', gtag(gr)) : ''}
+    ${gr ? field('蓝队结果', gtag(gr)) : ''}
   </div>`);
 }
 
@@ -392,7 +391,7 @@ function processMod(t, u) {
       : '';
     return mod('攻击过程', steps + roundBody(h0));
   }
-  /* 折叠条只放轮次与提示词摘要；攻击者拒绝、防护拦截等标记都在展开后展示 */
+  /* 折叠条只放轮次与提示词摘要；攻击者拒绝、蓝队拦截等标记都在展开后展示 */
   const first = roundInfo(t, u).breachRound;
   const rounds = u.history.map((h) => {
     const refused = h.attackerRefused
@@ -424,13 +423,13 @@ function analysisMd(t) {
   const L = [`# ${t.name}`, '',
     '## 基础信息', '', ...baseInfoRows(t).map(([k, v]) => `- ${k}：${strip(v)}`), '',
     '## 详细配置', '', ...configRows(t).map(([k, v]) => `- ${k}：${strip(v.replace(/<\/div><div>/g, '；'))}`), '',
-    '## 演练结果', '', ...taskMetricMarkdown(t), '',
-    `- ASR：${t.judged ? UI.pct(t.asr) : '未形成有效判定'}（已攻破 ${t.breach} / 有效判定 ${t.judged}）`,
+    '## 演练结果', '', '攻击成功率（ASR）= 攻破单元数 ÷ 有效判定单元数。', '',
+    ...taskMetricsMd(t),
     ...store.verdictCounts(t).map((d) => `- ${d.label}：${d.value}`), '',
     '## 核心发现', '', ...findings(t).map((f, i) => `${i + 1}. **${f.title}**：${f.text}`), ''];
   const tbl = (title, col, rows) => [`## ${title}`, '', `| ${col} | 有效数量 | 守住 | 攻破 | 攻破率 |`, '|---|---|---|---|---|',
     ...rows.map((r) => `| ${r.label} | ${r.judged} | ${r.judged - r.breach} | ${r.breach} | ${UI.pct(r.value)} |`), ''];
-  return [...L, ...methodPerformanceMd(t, methodRows(t)), ...tbl('场景表现', '攻击场景', sceneRows(t)), ...guardMd(t),
+  return [...L, ...methodPerformanceMd(t, methodRows(t)), ...tbl('场景风险分析', '攻击场景', sceneRows(t)), ...guardMd(t),
     '## 下一步建议', '', ...suggestions(t).map((s, i) => `${i + 1}. **${s.title}**：${s.text}`), ''].join('\n');
 }
 function guardMd(t) {
@@ -438,11 +437,11 @@ function guardMd(t) {
   const s = guardStats(t);
   if (!s.total) return [];
   const row = (m) => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `| ${k} | ${v} |`);
-  return ['## 防护表现', '',
+  return ['## 蓝队防护分析', '',
     `- 攻击单元去向：共 ${s.total} 条，${guardFlow(s).map((f) => `${f.label} ${f.value}`).join('，')}`,
     `- 拦截率：${UI.pct(s.blocked / s.total)}`, '',
     '| 拦截涉及的攻击方法 | 拦截单元数 |', '|---|---|', ...row(s.byMethod), '',
-    ...(s.byCat.size ? ['| 拦截涉及的审核维度 | 次数 |', '|---|---|', ...row(s.byCat), ''] : [])];
+    ...(s.byCat.size ? ['| 拦截涉及的风险类别 | 次数 |', '|---|---|', ...row(s.byCat), ''] : [])];
 }
 function roundMd(h) {
   const g = h.guard;
@@ -451,9 +450,9 @@ function roundMd(h) {
   const p = h.steps?.length ? [] : blk('攻击提示词', h.prompt);
   if (!g) return [...p, ...blk('靶标回复', h.response)];
   const inB = g.action === 'block_input', outB = g.action === 'block_output';
-  return [...p, ...chk('防护输入审核', g.input, inB),
-    ...(inB ? ['**靶标回复**：已被防护拦截，未到达靶标', ''] : blk('靶标回复', g.originalResponse ?? h.response)),
-    ...(g.output ? chk('防护输出审核', g.output, outB) : []),
+  return [...p, ...chk('蓝队输入审核', g.input, inB),
+    ...(inB ? ['**靶标回复**：已被蓝队拦截，未到达靶标', ''] : blk('靶标回复', g.originalResponse ?? h.response)),
+    ...(g.output ? chk('蓝队输出审核', g.output, outB) : []),
     ...(inB || outB ? blk('最终返回', h.response) : [])];
 }
 function unitsMd(t, units) {
@@ -472,7 +471,7 @@ function unitsMd(t, units) {
         '#### 摘要', '',
         `- 攻击方法：${methodText(t, u)}`, `- 攻击场景：${store.sceneLabel(store.sceneOfUnit(u))}`,
         `- 判定结果：${verdictOf(u).label}`,
-        `- 完成/总轮数：${roundCountText(t, u)}`, `- 攻破轮次：${breachRoundText(t, u)}`, ...(gr ? [`- 防护结果：${gr.label}`] : []), '',
+        `- 完成/总轮数：${roundCountText(t, u)}`, `- 攻破轮次：${breachRoundText(t, u)}`, ...(gr ? [`- 蓝队结果：${gr.label}`] : []), '',
         '#### 攻击题目', '', '```', u.target, '```', '',
         '#### 攻击过程', '', ...proc,
         '#### 判定依据', '', `- 裁判理由：${u.judgeReason || '裁判未给出理由'}`, '',
@@ -481,7 +480,7 @@ function unitsMd(t, units) {
 }
 /* PDF 复用页面的文档分节与内联图表，顺序：基础信息→详细配置→分析。 */
 function analysisPrintHTML(t) {
-  return `<div class="rr-report"><h1>${UI.esc(t.name)}</h1>${resultPanel(t)}
+  return `<div class="rr-report"><h1>${UI.esc(t.name)}</h1>
     ${UI.card('基础信息', UI.kvTable(baseInfoRows(t)))}
     ${UI.card('详细配置', UI.kvTable(configRows(t)))}
     ${analysisHTML(t)}</div>`;
@@ -496,7 +495,6 @@ function completedTask(id) {
 
 /* ---------------------------------------------------------------- 操作 */
 export const actions = {
-  ...reportManagementActions,
   rpSearch(v) { view.q = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpFilter(k, v) { view[k] = v; UI.resetPage('reports'); router.nav('exercise', 'reports'); },
   rpSort() { view.sortDesc = !view.sortDesc; router.nav('exercise', 'reports'); },

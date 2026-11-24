@@ -47,7 +47,7 @@ function contentOf(data, previous = {}) {
 }
 export function saveRiskRule(data, { publish = false } = {}) {
   const existing = customRules.find(rule => rule.id === data.id);
-  if (data.id && !existing) throw new Error('内置规则请使用触发与分级设置');
+  if (data.id && !existing) throw new Error('系统规则请使用触发与分级设置');
   if (existing) requireManage(existing.scope);
   const content = contentOf(data, existing);
   requireManage(content.scope);
@@ -80,7 +80,7 @@ export function toggleRiskRule(id) {
 }
 export function updateBuiltinRule(id, values) {
   const item = riskTypes.find(rule => rule.id === id);
-  if (!item) throw new Error('内置规则不存在');
+  if (!item) throw new Error('系统规则不存在');
   requireManage('org');
   const rule = { ...item.rule, ...values };
   if (Object.values(rule).some(value => !Number.isFinite(value) || value < 0 || value > 1)) throw new Error('阈值需在 0–100% 之间');

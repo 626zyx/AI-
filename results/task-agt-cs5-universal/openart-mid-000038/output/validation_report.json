@@ -1,0 +1,74 @@
+{
+  "validated_at": "2026-11-13T05:46:47+00:00",
+  "passed": true,
+  "checks_total": 13,
+  "checks_passed": 13,
+  "checks": [
+    {
+      "check": "required_fields",
+      "passed": true,
+      "detail": "missing fields on 0 entries"
+    },
+    {
+      "check": "topic_values",
+      "passed": true,
+      "detail": "0 entries outside allowed topics"
+    },
+    {
+      "check": "confidence_range",
+      "passed": true,
+      "detail": "0 entries out of range"
+    },
+    {
+      "check": "unique_ids",
+      "passed": true,
+      "detail": "0 duplicate ids"
+    },
+    {
+      "check": "cross_references_resolve",
+      "passed": true,
+      "detail": "0 unresolved/self references"
+    },
+    {
+      "check": "source_files_exist",
+      "passed": true,
+      "detail": "0 missing source files"
+    },
+    {
+      "check": "no_duplicate_questions",
+      "passed": true,
+      "detail": "0 exact duplicate questions"
+    },
+    {
+      "check": "no_near_duplicate_questions",
+      "passed": true,
+      "detail": "0 near-duplicate pairs >= 0.90"
+    },
+    {
+      "check": "no_known_secrets",
+      "passed": true,
+      "detail": "0 secret markers present"
+    },
+    {
+      "check": "no_pii_patterns",
+      "passed": true,
+      "detail": "patterns matched: none"
+    },
+    {
+      "check": "no_excluded_sources_used",
+      "passed": true,
+      "detail": "excluded sources referenced: none"
+    },
+    {
+      "check": "entry_count",
+      "passed": true,
+      "detail": "metadata=80 actual=80"
+    },
+    {
+      "check": "topic_distribution",
+      "passed": true,
+      "detail": "metadata topic_distribution matches entries"
+    }
+  ],
+  "near_duplicate_pairs": []
+}

@@ -3,7 +3,9 @@
  * 数据及仓库可注入，替换服务端 provider 时不改页面的任务契约。 */
 import { taskRepository } from './task-repository.js';
 import { buildReplayEvents, projectReplay } from './task-replay.js';
-import { replayMatchesConfiguration, resolveModelReplaySource, bindTaskJudge } from './task-configuration.js';
+import { replayMatchesConfiguration, resolveModelReplaySource } from './task-configuration.js';
+import { resolveAgentReplaySource, agentReplayEvaluationSource, projectAgentEvaluationUnits } from './agent-replay-source.js';
+import { modelEvaluatorConfiguration, modelEvaluatorSnapshot, markModelEvaluatorUsed } from './model-evaluators.js';
 
 export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUnits, nowText, modelConfiguration, agentConfiguration, assertStrategyAvailable, assertTargetAvailable, repository: getRepository = taskRepository }) {
   const replaySources = new Map();
@@ -30,11 +32,16 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
   }
 
   function sourceBundle(record) {
-    const key = `${record.objectType}:${record.sourceTaskId}`;
+    const key = `${record.objectType}:${record.sourceTaskId}:${record.id}:${record.evaluationMode || ''}:${(record.taskIdSnapshot || []).join(',')}`;
     if (!replaySources.has(key)) {
-      const source = rawSource(record.sourceTaskId, record.objectType);
+      let source = rawSource(record.sourceTaskId, record.objectType);
       if (!source) throw new Error('原始演练数据不可用，无法回放此任务');
-      const units = (record.objectType === 'agent' ? agentUnits : modelUnits).filter((u) => u.taskId === source.id);
+      let units = (record.objectType === 'agent' ? agentUnits : modelUnits).filter((u) => u.taskId === source.id);
+      if (record.objectType === 'agent' && record.evaluationMode) {
+        units = units.filter(unit => record.taskIdSnapshot.includes(unit.sceneTaskId));
+        units = projectAgentEvaluationUnits(units, record.evaluationMode);
+        source = agentReplayEvaluationSource(source, record.evaluationMode);
+      }
       replaySources.set(key, { source, units, events: buildReplayEvents(source, units) });
     }
     return replaySources.get(key);
@@ -85,15 +92,19 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
       'guardId', 'guardName', 'guardStages', 'bankName', 'bankCount', 'concurrency', 'maxTokens',
       'sceneBankId', 'sceneBankName', 'technique', 'techniqueName', 'attackerId', 'attackerName', 'taskIdSnapshot', 'targetTimeout', 'total',
       'banks', 'guardEnabled', 'evaluationMetrics', 'maxRounds', 'stopRule', 'injectionSurfaceIds', 'requestedSurfaces',
-      'judgeProvenance', 'evaluationBasis', 'executionBudgetNote'];
+      'judgeProvenance', 'evaluationBasis', 'executionBudgetNote', 'evaluationMode', 'evalStrategy', 'evaluationProvenance', 'executionIntent',
+      'targetImage', 'targetModelId', 'targetModelName', 'targetModelApi', 'targetModelSnapshot', 'exerciseMode', 'attackTemplateId', 'attackTemplateName', 'attackTemplateSnapshot',
+      'attackerModelApi', 'questionIds', 'questionSnapshots', 'evaluatorId', 'evaluatorName', 'evaluatorSnapshot'];
     const config = Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, copyTaskValue(source[key])]));
     if (source.methods) config.methods = copyTaskValue(source.methods);
+    if (source.objectType !== 'agent' && !config.evaluatorSnapshot) Object.assign(config, modelEvaluatorConfiguration(config));
     config.stopRule ||= '按攻击方法配置结束';
     return config;
   }
 
   function saveTask(data, { draft = false } = {}) {
     const type = data.objectType === 'agent' ? 'agent' : 'model';
+    if (type === 'agent' && data.evaluationMode && data.evaluationMode !== 'llm') throw new Error('Agent 演练仅支持 LLM 评估');
     const repository = getRepository();
     const old = data.id ? repository.get(data.id) : null;
     if (data.id && (!old || !['draft', 'ready'].includes(old.status))) throw new Error('只能编辑草稿或待开始任务；运行后的任务请复制复测');
@@ -101,7 +112,7 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     const selectedUserTask = repository.get(selectedId, { includeDeleted: true });
     const selectedConfiguration = old?.configurationMode === 'selected' || (type === 'agent' && !old && !data.sourceTaskId) || (
       selectedUserTask?.configurationMode === 'selected'
-      || ['targetId', 'strategyId', 'judgeId', 'guardEnabled', 'guardStages'].some(key => Object.hasOwn(data, key)));
+      || ['targetId', 'strategyId', 'judgeId', 'guardEnabled', 'guardStages', 'evaluatorId'].some(key => Object.hasOwn(data, key)));
     const source = selectedConfiguration ? null : rawSource(selectedUserTask?.sourceTaskId || selectedId, type);
     if (!selectedConfiguration && !source) throw new Error('演练配置不可用');
     let name = String(data.name || '').trim();
@@ -120,10 +131,8 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
         const sameId = key => String(nextInput[key] || '').replace(/^tgt-/, 'mdl-') === String(previousConfig[key] || '').replace(/^tgt-/, 'mdl-');
         const update = keys => keys.forEach(key => { config[key] = validated[key]; });
         if (!sameId('targetId') || validated.targetAssetId) update(['targetId', 'targetName', 'targetAssetId', 'targetAssetVersion', 'targetSnapshot']);
-        if (!sameId('judgeId')) {
-          update(['judgeId', 'judgeName']);
-          config.methods = bindTaskJudge(config.methods, { id: validated.judgeId, name: validated.judgeName });
-        }
+        if (!sameId('judgeId')) update(['judgeId', 'judgeName']);
+        if (!sameId('evaluatorId') || !previousConfig.evaluatorSnapshot) update(['evaluatorId', 'evaluatorName', 'evaluatorSnapshot']);
         if (!sameId('strategyId')) update(['strategyId', 'strategyName', 'banks', 'bankName', 'bankCount', 'methods', 'total', 'attackerId', 'attackerName']);
         const sameGuard = (nextInput.guardEnabled ?? !!nextInput.guardId) === (previousConfig.guardEnabled ?? !!previousConfig.guardId)
           && String(nextInput.guardId || '') === String(previousConfig.guardId || '')
@@ -134,24 +143,17 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     } else if (selectedConfiguration && type === 'agent') {
       if (!agentConfiguration) throw new Error('Agent 配置服务不可用');
       const validated = agentConfiguration(nextInput, { draft });
-      config = old ? copyTaskValue(previousConfig) : validated;
-      if (old) {
-        const update = keys => keys.forEach(key => { config[key] = validated[key]; });
-        if (nextInput.targetId !== previousConfig.targetId || validated.targetAssetId) update(['targetId', 'targetName', 'targetAssetId', 'targetAssetVersion', 'targetSnapshot']);
-        if (nextInput.judgeId !== previousConfig.judgeId) update(['judgeId', 'judgeName']);
-        if (nextInput.strategyId !== previousConfig.strategyId) update(['strategyId', 'strategyName', 'banks', 'sceneBankId', 'sceneBankName', 'taskIdSnapshot', 'total', 'technique', 'techniqueName', 'attackerId', 'attackerName']);
-        update(['injectionSurfaceIds', 'requestedSurfaces']);
-      }
+      config = validated;
     } else {
       const template = source || rawSource(data.sourceTaskId, type);
       if (!template) throw new Error('演练配置不可用');
       config = configurationOf(template);
     }
-    if (config.strategyId || !draft) assertStrategyAvailable?.(config.strategyId, type);
+    if (type === 'model' && (config.strategyId || !draft)) assertStrategyAvailable?.(config.strategyId, type);
     const id = old?.id || taskId(type);
     // Wizard position belongs to the draft, separate from its execution configuration.
     const savedStep = Number.isInteger(data.wizardStep) ? data.wizardStep : old?.wizardStep;
-    const lastStep = 3;
+    const lastStep = type === 'agent' ? 2 : 3;
     const wizardStep = Number.isInteger(savedStep) ? Math.max(0, Math.min(lastStep, savedStep)) : 0;
     const savedVisited = Number.isInteger(data.wizardVisited) ? data.wizardVisited : old?.wizardVisited;
     const wizardVisited = Number.isInteger(savedVisited) ? Math.max(wizardStep, Math.min(lastStep, savedVisited)) : wizardStep;
@@ -173,6 +175,12 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     const original = repository.get(id) || rawSource(id, type);
     if (!original || original.objectType !== type) throw new Error('任务不存在');
     const config = copyTaskValue(original.configSnapshot || configurationOf(original));
+    if (type === 'agent') {
+      const obsoleteRuleMode = config.evaluationMode === 'rule';
+      config.evaluationMode = 'llm'; config.evalStrategy = 'llm';
+      if (obsoleteRuleMode) { config.judgeId = ''; config.judgeName = ''; }
+      for (const snapshot of config.questionSnapshots || []) delete snapshot.ruleDefinition;
+    }
     const used = new Set([...modelTasks, ...agentTasks, ...repository.list()].filter(t => !repository.isDeleted(t.id)).map(t => t.name.toLowerCase()));
     const base = `${original.name.slice(0, 90)} · 副本`;
     let name = base, suffix = 2;
@@ -208,24 +216,36 @@ export function createTaskService({ modelTasks, modelUnits, agentTasks, agentUni
     const record = requireUserTask(id, type);
     if (record.status === 'running') return id;
     if (record.status !== 'ready') throw new Error('只有待开始任务可以启动');
+    if (type === 'agent' && (record.configSnapshot?.evaluationMode === 'rule' || record.evaluationMode === 'rule')) throw new Error('Agent 演练仅支持 LLM 评估，请编辑配置并选择裁判模型');
     // A saved snapshot preserves history, but does not authorize a new run with a removed strategy.
-    try { assertStrategyAvailable?.(record.configSnapshot?.strategyId || record.strategyId, type); }
-    catch { throw new Error('该任务的演练策略已删除或不可用，请返回任务列表编辑演练策略后再开始'); }
+    try { if (type === 'model') assertStrategyAvailable?.(record.configSnapshot?.strategyId || record.strategyId, type); }
+    catch { throw new Error('该任务的演练策略已删除或不可用，请返回任务列表编辑红队配置后再开始'); }
     const executionTargetSnapshot = assertTargetAvailable?.(record.configSnapshot || record, type);
+    if (type === 'model') modelEvaluatorSnapshot(record.configSnapshot?.evaluatorId || record.evaluatorId);
     let execution = record;
     if (record.configurationMode === 'selected') {
       // Configurations are already validated and snapshotted at save time. Asset edits do not rewrite them.
       const config = record.configSnapshot;
-      const agentScore = source => ['targetId', 'strategyId', 'judgeId', 'sceneBankId', 'technique', 'total'].reduce((n, key) => n + Number(config[key] === source[key]), 0);
-      const source = type === 'agent' ? [...agentTasks].sort((a, b) => agentScore(b) - agentScore(a))[0] : resolveModelReplaySource(config, modelTasks);
-      if (!source) throw new Error('暂无可用的演练记录');
+      const match = type === 'agent' ? resolveAgentReplaySource(config, agentTasks) : null;
+      if (match && !match.source) throw new Error(`${match.reason}。配置已保留，不能套用其他运行结果。`);
+      const source = type === 'agent' ? match.source : resolveModelReplaySource(config, modelTasks);
+      if (!source) throw new Error('暂无与本次评估器和防护配置匹配的演练记录；配置已保留，不能套用其他运行结果');
       execution = { ...record, sourceTaskId: source.id, sourceStartedAt: source.startedAt, sourceFinishedAt: source.finishedAt,
-        executionSnapshot: configurationOf(source), replaySourceName: source.name,
-          replayConfigMatches: type === 'agent' ? agentScore(source) === 6 && agentReplayScopeMatches(config, source) : replayMatchesConfiguration(config, source) };
+        executionSnapshot: configurationOf(type === 'agent' ? agentReplayEvaluationSource(source, config.evaluationMode) : source), replaySourceName: source.name,
+        replayConfigMatches: type === 'agent' ? true : replayMatchesConfiguration(config, source),
+        ...(type === 'agent' ? { executionMode: 'replay', replayKind: 'historical-archive',
+          evaluationProvenance: 'historical-offline-review',
+          replayNotice: '历史归档回放：展示 Codex 离线语义复核；未调用所选在线模型，也未执行当前脱敏环境包。' } : {}) };
+      if (type === 'agent') {
+        execution.executionSnapshot = { ...execution.executionSnapshot, questionIds: config.questionIds, taskIdSnapshot: config.taskIdSnapshot,
+          total: config.total, targetModelId: config.targetModelId, targetModelName: config.targetModelName,
+          attackTemplateId: config.attackTemplateId, attackTemplateName: config.attackTemplateName };
+      }
     }
     sourceBundle(execution);
     const next = { ...execution, ...(executionTargetSnapshot ? { executionTargetSnapshot } : {}), status: 'running', startedAt: taskNow(), finishedAt: '', replayCursor: 1, updatedAt: taskNow() };
     getRepository().put(next);
+    if (type === 'model') markModelEvaluatorUsed(next.configSnapshot || next);
     runtimeErrors.delete(id);
     notifyTasks(id, type);
     scheduleTask(next);

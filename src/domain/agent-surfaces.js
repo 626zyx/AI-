@@ -19,7 +19,7 @@ export function normalizeSurfaceDeclarations(rows = []) {
 
 export function selectableAgentSurfaces(agent) {
   const templates = new Set(['.qwen/skills/<skill-name>/SKILL.md', 'HOME/.deepagents/agent/skills/<skill-name>/SKILL.md']);
-  return (agent?.surfaces || []).filter(surface => AGENT_SURFACE_KINDS.includes(surface.kind) && surface.verified === true && surface.id && surface.path &&
+  return (agent?.surfaces || []).filter(surface => AGENT_SURFACE_KINDS.includes(surface.kind) && (surface.verified === true || (agent.intakeMode === 'configuration' && surface.configurationOnly === true)) && surface.id && surface.path &&
     (!/[<>*?]/.test(surface.path) || (surface.scopeType === 'template' && surface.kind === 'skill' && templates.has(surface.path))));
 }
 
@@ -27,6 +27,6 @@ export function selectedAgentSurfaces(agent, ids = []) {
   if (!Array.isArray(ids)) throw new Error('请选择有效的注入面文件');
   const available = selectableAgentSurfaces(agent), unique = [...new Set(ids)];
   const selected = unique.map(id => available.find(surface => surface.id === id));
-  if (selected.some(surface => !surface)) throw new Error('所选注入面不属于当前靶标已核验的文件，请重新选择');
+  if (selected.some(surface => !surface)) throw new Error('所选注入面不属于当前靶标的可用文件配置，请重新选择');
   return selected.map(({ id, kind, subtype, path, vector, desc, scopeType }) => ({ id, kind, ...(subtype ? { subtype } : {}), path, vector, ...(scopeType ? { scopeType } : {}), description: desc || '' }));
 }

@@ -9,7 +9,12 @@ import { compareValues, sortDirection, toggleSort } from '../core/table-sort.js'
 const views = {model:{q:'',targetId:'all',status:'all',sortKey:'createdAt',sortDesc:true},agent:{q:'',targetId:'all',status:'all',sortKey:'createdAt',sortDesc:true}};
 export const taskRoute = (type, view='tasks') => type==='agent'?['agent',({tasks:'ag-tasks',detail:'ag-task-detail',report:'ag-report-detail',create:'ag-task-create'})[view]]:['exercise',({tasks:'tasks',detail:'task-detail',report:'report-detail',create:'task-create'})[view]];
 const getTask = (id,type) => type==='agent'?store.getAgentTask(id):store.getTask(id);
-const targetKey = (task,type) => type==='model' ? String(task.targetId||'').replace(/^tgt-/,'mdl-') : task.targetId;
+const targetKey = (task,type) => {
+  if (type !== 'model') return task.targetId;
+  // Model revisions share one user-facing resource; historical aliases join the same filter.
+  const id = task.configSnapshot?.targetAssetId || store.models.find(model => model.id === task.targetId)?.assetId || String(task.targetId || '').split('@')[0];
+  return id.replace(/^tgt-/, 'mdl-');
+};
 export function openTaskPage(id,type='model'){
   if(getTask(id,type)?.status==='draft')return editTaskConfig(id,type);
   router.nav(...taskRoute(type,'detail'),id);

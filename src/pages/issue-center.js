@@ -220,7 +220,7 @@ export const actions = {
   icFix(id) {
     const f = service.getFinding(id); if (!f) return;
     const versions = listAssetVersions(f.assetId);
-    UI.modal('提交修复', `<div class="ic-stack">${field('修复后的被测版本 *', 'ic-fix-version', `<select id="ic-fix-version">${option('', '请选择已上传版本', '')}${versions.map(a => option(a.version, `${a.version} · ${a.status === 'ready' ? '已连通' : '待连通'}`, f.fixVersion)).join('')}</select>`, '如有新版本，请先到被测资产上传并检查连通。')}${field('修复说明 *', 'ic-fix-notes', textarea('ic-fix-notes', f.fixNotes, 4), '记录策略、提示词、知识或工具权限的变更。')}${note('提交后进入待复测。只有原问题和正常业务回归都通过，才开放验收关闭。')}</div>`, `${UI.btn('取消', { onclick: 'UI.closeModal()' })}${action('提交修复', `App.icFixSave(${q(id)})`, 'submitFix', true)}`);
+    UI.modal('提交修复', `<div class="ic-stack">${field('修复后的被测版本 *', 'ic-fix-version', `<select id="ic-fix-version">${option('', '请选择已上传版本', '')}${versions.map(a => option(a.version, `${a.version} · ${a.status === 'ready' ? '已连通' : '待连通'}`, f.fixVersion)).join('')}</select>`, '如有新版本，请先到被测资产上传并测试连通。')}${field('修复说明 *', 'ic-fix-notes', textarea('ic-fix-notes', f.fixNotes, 4), '记录策略、提示词、知识或工具权限的变更。')}${note('提交后进入待复测。只有原问题和正常业务回归都通过，才开放验收关闭。')}</div>`, `${UI.btn('取消', { onclick: 'UI.closeModal()' })}${action('提交修复', `App.icFixSave(${q(id)})`, 'submitFix', true)}`);
   },
   icFixSave(id) { perform(() => service.submitFix(id, value('ic-fix-version'), value('ic-fix-notes')), '已提交修复，下一步发起复测'); },
   icDecision(id, status) {

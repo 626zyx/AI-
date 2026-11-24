@@ -3,7 +3,6 @@
 import { icon } from './icons.js';
 import { esc } from './ui.js';
 import { NAV, SIDE_NAV, SUB_PARENT } from '../domain/constants.js';
-import { getAuthoredResource } from '../domain/resource-authoring.js';
 import * as router from './router.js';
 
 let shellEl = null;
@@ -19,7 +18,8 @@ export function mount() {
 }
 
 /* 未读角标：条数由消息通知页面提供 */
-function bellBadge() {
+function bellBadge(initialHome = false) {
+  if (initialHome) return '';
   const n = window.App?.ntUnread?.() || 0;
   return `<span class="bell-badge num" ${n ? '' : 'hidden'}>${n > 99 ? '99+' : n}</span>`;
 }
@@ -27,7 +27,7 @@ function bellBadge() {
 function renderHeader(cur) {
   const nav = NAV.map(
     (n) =>
-      `<button class="${cur.page === n.id ? 'active' : ''}" onclick="Shell.go('${n.id}')">${esc(n.label)}</button>`,
+      `<button class="${(cur.page === 'agent' ? 'exercise' : cur.page) === n.id ? 'active' : ''}" onclick="Shell.go('${n.id}')">${esc(n.label)}</button>`,
   ).join('');
   headerEl.innerHTML = `
     <button class="brand" onclick="Shell.go('home','home')"><b>AI</b><b class="brand-accent"> Range</b></button>
@@ -35,7 +35,6 @@ function renderHeader(cur) {
     <div class="header-actions">
       <button class="guide-button" title="使用指南" aria-label="使用指南" onclick="App.openUserGuide()">${icon('book', 18)}<span>使用指南</span></button>
       <button class="icon-btn bell-btn" title="消息通知" aria-label="消息通知" onclick="Shell.notify()">${icon('bell', 18)}${bellBadge(cur.page === 'home')}</button>
-      <button class="icon-btn" title="平台设置" aria-label="平台设置" onclick="Shell.settings()">${icon('settings', 18)}</button>
       <button class="icon-btn" title="账户" aria-label="账户" onclick="Shell.account()">${icon('user', 18)}</button>
     </div>`;
 }
@@ -49,10 +48,10 @@ function renderSidebar(cur) {
     return;
   }
   shellEl.classList.remove('side-collapsed');
-  const activeId = cur.sub === 'authoring' ? (getAuthoredResource(cur.param)?.kind === 'agent' ? 'scenebanks' : 'banks') : SUB_PARENT[cur.sub] || cur.sub;
+  const activeId = cur.sub === 'authoring' ? (/^(openart-mid-|env-)/.test(cur.param || '') ? 'scenebanks' : 'attack') : SUB_PARENT[cur.sub] || cur.sub;
   const nav = items
     .map(
-      (i) => `<button class="${activeId === i.id ? 'active' : ''} ${i.child ? 'child' : ''}" onclick="Shell.go('${page}','${i.id}')">
+      (i) => i.heading ? `<div class="side-nav-group">${esc(i.label)}</div>` : `<button class="${activeId === i.id ? 'active' : ''} ${i.child ? 'child' : ''}" onclick="Shell.go('${i.page || page}','${i.id}')">
         ${i.child ? '' : icon(i.icon, 16)}${esc(i.label)}</button>`,
     )
     .join('');
@@ -97,8 +96,6 @@ export function render(cur) {
   document.querySelectorAll('.overlay.open').forEach((el) => el.classList.remove('open'));
   const fn = router.resolve(cur.page, cur.sub);
   mainEl.innerHTML = `<div class="page">${fn ? fn(cur) : ''}</div>`;
-  mainEl.dataset.page = cur.page;
-  mainEl.dataset.sub = cur.sub;
   mainEl.scrollTop = scroll;
   restoreFocus(snap);
   router.pushHash(cur.page, cur.sub, cur.param);
@@ -110,10 +107,14 @@ export const api = {
     router.nav(page, sub, param);
   },
   notify() {
+    if (router.state().page === 'home') {
+      import('./ui.js').then(ui => ui.modal('消息通知', '<div class="empty">暂无演练通知。创建并运行任务后，可在这里查看进度与风险提醒。</div>', ui.btn('关闭', { onclick: 'UI.closeModal()' })));
+      return;
+    }
     window.App?.openNotices?.();
   },
   settings() {
-    router.nav('platform', 'roles');
+    router.nav('platform', 'intake');
   },
   account() {
     import('./ui.js').then((ui) =>
@@ -121,10 +122,10 @@ export const api = {
         '账户',
         `<table class="kv"><tbody>
            <tr><th>当前账号</th><td>安全运营</td></tr>
-           <tr><th>权限</th><td>演练任务、策略、资产与平台设置</td></tr>
+           <tr><th>权限</th><td>演练任务、策略、资产、风险全部可读</td></tr>
          </tbody></table>`,
         `${ui.btn('关闭', { onclick: "UI.closeModal()" })}
-         ${ui.btn('切换账户', { onclick: "UI.closeModal();UI.toast('当前使用安全运营账户')" })}`,
+         ${ui.btn('退出登录', { kind: 'danger', onclick: "UI.closeModal();UI.toast('demo 不支持真实退出登录')" })}`,
       ),
     );
   },

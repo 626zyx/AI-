@@ -1,0 +1,20 @@
+.sv-panel { border:1px solid var(--line); border-radius:10px; padding:20px; background:var(--surface); min-width:0; }
+.sv-panel>header { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+.sv-panel h3,.sv-panel h4 { margin:0; font-size:14px; font-weight:600; }
+.sv-panel header>div { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.sv-demo { color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:3px 7px; font-size:11px; }
+.sv-status { font-size:12px; color:var(--muted); white-space:nowrap; }
+.sv-status.passed { color:#14804a; }.sv-status.failed,.sv-status.stale { color:#b54922; }.sv-status.running { color:var(--primary); }
+.sv-disclosure { margin:12px 0 20px; color:var(--muted); font-size:12px; line-height:1.7; }
+.sv-phases { display:grid; gap:18px; }.sv-phases h4 { margin-bottom:12px; color:var(--muted); font-size:12px; }
+.sv-phases ol { display:grid; gap:14px; list-style:none; padding:0; margin:0; }
+.sv-phases li { display:flex; gap:10px; font-size:12px; }.sv-step-icon { display:grid; place-items:center; flex-shrink:0; width:21px; height:21px; border:1px solid var(--line); border-radius:50%; color:var(--muted); background:var(--subtle); }
+.sv-phases li.passed .sv-step-icon { color:#14804a; background:#edf8f1; border-color:#c9e5d3; }.sv-phases li.failed .sv-step-icon { color:#b54922; background:#fff2eb; border-color:#f1d4c4; }.sv-phases li.running .sv-step-icon { color:var(--primary); background:var(--primary-bg); border-color:var(--primary-line); }
+.sv-phases strong { display:block; font-size:12px; line-height:21px; font-weight:500; }.sv-phases p { margin:4px 0 0; color:var(--muted); line-height:1.7; overflow-wrap:anywhere; }.sv-phases .sv-remedy { color:#a24722; }
+.sv-logs { margin-top:18px; padding-top:14px; border-top:1px solid var(--line); font-size:12px; }.sv-logs summary { cursor:pointer; color:var(--muted); }.sv-logs ol { padding-left:24px; margin:12px 0 0; line-height:1.8; color:var(--muted); }
+.sv-panel footer { margin-top:18px; display:flex; justify-content:flex-end; }.sv-panel footer:empty { display:none; }
+@media(max-width:650px) { .sv-panel>header { flex-direction:column; }.sv-panel { padding:16px; } }
+
+.sv-step-details>summary { cursor:pointer; color:var(--muted); font-size:12px; padding:0 0 12px; }
+.sv-step-details:not([open])>summary { padding-bottom:0; }
+.sv-step-details .sv-phases ol { gap:10px; }

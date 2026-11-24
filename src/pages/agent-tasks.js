@@ -5,10 +5,11 @@ import { openAgentWizard } from './agent-wizard.js';
 import { copyTaskConfig } from './task-wizard.js';
 import { taskListPage, openTaskPage, openTaskReport } from './task-list.js';
 import { taskWorkspacePage } from './task-workspace.js';
+import { agentDetailPage } from './agent-detail.js';
 import { reportResultPanel } from './report-result.js';
 export const agentTasksPage = () => taskListPage('agent');
 export const agentDraftsPage = () => taskListPage('agent', true);
-export const agentTaskDetailPage = cur => taskWorkspacePage(cur, 'agent');
+export const agentTaskDetailPage = cur => agentDetailPage(cur);
 
 export function agentResultPanel(t) {
   return reportResultPanel(t);

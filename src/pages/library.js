@@ -1,15 +1,16 @@
-/* 策略中心底层：攻击方法 / 场景题库（列表 + 详情 + 新建题库） */
+/* 策略中心底层：攻击方法 / 攻击题库（列表 + 详情 + 新建题库） */
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { detailFields, detailBlock, detailContent, detailTableField, parameterTable, openConfigDetail } from '../core/config-detail.js';
-import { authoringListRows, authoringState, authoringRowActions } from './resource-authoring.js';
-import { methodDependencies } from '../domain/method-catalog.js';
+import { authoringListRows } from './resource-authoring.js';
+import { openRtJsonl } from '../domain/resource-authoring.js';
+import { getModelBankUsage } from '../domain/model-bank-authoring.js';
 
 /* ---------------------------------------------------------------- 攻击方法 */
 const mView = { q: '', family: 'all' };
 
-export function methodsPage() {
+export function methodsPage({ embedded = false } = {}) {
   let rows = store.methods.filter(m => !m.authoringId);
   if (mView.family !== 'all') rows = rows.filter((m) => m.family === mView.family);
   if (mView.q.trim()) {
@@ -21,35 +22,34 @@ export function methodsPage() {
     selects: [
       {
         label: '类别', id: 'md-family', value: mView.family, onchange: 'App.mdFamily(this.value)',
-        options: [['all', '全部路线'], ...store.methodFamilies.map((f) => [f, f])],
+        options: [['all', '全部类别'], ...store.methodFamilies.map((f) => [f, f])],
       },
     ],
   });
   const table = UI.pagedTable(
     'methods',
     [
-      { title: '名称 / 说明', render: (m) => `<button class="link-btn" onclick="App.${m.userResource ? 'raOpen' : 'openMethod'}('${m.id}')">${UI.esc(m.name)}</button><div class="faint text-support">${UI.esc(m.desc || '')}</div>` },
-      { title: '来源', width: '90px', render: () => UI.badge('系统', 'gray') },
-      { title: '类别', width: '150px', render: (m) => UI.esc(m.family || '自建模板') },
-      
-      { title: '依赖模型', width: '200px', render: (m) => UI.esc(depsOf(m).join('、') || '无') },
+      { title: '名称 / 说明', render: (m) => `<button class="link-btn" onclick="App.openMethod('${m.id}')">${UI.esc(m.name)}</button>${m.available === false ? ' <span class="mtag gray">需适配</span>' : ''}<div class="faint text-support">${UI.esc(m.desc || '')}</div>` },
+      { title: '来源', width: '80px', render: () => UI.badge('系统', 'blue') },
+      { title: '类别', width: '150px', render: (m) => UI.esc(m.family) },
+      { title: '依赖模型', width: '220px', render: (m) => UI.esc(m.available === false ? m.requires : (depsOf(m).join('、') || '无')) },
       {
         title: '操作', width: '90px', cls: 'actions',
-        render: (m) => m.userResource ? authoringRowActions(m) : `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openMethod('${m.id}')` })}</div>`,
+        render: (m) => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openMethod('${m.id}')` })}</div>`,
       },
     ],
     rows,
     '暂无攻击方法',
   );
-  return `${UI.pageHead('演练方法')}${flt}${UI.card('', table, '', true)}`;
+  return `${embedded ? '' : UI.pageHead('攻击库')}${flt}${UI.card('', table, '', true)}`;
 }
 
-const depsOf = methodDependencies;
+const depsOf = (m) => [m.generator ? '攻击生成模型' : '', m.process ? '裁判' : ''].filter(Boolean);
 
-/* ---------------------------------------------------------------- 场景题库 */
+/* ---------------------------------------------------------------- 攻击题库 */
 const bView = { q: '' };
 
-export function banksPage() {
+export function banksPage({ embedded = false } = {}) {
   let rows = [...store.banks.filter(b => !b.authoringId), ...authoringListRows('model')];
   if (bView.q.trim()) {
     const q = bView.q.trim().toLowerCase();
@@ -57,31 +57,41 @@ export function banksPage() {
   }
   const flt = UI.filters({
     search: { label: '搜索', id: 'bk-q', value: bView.q, placeholder: '搜索题库名称', oninput: 'App.bkSearch(this.value)' },
+    right: embedded ? UI.btn('新建题库', { onclick: 'App.newBank()' }) : '',
   });
   const table = UI.pagedTable(
     'banks',
     [
-      { title: '名称', width: '200px', cls: 'nowrap', render: (b) => `<button class="link-btn" onclick="App.${b.userResource ? 'raOpen' : 'openBank'}('${b.id}')">${UI.esc(b.name)}</button>` },
-      { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', 'gray') },
-      { title: '行业', width: '90px', render: (b) => UI.esc(b.industry) },
+      { title: '名称', width: '200px', render: (b) => `<button class="link-btn" onclick="App.${b.userResource ? 'mbOpen' : 'openBank'}('${b.id}')">${UI.esc(b.name)}</button>` },
+      { title: '来源', width: '80px', render: (b) => UI.badge(b.source === 'system' ? '系统' : '自建', b.source === 'system' ? 'blue' : 'gray') },
+      { title: '业务领域', width: '100px', render: (b) => UI.esc(b.industry) },
       { title: '场景标签', render: (b) => UI.tagList(b.scenes.map((id) => store.sceneLabel(id))) },
       { title: '数量', width: '80px', cls: 'num', render: (b) => `<span class="num">${b.items.length}</span>` },
-      { title: '版本', width: '145px', render: b => b.userResource ? authoringState(b) : '—' },
+      { title: '版本', width: '70px', render: b => b.userResource ? `<span class="mono">${UI.esc(b.version)}</span>` : '<span class="faint">—</span>' },
+      { title: '状态', width: '85px', render: b => UI.badge(b.status === 'draft' ? '草稿' : '已发布', b.status === 'draft' ? 'gray' : 'green') },
       { title: '创建时间', width: '150px', cls: 'num', render: (b) => UI.esc(b.createdAt || '—') },
       {
         title: '操作', width: '120px', cls: 'actions',
-        render: (b) => b.userResource ? authoringRowActions(b) : `<div class="row-actions">
-          ${UI.linkBtn('详情', { onclick: `App.openBank('${b.id}')` })}
-          ${UI.linkBtn('导出', { onclick: `App.exportBank('${b.id}')` })}
-        </div>`,
+        render: bankActions,
       },
     ],
     rows,
     '暂无场景题库',
   );
-  return `${UI.pageHead('场景题库', {
+  return `${embedded ? '' : UI.pageHead('场景题库', {
     actions: UI.btn('新建题库', { kind: 'primary', ico: 'plus', onclick: 'App.newBank()' }),
   })}${flt}${UI.card('', table, '', true)}`;
+}
+
+function bankActions(b) {
+  const more = b.userResource ? [
+    ['版本更新', `App.mbNewVersion('${b.id}')`, { disabled: b.status === 'draft' }],
+    ['导出', `App.mbExport('${b.id}')`],
+    ['删除', `App.mbDelete('${b.id}')`, { danger: true, disabled: getModelBankUsage(b.id).used }],
+  ] : [
+    ['导出', `App.exportBank('${b.id}')`],
+  ];
+  return `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.${b.userResource ? 'mbOpen' : 'openBank'}('${b.id}')` })}${UI.moreMenu(more)}</div>`;
 }
 
 /* ---------------------------------------------------------------- 题库详情（右侧抽屉） */
@@ -108,7 +118,7 @@ function bankBody(b) {
   );
   return detailContent(detailBlock('题库基础信息', detailFields([
     ['题库名称', b.name], ['来源', b.source === 'system' ? '系统' : '自建'],
-    ['行业', b.industry], ['题目数', b.items.length], ['创建时间', b.createdAt],
+    ['业务领域', b.industry], ['题目数', b.items.length], ['创建时间', b.createdAt],
   ])) + detailBlock('题目内容', UI.filters({
       search: { label: '搜索', id: 'bd-q', value: dView.q, placeholder: '搜索编号或题目', oninput: 'App.bdSearch(this.value)' },
       selects: [{
@@ -139,11 +149,11 @@ export const actions = {
   openMethod(id) {
     const m = store.methods.find((x) => x.id === id);
     if (!m) return;
-    openConfigDetail('演练方法详情', detailContent(
+    openConfigDetail('攻击方法详情', detailContent(
       detailBlock('方法基础信息', detailFields([
-        ['方法名称', m.name], ['说明', m.desc], ['来源', '系统'], ['类别', m.family],
+        ['方法名称', m.name], ['说明', m.desc], ['来源', '系统'], ['技术路线', m.family],
       ])) + detailBlock('详细配置信息', detailFields([
-        ['交互轮次', m.turns], ['依赖模型', depsOf(m).join('、') || '无'], ['适用要求', m.requirements || '文本输入'], ...(m.runtime ? [['运行依赖', m.runtime]] : []),
+        ['交互轮次', m.turns], ['依赖模型', depsOf(m).join('、') || '无'],
       ]) + detailTableField('方法参数', parameterTable(m.params.map(p => [p.label, p.value]))))));
   },
 
@@ -161,11 +171,10 @@ export const actions = {
     const b = store.getBank(id);
     if (!b) return;
     const data = b.items.map((i) => ({ id: i.id, prompt: i.prompt, scene: store.sceneLabel(i.scene) }));
-    UI.download(`${b.name}.json`, JSON.stringify(data, null, 2));
+    UI.download(`${b.name}.jsonl`, openRtJsonl(data));
   },
 
   newBank() {
-    window.App.raCreate('model');
+    window.App.mbCreate();
   },
-
 };

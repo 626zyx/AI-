@@ -3,7 +3,7 @@ import { SIDE_NAV, SUB_PARENT } from '../domain/constants.js';
 
 const routes = new Map();
 /* 无侧栏栏目的默认子页 */
-const DEFAULT_SUB = { assets: 'intake' };
+const DEFAULT_SUB = { assets: 'intake', exercise: 'tasks', agent: 'ag-tasks', strategy: 'attack', platform: 'intake' };
 let current = { page: 'home', sub: 'home', param: null };
 
 export function register(page, sub, render) {
@@ -14,7 +14,7 @@ export function resolve(page, sub) {
   const key = `${page}/${sub}`;
   if (routes.has(key)) return routes.get(key);
   const side = SIDE_NAV[page];
-  if (side && side.length) return routes.get(`${page}/${side[0].id}`) || null;
+  if (side && side.length) return routes.get(`${page}/${DEFAULT_SUB[page] || side.find(i => !i.heading)?.id}`) || null;
   return null;
 }
 
@@ -65,13 +65,9 @@ function navigate(next, options = {}, consumeHistory = false) {
 }
 
 export function nav(page, sub = null, param = null, options = {}) {
-  if (page === 'risk') { page = 'assets'; sub = 'intake'; param = null; }
-  if (page === 'assets' && sub === 'agent-detail') { sub = 'intake'; param = null; }
-  if (page === 'posture') { page = 'home'; sub = 'home'; }
-  if (page === 'platform' && sub === 'riskrule') sub = 'grading';
-  if (['results', 'ag-results', 'compare'].includes(sub)) { page = 'assets'; sub = 'intake'; }
+  if (page === 'assets' || page === 'posture') { page = 'platform'; sub = 'intake'; param = null; }
   const side = SIDE_NAV[page];
-  const target = sub || (side && side.length ? side[0].id : DEFAULT_SUB[page] || 'home');
+  const target = sub || DEFAULT_SUB[page] || side?.find(i => !i.heading)?.id || 'home';
   const next = { page, sub: target, param };
   return navigate(next, options);
 }

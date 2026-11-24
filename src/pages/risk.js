@@ -85,7 +85,7 @@ export const actions = {
       ['未参与判定', String(metric.unknown ?? '—')],
       ...(metric.name ? [['最高值归属', UI.esc(metric.name)]] : []),
       ['指标口径', UI.esc(metric.definition)],
-      ['规则来源', rule.builtin ? '系统内置' : `用户自建 · ${UI.esc(event.ruleVersion)}`],
+      ['规则来源', rule.builtin ? '系统' : `用户自建 · ${UI.esc(event.ruleVersion)}`],
       ['适用范围', UI.esc(rule.targetId ? event.targetName : '全部同类资产')],
       ['负责人', UI.esc(rule.owner || '安全运营')],
       ['业务含义', UI.esc(rule.description || '根据任务指标触发的安全风险')],

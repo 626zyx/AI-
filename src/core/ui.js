@@ -27,7 +27,7 @@ export function moreMenu(items, label = '更多') {
   return `<span class="dd">
     <button class="link-btn" aria-expanded="false" onclick="UI.toggleMenu(event,this)">${esc(label)}</button>
     <span class="dd-menu" hidden>${items
-      .map(([l, fn, options = {}]) => `<button${options.danger ? ' class="danger"' : ''} onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
+      .map(([l, fn, options = {}]) => `<button${options.danger ? ' class="danger"' : ''}${options.disabled ? ' disabled' : ''} onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
       .join('')}</span></span>`;
 }
 export function closeMenus() {

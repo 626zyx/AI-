@@ -1,0 +1,91 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as store from '../src/domain/store.js';
+import { initializeAssetBridge } from '../src/domain/asset-bridge.js';
+import { getAsset, getAssetSnapshot, saveAsset, saveManualAgent, validateAsset, listAssetVersions, updateAssetConnection } from '../src/domain/asset-intake.js';
+import { listPickerResources } from '../src/core/resource-picker.js';
+import { selectedAgentSurfaces } from '../src/domain/agent-surfaces.js';
+
+test('a configured API model version is selected, snapshotted, and frozen by a started task', async () => {
+  initializeAssetBridge();
+  const id='bridge-model-v3-test';
+  saveAsset({id,kind:'model',name:'Bridge Test Model',owner:'QA',source:'test',sourceStatus:'已发布',baseUrl:'https://api.example.com/v1',apiModel:'test-model',apiKey:'demo-key'});
+  await validateAsset(id,{version:'V1',delay:0});
+  const target=store.models.find(x=>x.id===`${id}@V1`);
+  assert.equal(target.status,'connected');
+  const task=store.saveTask({name:'Bridge model version test',objectType:'model',targetId:target.id,strategyId:'stg-advbench-base',judgeId:'mdl-deepseek-flash'});
+  const saved=store.getTask(task);
+  assert.equal(saved.configSnapshot.targetAssetId,id);
+  assert.equal(saved.configSnapshot.targetAssetVersion,'V1');
+  await store.startTask(task,'model');
+  assert.equal(store.getTask(task).executionTargetSnapshot.connectionRevision,1);
+  assert.equal(getAssetSnapshot(id,'V1').immutable,true);
+  assert.throws(()=>saveAsset({...getAsset(id,'V1'),apiModel:'changed-model'},{mode:'edit'}),/已用于演练/);
+  saveAsset({...getAsset(id,'V1'),apiModel:'test-model-v2'},{mode:'new-version'});
+  assert.deepEqual(listAssetVersions(id).map(x=>x.version),['V1','V2']);
+  assert.equal(getAssetSnapshot(id,'V1').apiModel,'test-model');
+});
+
+test('the unified model pool remains available after unrelated connectivity synchronization', async () => {
+  initializeAssetBridge();
+  const id='bridge-role-model';
+  saveAsset({id,kind:'model',name:'Role Model',baseUrl:'https://api.example.com/v1',apiModel:'role-model',apiKey:'demo'});
+  await validateAsset(id,{delay:0});
+  await validateAsset('mdl-qwen-flash',{version:'V1',delay:0});
+  assert.ok(listPickerResources('model').some(x=>x.id===`${id}@V1`&&x.status==='connected'));
+  assert.deepEqual(store.models.find(x=>x.id===`${id}@V1`).roles,[]);
+  assert.equal(store.platformModels().filter(x=>x.assetId===id).length,1);
+  assert.ok(!store.platformModels().some(x=>x.id==='mdl-qwen-flash'));
+});
+
+test('a manually configured Agent is selectable without a connectivity check and cannot borrow another Agent archive', async () => {
+  initializeAssetBridge();
+  const baseId='bridge-agent-base', id='bridge-agent';
+  saveAsset({id:baseId,kind:'model',name:'Agent Base',baseUrl:'https://api.example.com/v1',apiModel:'base-v1',apiKey:'demo'});
+  await validateAsset(baseId,{delay:0});
+  saveManualAgent({id,kind:'agent',name:'Bridge Agent',enterpriseVersion:'1.0.0',image:'company/agent:1.0',command:['agent','--auto'],taskInput:'stdin',surfaceDeclarations:[{kind:'instruction',path:'AGENTS.md'}]});
+  const resource=listPickerResources('agent').find(row=>row.id===`${id}@V1`);
+  assert.ok(resource);assert.equal(resource.status,'connected');
+  assert.equal(resource.actualConnectionVerified,false);
+  const bridged=store.agents.find(row=>row.id===resource.id);
+  assert.equal(bridged.connectionVerification.actualVerified,false);
+  assert.equal(bridged.surfaces[0].verified,false);
+  assert.equal(bridged.surfaces[0].configurationOnly,true);
+  assert.equal(selectedAgentSurfaces(bridged,[bridged.surfaces[0].id])[0].path,'AGENTS.md');
+  const taskId=store.saveTask({name:'Custom Agent snapshot test',objectType:'agent',targetId:`${id}@V1`,targetModelId:`${baseId}@V1`,exerciseMode:'baseline',evaluationMode:'llm',judgeId:'mdl-qwen-flash',questionIds:['openart-mid-000023']});
+  assert.equal(store.getAgentTask(taskId).configSnapshot.targetSnapshot.baseModelSnapshot,null);
+  assert.equal(store.getAgentTask(taskId).configSnapshot.targetSnapshot.enterpriseVersion,'1.0.0');
+  assert.equal(store.getAgentTask(taskId).configSnapshot.targetModelSnapshot.apiModel,'base-v1');
+  assert.throws(()=>store.startTask(taskId,'agent'),/靶标或镜像.*历史案例/);
+  assert.equal(store.getAgentTask(taskId).status,'ready');
+  assert.equal(getAssetSnapshot(id,'V1').immutable,false);
+  assert.equal(getAssetSnapshot(baseId,'V1').immutable,false);
+});
+
+test('Agent start validates the selected base version and freezes it independently of the default binding', async () => {
+  initializeAssetBridge();
+  const baseId='mdl-deepseek-flash',id='agt-deepagents-code-0210';
+  saveAsset({...getAsset(baseId,'V1'),description:'Selected version for snapshot regression'},{mode:'new-version'});
+  await validateAsset(baseId,{version:'V2',delay:0});
+  const taskId=store.saveTask({name:'Pinned Agent base test',objectType:'agent',targetId:`${id}@V1`,targetModelId:`${baseId}@V2`,exerciseMode:'baseline',evaluationMode:'llm',judgeId:'mdl-qwen-flash',questionIds:['openart-mid-000023']});
+  const config=store.getAgentTask(taskId).configSnapshot;
+  assert.equal(config.targetSnapshot.baseModelVersion,'V1');
+  assert.equal(config.targetModelSnapshot.version,'V2');
+  const savedRevision=config.targetModelSnapshot.connectionRevision;
+  updateAssetConnection(baseId,'V2',{baseUrl:'https://unreachable.example/v1'});
+  await validateAsset(baseId,{version:'V2',delay:0});
+  assert.throws(()=>store.startTask(taskId,'agent'),/基模尚未连通/);
+  assert.equal(store.getAgentTask(taskId).status,'ready');
+  updateAssetConnection(baseId,'V2',{baseUrl:'https://api-repaired.example/v1'});
+  await validateAsset(baseId,{version:'V2',delay:0});
+  store.startTask(taskId,'agent');
+  assert.equal(getAssetSnapshot(id,'V1').immutable,true);
+  assert.equal(getAssetSnapshot(baseId,'V2').immutable,true);
+  assert.ok(getAssetSnapshot(baseId,'V2').usedBy.includes(taskId));
+  assert.ok(!getAssetSnapshot(baseId,'V1').usedBy.includes(taskId));
+  const execution=store.getAgentTask(taskId).executionTargetSnapshot;
+  assert.equal(execution.baseModelSnapshot.version,'V2');
+  assert.equal(execution.baseModelSnapshot.connectionRevision,savedRevision+2);
+  assert.equal(store.getAgentTask(taskId).configSnapshot.targetModelSnapshot.connectionRevision,savedRevision);
+  assert.throws(()=>saveAsset({...getAssetSnapshot(baseId,'V2'),apiModel:'different-base'}),/测试配置已冻结/);
+});

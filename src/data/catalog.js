@@ -470,7 +470,32 @@ export const methodCatalog = [
   "registry": "figstep_attack",
   "source": "OpenRT/attacks/blackbox/implementations/FigStep/attack.py:13",
   "params": []
- }
+ },
+ { "id": "AutoDAN", "name": "AutoDAN", "family": "优化与模糊测试", "turns": "单轮", "desc": "用遗传算法进化越狱提示词种群，按靶标反馈择优。", "generator": true, "process": true, "registry": "autodan_attack", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "AutoDAN-R", "name": "AutoDAN-R", "family": "优化与模糊测试", "turns": "单轮", "desc": "AutoDAN-Turbo 的强化版，终身维护策略库并用嵌入检索复用策略。", "generator": true, "process": true, "registry": "autodan_turbo_r", "available": true, "requires": "攻击生成 / 裁判 / 嵌入模型", "params": [] },
+ { "id": "SeqAR", "name": "SeqAR", "family": "优化与模糊测试", "turns": "单轮", "desc": "按角色序列逐步构造并评分、束搜索优化越狱提示。", "generator": true, "process": true, "registry": "seqar_attack", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "Genetic", "name": "Genetic", "family": "优化与模糊测试", "turns": "单轮", "desc": "通用遗传算法基类，交叉变异候选并保留高分个体。", "generator": true, "process": true, "registry": "genetic_attack", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "Adaptive", "name": "Adaptive", "family": "优化与模糊测试", "turns": "单轮", "desc": "基于 logprob 的随机搜索优化对抗后缀，含预填充与迁移策略。", "generator": true, "process": true, "registry": "adaptive_attack", "available": false, "requires": "靶标需返回 logprobs（多数 API 不支持）", "params": [] },
+ { "id": "PastTense", "name": "PastTense", "family": "语言与编码", "turns": "单轮", "desc": "把有害请求改写为过去时等时态规避表述。", "generator": true, "process": false, "registry": "past_tense", "available": true, "requires": "改写模型", "params": [] },
+ { "id": "ArtPrompt", "name": "ArtPrompt", "family": "语言与编码", "turns": "单轮", "desc": "将敏感词替换为 ASCII 字符画，诱导靶标先识别再执行。", "generator": false, "process": false, "registry": "artprompt", "available": true, "requires": "无", "params": [] },
+ { "id": "AIR", "name": "AIR", "family": "语言与编码", "turns": "单轮", "desc": "把有害指令重构为分散的看似无害段落，整体仍达成目标。", "generator": true, "process": false, "registry": "air_attack", "available": true, "requires": "改写模型", "params": [] },
+ { "id": "JAM", "name": "JAM", "family": "语言与编码", "turns": "单轮", "desc": "用密码游戏格式加 GUARD 前缀绕过内容审核。", "generator": false, "process": true, "registry": "jam", "available": false, "requires": "本地毒性模型 (toxic-bert)", "params": [] },
+ { "id": "SI", "name": "SI", "family": "多模态", "turns": "单轮", "desc": "反复打乱并测试图像补丁以绕过多模态安全。", "generator": false, "process": true, "registry": "si_attack", "available": false, "requires": "多模态靶标 + 裁判", "params": [] },
+ { "id": "QueryRelevant", "name": "Query-Relevant", "family": "多模态", "turns": "单轮", "desc": "围绕问题生成相关图像或排版图，诱导读图靶标回答。", "generator": true, "process": false, "registry": "query_relevant_attack", "available": false, "requires": "多模态靶标 + 图像生成模型", "params": [] },
+ { "id": "IDEATOR", "name": "IDEATOR", "family": "多模态", "turns": "单轮", "desc": "攻击者模型与图像生成协同迭代构造多模态越狱。", "generator": true, "process": true, "registry": "ideator_attack", "available": false, "requires": "多模态靶标 + 攻击生成 + 图像生成", "params": [] },
+ { "id": "MML", "name": "MML", "family": "多模态", "turns": "单轮", "desc": "对图像做镜像/旋转/编码等变换规避视觉安全检查。", "generator": false, "process": false, "registry": "mml_attack", "available": false, "requires": "多模态靶标 + 辅助模型", "params": [] },
+ { "id": "HADES", "name": "HADES", "family": "多模态", "turns": "单轮", "desc": "用排版与扩散生成图像承载有害意图并迭代优化。", "generator": true, "process": true, "registry": "hades_attack", "available": false, "requires": "多模态靶标 + 图像生成", "params": [] },
+ { "id": "HIMRD", "name": "HIMRD", "family": "多模态", "turns": "单轮", "desc": "分步理解与诱导的多模态越狱。", "generator": true, "process": true, "registry": "himrd_attack", "available": false, "requires": "多模态靶标 + 图像生成", "params": [] },
+ { "id": "JOOD", "name": "JOOD", "family": "多模态", "turns": "单轮", "desc": "用分布外图文混合绕过多模态安全。", "generator": true, "process": false, "registry": "jood_attack", "available": false, "requires": "多模态靶标 + 图像生成", "params": [] },
+ { "id": "CS-DJ", "name": "CS-DJ", "family": "多模态", "turns": "单轮", "desc": "用干扰图像集与排版分散注意力实现越狱。", "generator": false, "process": false, "registry": "csdj_attack", "available": false, "requires": "多模态靶标 + CLIP/图像库", "params": [] },
+ { "id": "ActorAttack", "name": "ActorAttack", "family": "多智能体", "turns": "多轮", "desc": "通过发现关联“角色”并多轮铺垫逐步诱导。", "generator": true, "process": true, "registry": "actor_attack", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "RainbowTeaming", "name": "Rainbow Teaming", "family": "多智能体", "turns": "单轮", "desc": "按风险类别与攻击风格构建多样化攻击档案库并变异。", "generator": true, "process": true, "registry": "rainbow_teaming", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "X-Teaming", "name": "X-Teaming", "family": "多智能体", "turns": "多轮", "desc": "规划器与优化器协同的多轮团队式攻击。", "generator": true, "process": true, "registry": "xteaming_attack", "available": true, "requires": "攻击生成 / 裁判", "params": [] },
+ { "id": "EvoSynth", "name": "EvoSynth", "family": "多智能体", "turns": "单轮", "desc": "多智能体自治编排进化式合成越狱。", "generator": true, "process": true, "registry": "evosynth", "available": false, "requires": "agents SDK（额外依赖）", "params": [] },
+ { "id": "GCG", "name": "GCG", "family": "白盒", "turns": "单轮", "desc": "基于梯度的贪婪坐标搜索优化对抗后缀。", "generator": false, "process": true, "registry": "nanogcg_attack", "available": false, "requires": "本地模型权重与梯度（不支持 API 靶标）", "params": [] },
+ { "id": "VisualJailbreak", "name": "Visual Jailbreak", "family": "白盒", "turns": "单轮", "desc": "对输入图像做白盒对抗优化诱导视觉语言模型越狱。", "generator": false, "process": true, "registry": "visual_jailbreak_attack", "available": false, "requires": "多模态白盒权重（不支持 API 靶标）", "params": [] },
+ { "id": "ASA", "name": "ASA", "family": "白盒", "turns": "单轮", "desc": "激活引导：在隐藏层注入引导向量绕过安全。", "generator": false, "process": true, "registry": "activation_steering_attack", "available": false, "requires": "本地模型权重与激活（不支持 API 靶标）", "params": [] },
+ { "id": "ImperceptibleJailbreak", "name": "Imperceptible Jailbreak", "family": "白盒", "turns": "单轮", "desc": "构造近乎不可见的字符扰动越狱。", "generator": false, "process": true, "registry": "imperceptible_jailbreak", "available": false, "requires": "本地模型权重与分词器（不支持 API 靶标）", "params": [] }
 ];
 export const scenes = [
  {

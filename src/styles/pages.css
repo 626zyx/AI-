@@ -162,10 +162,11 @@
 .tl-row-actions > .link-btn:last-of-type { grid-column: 2; }
 .tl-row-actions > .dd { grid-column: 3; justify-self: start; }
 
-/* 已发布策略保留详情、新版本，次级操作收入更多菜单。 */
-.row-actions.strategy-row-actions { display: flex; flex-wrap: nowrap; gap: 12px; align-items: center; justify-content: flex-start; white-space: nowrap; }
+/* 已发布策略按详情、复制、删除排列；草稿编辑占中栏，删除统一对齐。 */
+.strategy-row-actions { display: grid; grid-template-columns: repeat(3, 2em); gap: 14px; justify-content: start; }
 .strategy-row-actions > button { justify-self: start; white-space: nowrap; }
-.strategy-row-actions > .link-btn, .strategy-row-actions > .dd { flex: 0 0 auto; }
+.strategy-row-actions[data-strategy-status="draft"] > button:first-child { grid-column: 2; }
+.strategy-row-actions[data-strategy-status="draft"] > button:last-child { grid-column: 3; }
 
 /* ---------------------------------------------------------------- 模型演练 · 攻防明细详情 */
 /* 同层级同呈现：模块标题 ud-mod-title；字段名 ud-label；短值纯文本；自然语言长文本一律 ud-text 文本框 */

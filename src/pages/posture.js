@@ -62,7 +62,7 @@ function riskCard(b) {
     <span class="ps-risk-asr num">${UI.pct(e.asr)}</span>
   </button>`).join('') : '<div class="ps-empty">范围内暂无风险事件</div>';
   return `<section class="ps-card" id="ps-risk-card"><div class="ps-card-h">风险提醒<span class="ps-count">${b.risks.length}</span>
-    ${b.risks.length > ROWS ? `<button class="link-btn ps-more" onclick="App.go('risk','events')">全部</button>` : ''}</div><div class="ps-list">${rows}</div></section>`;
+    ${b.risks.length > ROWS ? `<button class="link-btn ps-more" onclick="App.go('exercise','tasks')">全部</button>` : ''}</div><div class="ps-list">${rows}</div></section>`;
 }
 
 export function posturePage() {

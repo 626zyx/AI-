@@ -54,8 +54,8 @@ function renderForm() {
   /* 被任务、策略或智能体引用后，名称、模型标识、地址、接口类型锁定，只能轮换 API Key */
   const lock = f.id && store.modelUsage(f.id).length ? 'disabled' : '';
   const opt = (v, l, cur, dis) => `<option value="${v}" ${v === cur ? 'selected' : ''} ${dis ? 'disabled' : ''}>${UI.esc(l)}</option>`;
-  const testLine = f.test === 'ok' ? '<span style="color:var(--vd-safe)">连接成功</span>'
-    : f.test === 'fail' ? '<span class="text-danger">连接失败，请检查地址与 Key</span>'
+  const testLine = f.test === 'ok' ? '<span style="color:var(--vd-safe)">已连通</span>'
+    : f.test === 'fail' ? '<span class="text-danger">连通失败，请检查地址与 Key</span>'
     : f.test === 'run' ? '<span class="muted">测试中…</span>' : '';
   const body = `<div class="form-secs">
     ${lock ? '<p class="faint text-support">该模型已被演练任务、策略或智能体引用，为保证历史结果可追溯，只能更换 API Key。</p>' : ''}
@@ -81,7 +81,7 @@ function renderForm() {
     <span class="faint text-support">测试会向该地址发送一次最小请求。首次接入须测试通过。</span>
     <div id="mf-test">${testLine}</div>
   </div>`;
-  const foot = `<div style="margin-right:auto">${UI.btn('测试连接', { onclick: 'App.mfTest()' })}</div>
+  const foot = `<div style="margin-right:auto">${UI.btn('测试连通', { onclick: 'App.mfTest()' })}</div>
     ${UI.btn('取消', { onclick: 'UI.closeModal()' })}
     ${UI.btn(f.id ? '保存' : '接入模型', { kind: 'primary', onclick: 'App.mfSave()', disabled: !f.id && f.test !== 'ok' })}`;
   UI.modal(f.id ? '编辑模型' : '接入模型', body, foot);
@@ -120,7 +120,7 @@ export const actions = {
   mfSave() {
     const f = form;
     if (!f.name.trim() || !f.apiModel.trim() || !f.baseUrl.trim()) return UI.toast('请填写必填项');
-    if (!f.id && f.test !== 'ok') return UI.toast('首次接入须测试连接通过');
+    if (!f.id && f.test !== 'ok') return UI.toast('首次接入须测试连通通过');
     const old = f.id && store.models.find((x) => x.id === f.id);
     store.saveModel({ ...old, id: f.id, name: f.name.trim(), apiModel: f.apiModel.trim(), baseUrl: f.baseUrl.trim(), apiType: f.apiType, auth: f.auth, status: f.test === 'ok' ? 'connected' : f.status });
     UI.closeModal();

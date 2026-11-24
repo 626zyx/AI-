@@ -22,7 +22,7 @@ export function validateAgentSubmission(data, { models, existing = [] }) {
   const name = String(data.name || '').trim();
   if (!name) throw new Error('请填写智能体名称');
   if (existing.some(agent => agent.id !== data.id && agent.name.trim() === name)) throw new Error('智能体名称已存在');
-  const base = models.find(model => model.id === data.baseModelId && model.status === 'connected' && model.roles.includes('智能体基座'));
+  const base = models.find(model => model.id === data.baseModelId && model.status === 'connected' && (!model.apiType || model.apiType === 'openai'));
   if (!base) throw new Error('请选择已接入的基座模型');
   const image = normalizeImageReference(data.image);
   const command = normalizeAgentCommand(data.executable, data.argumentsText);

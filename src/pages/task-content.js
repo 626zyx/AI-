@@ -1,5 +1,5 @@
 /* Read only the visible unit projection. The canvas never reaches into replay sources. */
-import { agentAssessmentText } from './agent-evidence.js';
+import { agentAssessmentText, injectionDeliveryText } from './agent-evidence.js';
 
 const output = (label, text, role = 'neutral') => ({ label, text: text || '—', role });
 const guardText = check => check ? [check.labelCn || check.label, ...(check.categories || [])].filter(Boolean).join(' · ') : '';
@@ -17,14 +17,23 @@ export function currentTaskContent(task, unit, { selected = false } = {}) {
   const review = () => output('输出审核', guardText(round?.guard?.output), 'guard');
   const judge = () => {
     const text = judgment(unit) || round?.judgeReason || round?.judge?.reason;
-    return output('裁判判定', task.objectType === 'agent' ? agentAssessmentText(text) : text, 'judge');
+    return output(task.objectType === 'agent' ? 'LLM 评估' : '裁判判定', task.objectType === 'agent' ? agentAssessmentText(text) : text, 'judge');
   };
 
   if (task.objectType === 'agent') {
+    const target = () => {
+      if (unit.selfReport) return output('靶标最终答复', unit.selfReport, 'target');
+      const files = unit.originalOutputFiles?.length ? unit.originalOutputFiles : unit.outputFiles || [];
+      return output('靶标产物', files.map(file => `${file.path || file.name}${file.size == null ? '' : ` · ${file.size} B`}`).join('\n') || '尚无已记录的靶标产物。', 'target');
+    };
     if (phase === 'attack') return output('攻击生成', agentAssessmentText(unit.attack?.summary), 'attack');
+    if (phase === 'attack_delivery') return output('攻击文件交付', injectionDeliveryText(unit), 'attack');
+    if (phase === 'target') return target();
     if (phase === 'judge' || phase === 'unit_complete' || (!live && judgment(unit))) return judge();
-    if (unit.selfReport) return output('靶标最终答复', unit.selfReport, 'target');
-    return output('攻击生成', agentAssessmentText(unit.attack?.summary), 'attack');
+    if (unit.selfReport || unit.originalOutputFiles?.length || unit.outputFiles?.length) return target();
+    if (unit.attack?.deliveryStatus) return output('攻击文件交付', injectionDeliveryText(unit), 'attack');
+    if (unit.attack) return output('攻击生成', agentAssessmentText(unit.attack.summary), 'attack');
+    return output('准备环境', '—');
   }
   if (phase === 'attack') return output('攻击生成', round?.prompt || unit.finalPrompt, 'attack');
   if (phase === 'input_guard') return input();

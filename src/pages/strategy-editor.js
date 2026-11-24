@@ -1,38 +1,39 @@
-/* 新建 / 编辑模型演练策略：单个弹窗。从已有攻击方法与场景题库中选取并配置。
- * 与新建演练任务同一套交互：可保存草稿（待发布），取消时提醒；发布后锁定不可编辑。
- * 防护方法随策略发布固定；裁判模型在创建演练任务时配置。 */
+/* 新建 / 编辑组合攻击策略：推荐路径与四步自定义路径共用一个完整页面。
+ * 与新建演练任务同一套交互：可保存草稿，取消时提醒；发布后锁定不可编辑。
+ * 裁判模型不属于策略，在创建演练任务时选择。 */
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
-import { CONFIGURE_MODEL_VALUE, configureModelsOption, configureMoreModels } from '../core/model-config-navigation.js';
+import { configureMoreModels } from '../core/model-config-navigation.js';
+import { openResourcePicker, listPickerResources } from '../core/resource-picker.js';
 import { selectableModelBanks, selectableMethods } from '../domain/resource-authoring.js';
-import { releaseLabel, freezeStrategyDependencies, strategyUpdates, upgradedStrategy } from '../domain/strategy-service.js';
-import { methodDependencies } from '../domain/method-catalog.js';
 
 const st = {
-  id: null, name: '', desc: '', guardId: '', guardStages: [], targetCapability: 'text', parentId: null,
+  id: null, name: '', desc: '',
   methods: [],          // [{ name, params: {label: value}, generator, process, open }]
   banks: [],            // [{ bankId, all, count, open }]
-  mFamily: 'all', mTurns: 'all', mOpen: false, preset: '', familyId: null, version: '1.0',
+  mFamily: 'all', mTurns: 'all', mOpen: false, preset: '',
   bIndustry: 'all', bSource: 'all', bOpen: true,
+  step: 0, visited: 0, mode: 'preset', dirty: false, routeKey: null, readOnly: false, error: '',
 };
 
 const req = '<span class="req">*</span>';
-const genModels = () => store.modelsWithRole('攻击生成');
+const auxiliaryModels = () => listPickerResources('model').filter(model => model.status === 'connected');
 const encodeName = name => encodeURIComponent(name).replace(/'/g, '%27');
 const methodOf = (name) => store.methods.find((m) => m.name.toLowerCase() === name.toLowerCase());
-/* 所有方法均进入目录，按靶标的输入能力与内部访问能力限制选择。 */
-const pickable = () => selectableMethods('model-method');
-const compatible = m => m.family === '白盒优化' ? st.targetCapability === 'local' : m.family === '多模态' ? ['image','local'].includes(st.targetCapability) : true;
-const catalog = () => ({ banks:store.banks,guards:store.guards,models:store.models });
-const additionalDependencies = m => methodDependencies(m).filter(role => !['攻击生成模型','裁判模型'].includes(role)).map(role => ({role,key:role==='文本嵌入模型'||role==='图文嵌入模型'?'embedding':role==='图像生成模型'?'imageGenerator':'vision',models:store.modelsWithRole(role==='图文嵌入模型'?'文本嵌入':role.replace(/模型$/, ''))}));
-const methodPresets = [
-  { id: 'baseline', name: '直接基线', methods: ['Direct'], questions: 20, desc: '20 题 · 原样测试' },
-  { id: 'variants', name: '轻量变体', methods: ['Direct', 'Jailbroken'], questions: 50, desc: '50 题 · 编码与表达变体' },
-  { id: 'in-depth', name: '深入演练', methods: ['Direct', 'DeepInception', 'PAIR'], questions: 100, desc: '100 题 · 语境嵌套与迭代优化' },
+/* 多模态方法需要图像靶标，本平台只演练文本模型，不提供选择 */
+const pickable = () => selectableMethods('model-method').filter((m) => m.family !== '多模态' && m.available !== false);
+export const methodPresets = [
+  { id: 'baseline', name: '基线安全演练', methods: ['Direct'], questions: 120, desc: '直接提问，检查模型的基础安全边界。' },
+  { id: 'variants', name: '轻量变体组合', methods: ['Jailbroken', 'CipherChat', 'CodeAttack', 'DeepInception'], questions: 50, desc: '四种单轮方法，覆盖编码、代码封装与语境变体。' },
+  { id: 'in-depth', name: '深度安全演练', methods: ['DeepInception', 'ReNeLLM', 'PAIR', 'Crescendo'], questions: 100, desc: '结合语境嵌套、迭代优化与多轮交互。' },
 ];
+const STEPS = ['基本信息', '攻击方法', '题库', '确认与发布'];
+let pendingNavigation = null;
+const edit = () => !st.readOnly;
+const dirty = () => { st.dirty = true; st.error = ''; };
 function presetPicker() {
-  return `<div class="ra-preset-grid">${methodPresets.map(p => `<button class="ra-preset ${st.preset === p.id ? 'active' : ''}" type="button" onclick="App.sePreset('${p.id}')"><strong>${p.name}</strong><span>${p.methods.join(' + ')}</span><small>${p.desc}</small></button>`).join('')}</div>${UI.linkBtn(st.mOpen ? '收起方法组合' : '自定义方法组合', { onclick: `App.seSet('mOpen',${!st.mOpen})` })}`;
+  return `<div class="sa-presets">${methodPresets.map(p => `<button class="sa-preset ra-preset ${st.preset === p.id && st.mode === 'preset' ? 'active' : ''}" type="button" aria-pressed="${st.preset === p.id && st.mode === 'preset'}" onclick="App.sePreset('${p.id}')"><span class="sa-preset-top"><strong>${p.name}</strong><i>${st.preset === p.id && st.mode === 'preset' ? '✓' : ''}</i></span><span class="sa-preset-count"><b>${p.questions}</b> 题 <span>· ${p.methods.length} 种方法</span></span><span class="sa-preset-methods">${p.methods.join(' · ')}</span><small>${p.desc}</small></button>`).join('')}</div><div class="sa-custom-entry">${UI.linkBtn('需要更灵活的测试？自定义方法组合 →', { onclick: 'App.seCustom()' })}</div>`;
 }
 
 /* ---------------------------------------------------------------- 攻击方法 */
@@ -49,8 +50,8 @@ function methodPicker() {
   const chips = [['all', '全部轮次'], ['单轮', '单轮'], ['多轮', '多轮']]
     .map(([v, l]) => `<button class="pk-chip ${st.mTurns === v ? 'active' : ''}" onclick="App.seSet('mTurns','${v}')">${l}</button>`).join('');
   const cards = list.map((m) => `<label class="pk-card ${on.has(m.name) ? 'on' : ''}">
-      <span class="pk-card-head"><input type="checkbox" ${on.has(m.name) ? 'checked' : ''} ${compatible(m)?'':'disabled'} onchange="App.seMethod('${encodeName(m.name)}',this.checked)" /><b>${UI.esc(m.name)}</b></span>
-      <span class="pk-desc">${UI.esc(m.desc)}</span>${compatible(m)?'':`<small class="text-support faint">${UI.esc(m.requirements)}</small>`}</label>`).join('') || '<div class="faint">暂无方法</div>';
+      <span class="pk-card-head"><input type="checkbox" ${on.has(m.name) ? 'checked' : ''} onchange="App.seMethod('${encodeName(m.name)}',this.checked)" /><b>${UI.esc(m.name)}</b></span>
+      <span class="pk-desc">${UI.esc(m.desc)}</span></label>`).join('') || '<div class="faint">暂无方法</div>';
   return picker(`已选择 ${st.methods.length} 种攻击方法`, 'mOpen', side, chips, cards);
 }
 
@@ -77,46 +78,49 @@ function paramInput(i, p, v) {
 function methodConfigs() {
   return st.methods.map((sm, i) => {
     const m = methodOf(sm.name);
-    const head = `<div class="cfg-card-head"><div><b>${UI.esc(m.name)}</b></div>
+    const head = `<div class="cfg-card-head"><div><b>${UI.esc(m.name)}</b><div class="faint text-support">${UI.esc(m.desc)}</div></div>
       <span class="row-actions">${UI.linkBtn(sm.open ? '收起' : '展开', { onclick: `App.seToggle('methods',${i})` })}${UI.linkBtn('移除', { onclick: `App.seMethod('${encodeName(m.name)}',false)` })}</span></div>`;
     if (!sm.open) return `<div class="cfg-card">${head}</div>`;
     const params = m.params.length
-      ? `<details><summary class="faint text-support">查看固定执行参数</summary>${UI.kvTable(m.params.map(p => [UI.esc(p.label), UI.esc(sm.params[p.label])]))}</details>`
-      : '';
-    const sel = (key, label, list) => `<div class="field"><label>${label}${req}</label>
-      <select onchange="App.seAux(${i},'${key}',this.value)"><option value="">${list.length ? `请选择${label}` : `暂无可用的${label}模型`}</option>
-      ${list.map((x) => `<option value="${x.id}" ${sm[key] === x.id ? 'selected' : ''}>${UI.esc(x.name)}</option>`).join('')}
-      ${configureModelsOption}</select>
-      ${list.length ? '' : `<span class="faint text-support">需先在平台管理中为模型配置「${label === '裁判模型' ? '裁判' : '攻击生成'}」角色，${UI.linkBtn('去配置', { onclick: 'App.seConfigureModels()' })}</span>`}</div>`;
-    const aux = m.generator || additionalDependencies(m).length
+      ? UI.kvTable(m.params.map(p => [UI.esc(p.label), UI.esc(sm.params[p.label])]))
+      : '<div class="faint text-support">使用固定配置，无需填写参数。</div>';
+    const sel = (key, label) => {
+      const chosen = listPickerResources('model').find(model => model.id === sm[key] || model.assetId === sm[key]);
+      const id = `se-${i}-${key}`;
+      return `<div class="field"><label for="${id}">${label}${req}</label>
+        <button type="button" id="${id}" value="${UI.esc(sm[key] || '')}" class="tw-resource-field${chosen ? ' has-value' : ''}" aria-label="${chosen ? `更换${label}` : `配置${label}`}" onclick="App.sePickAux(${i},'${key}')"><span>${UI.esc(chosen?.displayName || chosen?.name || '+ 配置模型')}</span><span class="tw-resource-action">${chosen ? '更换' : ''}</span></button>
+        ${chosen ? `<span class="faint text-support">${UI.esc(chosen.apiModel || chosen.requestId || '')}</span>` : `<span class="faint text-support">从已接入模型中选择。${UI.linkBtn('配置更多模型', { onclick: 'App.seConfigureModels()' })}</span>`}</div>`;
+    };
+    const aux = m.generator || m.process
       ? `<div class="se-sec mt-16">辅助模型</div><div class="form-row">
-          ${m.generator ? sel('generator', '攻击生成模型', genModels()) : ''}${additionalDependencies(m).map(dep=>sel(dep.key,dep.role,dep.models)).join('')}</div>`
+          ${m.generator ? sel('generator', '攻击生成模型') : ''}${m.process ? sel('process', '过程裁判') : ''}</div>`
       : '';
-    return `<div class="cfg-card">${head}${params||aux?`<div class="cfg-card-body">${params}${aux}</div>`:''}</div>`;
+    return `<div class="cfg-card">${head}<div class="cfg-card-body">${params}${aux}</div></div>`;
   }).join('');
 }
 
-/* ---------------------------------------------------------------- 场景题库 */
+/* ---------------------------------------------------------------- 攻击题库 */
 function bankPicker() {
-  const selectable = [...selectableModelBanks()]; for(const ref of st.banks){const old=store.getBank(ref.bankId);if(old&&!selectable.some(b=>b.id===old.id))selectable.push(old);}
+  const selectable = selectableModelBanks();
   const inds = [...new Set([...store.INDUSTRIES, ...selectable.map(b => b.industry)])];
   let list = selectable;
   if (st.bIndustry !== 'all') list = list.filter((b) => b.industry === st.bIndustry);
   if (st.bSource !== 'all') list = list.filter((b) => b.source === st.bSource);
   const on = new Set(st.banks.map((b) => b.bankId));
-  const side = [['all', '全部行业', selectable.length], ...inds.map((x) => [x, x, selectable.filter((b) => b.industry === x).length])]
+  const side = [['all', '全部业务领域', selectable.length], ...inds.map((x) => [x, x, selectable.filter((b) => b.industry === x).length])]
     .map(([v, l, n]) => `<button class="pk-nav ${st.bIndustry === v ? 'active' : ''}" onclick="App.seSet('bIndustry','${v}')"><span>${UI.esc(l)}</span><span class="num faint">${n}</span></button>`).join('');
   const chips = [['all', '全部来源'], ['system', '系统题库'], ['custom', '自建题库']]
     .map(([v, l]) => `<button class="pk-chip ${st.bSource === v ? 'active' : ''}" onclick="App.seSet('bSource','${v}')">${l}</button>`).join('');
   const cards = list.map((b) => `<label class="pk-card ${on.has(b.id) ? 'on' : ''}">
       <span class="pk-card-head"><input type="checkbox" ${on.has(b.id) ? 'checked' : ''} onchange="App.seBank('${b.id}',this.checked)" /><b>${UI.esc(b.name)}</b></span>
-      <span class="pk-desc num">${b.source==='system'?'':`${releaseLabel(b.version)} · `}${b.items.length} 题</span></label>`).join('') || '<div class="faint">该筛选下暂无题库</div>';
-  return picker(`已选择 ${st.banks.length} 套场景题库`, 'bOpen', side, chips, cards);
+      <span class="pk-desc num">${b.items.length} 题</span></label>`).join('') || '<div class="faint">该筛选下暂无题库</div>';
+  return picker(`已选择 ${st.banks.length} 套攻击题库`, 'bOpen', side, chips, cards);
 }
 
 function bankConfigs() {
   return `<div class="bank-cfgs">${st.banks.map((sb, i) => {
     const b = store.getBank(sb.bankId);
+    if (!b) return '<p class="sa-error">引用的题库不可用，请重新选择。</p>';
     const n = b.items.length;
     const head = `<div class="cfg-card-head"><div><b>${UI.esc(b.name)}</b><div class="faint text-support num">${sb.all ? `全部 ${n} 题` : `前 ${sb.count} 题`} · 共 ${n} 题</div></div>
       <span class="row-actions">${UI.linkBtn(sb.open ? '收起' : '展开', { onclick: `App.seToggle('banks',${i})` })}${UI.linkBtn('移除', { onclick: `App.seBank('${b.id}',false)` })}</span></div>`;
@@ -129,90 +133,108 @@ function bankConfigs() {
   }).join('')}</div>`;
 }
 
-function upgradeNotice() {
-  const source=st.id&&store.strategies.find(s=>s.id===st.id);if(!source)return '';
-  const updates=strategyUpdates(source,catalog());
-  return updates.length?`<div class="strategy-upgrade-note"><span>${updates.length} 项依赖有更新</span>${UI.linkBtn('更新草稿依赖',{onclick:'App.seUpgradeResources()'})}</div>`:'';
+/* ---------------------------------------------------------------- 页面与步骤 */
+function render({ top = false } = {}) {
+  router.nav('strategy', 'strategy-create', st.id || null, { replace: true });
+  if (top) { const main = document.getElementById('app-main'); if (main) main.scrollTop = 0; }
 }
-function guardConfiguration() {
-  const guard=store.guards.find(g=>g.id===st.guardId);
-  return `<section class="form-sec"><h3>防护配置</h3><div class="form-row"><div class="field"><label>防护方法</label><select onchange="App.seGuard(this.value)"><option value="">不启用防护</option>${store.guards.filter(g=>g.status==='published').map(g=>`<option value="${g.id}" ${st.guardId===g.id?'selected':''}>${UI.esc(g.name)}${g.builtin?'':` · ${releaseLabel(g.version)}`}</option>`).join('')}</select></div>${guard?`<div class="field"><label>审核位置${req}</label><div class="tw-choices">${guard.stages.map(stage=>`<label><input type="checkbox" ${st.guardStages.includes(stage)?'checked':''} onchange="App.seGuardStage('${stage}',this.checked)">${stage}审核</label>`).join('')}</div></div>`:''}</div>${guard?`<div class="faint text-support">${guard.builtin?'':`防护模型：${UI.esc(store.modelName(guard.modelId))} · `}${guard.stages.includes('输入')?'输入：请求送达靶标前审核':''}${guard.stages.length===2?'；':''}${guard.stages.includes('输出')?'输出：回复交付前审核':''}</div>`:''}</section>`;
+function fail(message) { st.error = message; render(); UI.toast(message); return false; }
+function basicStep() {
+  return `<section class="sa-section"><h2>基本信息</h2><div class="sa-basic-fields"><div class="field"><label for="se-name">策略名称${req}</label><input id="se-name" maxlength="100" value="${UI.esc(st.name)}" placeholder="请输入策略名称" oninput="App.seField('name',this.value)"></div><div class="field"><label for="se-desc">策略描述</label><textarea id="se-desc" rows="2" placeholder="选填" oninput="App.seField('desc',this.value)">${UI.esc(st.desc)}</textarea></div></div></section><section class="sa-section"><div class="sa-section-heading"><h2>推荐策略</h2><span>选择后直接确认配置</span></div>${presetPicker()}</section>`;
 }
-
-/* ---------------------------------------------------------------- 渲染 */
-function render() {
-  const keep = document.querySelector('#modal .modal-body')?.scrollTop || 0;
-  const body = `<div class="form-secs strategy-form">${upgradeNotice()}
-    <section class="form-sec"><h3>基本信息</h3>
-      <div class="form-row"><div class="field"><label for="se-name">策略名称${req}</label>
-        <input type="text" id="se-name" value="${UI.esc(st.name)}" placeholder="请输入策略名称" oninput="App.seField('name',this.value)" /></div>
-      <div class="field"><label for="se-capability">靶标能力</label><select id="se-capability" onchange="App.seSet('targetCapability',this.value)">${[['text','文本接口'],['image','图像与文本接口'],['local','本地模型内部访问']].map(([id,label])=>`<option value="${id}" ${st.targetCapability===id?'selected':''}>${label}</option>`).join('')}</select></div></div>
-      <details class="strategy-optional" ${st.desc?'open':''}><summary>策略描述（选填）</summary><div class="field">
-        <textarea id="se-desc" aria-label="策略描述" rows="2" oninput="App.seField('desc',this.value)">${UI.esc(st.desc)}</textarea></div></details>
-    </section>
-    <section class="form-sec"><h3>演练方法${req}</h3>
-      ${presetPicker()}${methodPicker()}${methodConfigs()}</section>
-    <section class="form-sec"><h3>场景题库${req}</h3>${bankPicker()}${bankConfigs()}</section>${guardConfiguration()}
-  </div>`;
-  const footer = `${UI.btn('取消', { onclick: 'App.seCancel()' })}${UI.btn('保存草稿', { onclick: 'App.seDraft()' })}${UI.btn('发布', { kind: 'primary', onclick: 'App.sePublish()' })}`;
-  UI.modal(`${st.id ? '编辑模型演练策略' : '新建模型演练策略'} · ${releaseLabel(st.version)}`, body, footer, { wide: true });
-  const el = document.querySelector('#modal .modal-body');
-  if (el) el.scrollTop = keep;
+function methodStep() { return `<section class="sa-section"><h2>选择攻击方法</h2>${methodPicker()}</section>${st.methods.length ? `<section class="sa-section"><h2>方法配置</h2><div class="sa-method-configs">${methodConfigs()}</div></section>` : ''}`; }
+function bankStep() { return `<section class="sa-section"><h2>选择题库</h2>${bankPicker()}</section>${st.banks.length ? `<section class="sa-section"><h2>选题范围</h2>${bankConfigs()}</section>` : ''}`; }
+const modelName = id => listPickerResources('model').find(row => row.id === id || row.assetId === id)?.name || store.models.find(row => row.id === id)?.name || '待配置';
+function confirmationStep() {
+  const total = st.banks.reduce((sum, ref) => sum + (ref.all ? store.getBank(ref.bankId)?.items.length || 0 : ref.count), 0);
+  const plan = methodPresets.find(item => item.id === st.preset);
+  const methodRows = st.methods.map((method, index) => {
+    const def = methodOf(method.name);
+    const params = Object.entries(method.params).map(([key, value]) => `<div><span class="sa-param-key">${UI.esc(key)}</span>${UI.esc(typeof value === 'boolean' ? value ? '开启' : '关闭' : value)}</div>`).join('') || '无额外参数';
+    const role = (key, label) => `<div class="sa-aux-line"><span>${label}</span>${!st.readOnly ? `<button type="button" id="se-${index}-${key}" class="link-btn" aria-label="${method[key] ? `更换${label}` : `配置${label}`}" value="${UI.esc(method[key] || '')}" onclick="App.sePickAux(${index},'${key}')">${UI.esc(method[key] ? modelName(method[key]) : '+ 配置模型')}</button>` : UI.esc(modelName(method[key]))}</div>`;
+    return { name: method.name, params, aux: `${def?.generator ? role('generator', '攻击生成模型') : ''}${def?.process ? role('process', '过程裁判') : ''}` || '<span class="faint">无需辅助模型</span>' };
+  });
+  return `<section class="sa-section"><div class="sa-confirm-heading"><div><h2>${UI.esc(st.name || '未命名策略')}</h2><p>${UI.esc(st.desc || '未填写描述')}</p></div>${UI.badge(st.readOnly ? '已发布' : '待确认', st.readOnly ? 'green' : 'blue')}</div><div class="sa-overview"><div><span>配置方式</span><strong>${st.mode === 'preset' && plan ? plan.name : '自定义组合'}</strong></div><div><span>题目数量</span><strong>${total}<small> 题</small></strong></div><div><span>攻击方法</span><strong>${st.methods.length}<small> 种</small></strong></div><div><span>执行单元</span><strong>${total * st.methods.length}<small> 个</small></strong></div></div></section><section class="sa-section"><div class="sa-section-heading"><h2>攻击方法与执行参数</h2>${!st.readOnly ? UI.linkBtn('自定义调整', { onclick: 'App.seCustomizeStep(1)' }) : ''}</div>${UI.table([{ title: '攻击方法', width: '140px', key: 'name' }, { title: '执行参数', render: row => `<div class="sa-params">${row.params}</div>` }, { title: '辅助模型', width: '270px', render: row => row.aux }], methodRows, '尚未选择攻击方法')}</section><section class="sa-section"><div class="sa-section-heading"><h2>题库与选题范围</h2>${!st.readOnly ? UI.linkBtn('调整题库', { onclick: 'App.seCustomizeStep(2)' }) : ''}</div>${UI.table([{ title: '题库', render: ref => UI.esc(store.getBank(ref.bankId)?.name || '题库不可用') }, { title: '业务领域', render: ref => UI.esc(store.getBank(ref.bankId)?.industry || '—') }, { title: '选题范围', width: '180px', render: ref => ref.all ? `全部 ${store.getBank(ref.bankId)?.items.length || 0} 题` : `前 ${ref.count} 题` }], st.banks)}</section>`;
+}
+function reset(id = null) {
+  Object.assign(st, { id: null, name: '', desc: '', methods: [], banks: [], mFamily: 'all', mTurns: 'all', mOpen: true, preset: '', bIndustry: 'all', bSource: 'all', bOpen: true, step: 0, visited: 0, mode: 'preset', dirty: false, readOnly: false, error: '', routeKey: id || '__new' });
+  if (id) {
+    const record = store.strategies.find(row => row.id === id);
+    if (!record) return false;
+    fromRecord(record);
+    st.readOnly = record.status === 'published';
+    if (st.readOnly) st.step = 3;
+  }
+  return true;
+}
+export function strategyEditorPage(cur = {}) {
+  const key = cur.param || '__new';
+  if (st.routeKey !== key && !reset(cur.param)) return UI.pageHead('组合攻击策略') + '<div class="empty">策略不存在或已删除</div>';
+  const canOpen = step => !st.readOnly && (step === 0 || st.mode === 'custom' && step <= st.visited || step === 3 && st.visited === 3);
+  const steps = `<ol class="sa-steps">${STEPS.map((label, index) => `<li class="${index === st.step ? 'active' : index < st.step ? 'complete' : ''}"><button type="button" ${canOpen(index) ? `onclick="App.seStep(${index})"` : 'disabled'} ${index === st.step ? 'aria-current="step"' : ''}><i>${index + 1}</i><span>${label}</span>${st.mode === 'preset' && (index === 1 || index === 2) ? '<small>推荐配置</small>' : ''}</button></li>`).join('')}</ol>`;
+  const content = st.step === 0 ? basicStep() : st.step === 1 ? methodStep() : st.step === 2 ? bankStep() : confirmationStep();
+  const previous = st.step > 0 ? UI.btn('上一步', { onclick: 'App.sePrevious()' }) : '';
+  const footer = st.readOnly ? UI.btn('返回列表', { onclick: "App.go('strategy','attack')" }) : UI.btn('取消', { onclick: 'App.seCancel()' }) + previous + UI.btn('保存草稿', { onclick: 'App.seDraft()' }) + UI.btn(st.step === 3 ? '发布策略' : st.step === 0 && st.mode === 'preset' ? '确认推荐配置' : '下一步', { kind: 'primary', onclick: st.step === 3 ? 'App.sePublish()' : 'App.seNext()' });
+  return UI.pageHead(st.readOnly ? '组合攻击策略详情' : st.id ? '编辑组合攻击策略' : '新建组合攻击策略', { back: UI.backBtn().replace('App.back()', 'App.seCancel()') }) + `<div class="strategy-authoring-page">${steps}<div class="sa-content">${st.error ? `<p class="sa-error" role="alert">${UI.esc(st.error)}</p>` : ''}${content}</div><footer class="sa-footer"><span>${st.readOnly ? '已发布' : st.dirty ? '有未保存的更改' : st.id ? '草稿已保存' : ''}</span><div>${footer}</div></footer></div>`;
 }
 
 /* ---------------------------------------------------------------- 存取 */
 function toRecord(status) {
   const name = (id) => store.models.find((m) => m.id === id)?.name;
-  return freezeStrategyDependencies({
-    guardId:st.guardId||null, guardEnabled:!!st.guardId, guardStages:[...st.guardStages], targetCapability:st.targetCapability, parentId:st.parentId,
-    id: st.id, familyId: st.familyId || undefined, version: st.version, name: st.name.trim(), desc: st.desc.trim(), status,
+  return {
+    id: st.id, name: st.name.trim(), desc: st.desc.trim(), status,
+    authoringMode: st.mode, authoringPreset: st.preset, authoringStep: st.step, authoringVisited: st.visited,
     banks: st.banks.map((b) => ({ bankId: b.bankId, count: b.all ? null : b.count })),
     methods: st.methods.map((sm, i) => ({
       name: sm.name, order: i + 1,
       params: [
         ...Object.entries(sm.params),
         ...(sm.generator ? [['攻击生成模型', name(sm.generator)]] : []),
-        ...additionalDependencies(methodOf(sm.name)).filter(dep=>sm[dep.key]).map(dep=>[dep.role,name(sm[dep.key])]),
+        ...(sm.process ? [['过程裁判', name(sm.process)]] : []),
       ],
-      aux: { generator: sm.generator, ...Object.fromEntries(additionalDependencies(methodOf(sm.name)).map(dep=>[dep.key,sm[dep.key]||''])) },
+      aux: { generator: sm.generator, process: sm.process },
     })),
-  }, catalog());
+  };
 }
 function fromRecord(s) {
   const byName = (n) => store.models.find((m) => m.name === n)?.id || '';
   Object.assign(st, {
-    id: s.id, familyId: s.familyId, parentId:s.parentId, guardId:s.guardId||'',guardStages:[...(s.guardStages||[])],targetCapability:s.targetCapability||'text', version: s.version || '1.0', name: s.name, desc: s.desc || '',
+    id: s.id, name: s.name, desc: s.desc || '',
+    mode: s.authoringMode || 'custom', preset: s.authoringPreset || '', step: s.authoringStep || 0, visited: s.authoringVisited || 0,
     banks: s.banks.map((b) => ({ bankId: b.bankId, all: !b.count, count: b.count || 20, open: true })),
     methods: s.methods.filter((m) => methodOf(m.name)).map((m) => {
       const def = methodOf(m.name);
       const params = Object.fromEntries(def.params.map((p) => [p.label, p.value]));
       m.params.forEach(([k, v]) => { if (k in params) params[k] = v; });
-      const generator = m.aux?.generator || byName(m.params.find(([label]) => label === '攻击生成模型')?.[1]);
-      return { name: def.name, params, generator, ...Object.fromEntries(additionalDependencies(def).map(dep=>[dep.key,m.aux?.[dep.key]||''])), open: false };
+      const get = (k) => m.aux?.[k] || byName(m.params.find(([x]) => x === (k === 'generator' ? '攻击生成模型' : '过程裁判'))?.[1]);
+      return { name: def.name, params, generator: get('generator'), process: get('process'), open: false };
     }),
   });
 }
-const nameTaken = () => store.strategies.some((s) => s.id !== st.id && (s.familyId || s.id) !== st.familyId && s.name === st.name.trim());
+const nameTaken = () => store.strategies.some((s) => s.id !== st.id && s.name === st.name.trim());
 
+function validateBasic() { if (!st.name.trim()) return '请输入策略名称'; if (nameTaken()) return '策略名称重复，请修改'; return ''; }
 function validate() {
   if (!st.name.trim()) return '请输入策略名称';
   if (nameTaken()) return '策略名称重复，请修改';
   if (!st.methods.length) return '请至少选择一种攻击方法';
   for (const sm of st.methods) {
     const m = methodOf(sm.name);
-    if (m.generator && !sm.generator) return `请为 ${m.name} 选择攻击生成模型`;
-    if (!compatible(m)) return `${m.name} 与所选靶标能力不兼容`;
-    for(const dep of additionalDependencies(m))if(!sm[dep.key])return `请为 ${m.name} 选择${dep.role}`;
+    if (!m || m.available === false) return '所选攻击方法不可用，请重新选择';
+    if (m.generator && !auxiliaryModels().some(model => model.id === sm.generator || model.assetId === sm.generator)) return `请为 ${m.name} 选择可用的攻击生成模型`;
+    if (m.process && !auxiliaryModels().some(model => model.id === sm.process || model.assetId === sm.process)) return `请为 ${m.name} 选择可用的过程裁判`;
   }
-  if(st.guardId && (!store.guards.some(g=>g.id===st.guardId&&g.status==='published')||!st.guardStages.length)) return '请选择防护方法及审核位置';
-  if (!st.banks.length) return '请至少选择一套场景题库';
+  if (!st.banks.length) return '请至少选择一套攻击题库';
   for (const sb of st.banks) {
-    const n = store.getBank(sb.bankId).items.length;
-    if (!sb.all && !(sb.count >= 1 && sb.count <= n)) return `题量需在 1–${n} 之间`;
+    const bank = store.getBank(sb.bankId);
+    if (!bank || bank.status === 'draft') return '所选题库不可用，请重新选择已发布题库';
+    const n = bank.items.length;
+    if (!sb.all && !(Number.isInteger(sb.count) && sb.count >= 1 && sb.count <= n)) return `题量需在 1–${n} 之间`;
   }
   return '';
 }
 function done(msg) {
+  st.dirty = false; st.routeKey = null; pendingNavigation = null;
   UI.closeModal();
   UI.toast(msg);
   UI.resetPage('strategies');
@@ -220,77 +242,69 @@ function done(msg) {
 }
 
 export function openEditor(id = null) {
-  Object.assign(st, { id: null, familyId: null, version: '1.0', name: '', desc: '', guardId:'',guardStages:[],targetCapability:'text',parentId:null, methods: [], banks: [], mFamily: 'all', mTurns: 'all', mOpen: false, preset: '', bIndustry: 'all', bSource: 'all', bOpen: true });
-  if (id) {
-    const s = store.strategies.find((x) => x.id === id);
-    if (!s || s.status !== 'draft') return UI.toast('已发布的策略不支持编辑，请创建新版本');
-    fromRecord(s);
-  }
-  render();
+  if (id && !store.strategies.some(row => row.id === id && row.status === 'draft')) return UI.toast('仅草稿策略可编辑');
+  if (router.state().sub === 'strategy-create' && (router.state().param || null) === id && st.dirty) return render();
+  return router.nav('strategy', 'strategy-create', id, { onCommit: () => { reset(id); UI.closeModal(); UI.closeDrawer(); } });
 }
-
+function saveDraft() {
+  const error = validateBasic(); if (error) throw Error(error);
+  const id = store.saveStrategy(toRecord('draft')); st.id = id; st.routeKey = id; st.dirty = false; return id;
+}
+router.beforeNavigate(transition => {
+  if (transition.from.sub !== 'strategy-create' || !st.dirty || st.readOnly || transition.options.purpose === 'configure-models') return;
+  pendingNavigation = transition;
+  UI.modal('保存策略更改', '<p>当前策略还有未保存的更改。</p>', UI.btn('继续编辑', { onclick: 'App.seBack()' }) + UI.btn('放弃更改', { onclick: 'App.seLeave(false)' }) + UI.btn('保存并离开', { kind: 'primary', onclick: 'App.seLeave(true)' }));
+  return false;
+});
 export const actions = {
   newStrategy() { openEditor(); },
   editStrategy(id) { openEditor(id); },
-  seField(k, v) { st[k] = v; },
-  seSet(k, v) { st[k] = v; render(); },
-  seGuard(id){st.guardId=id;st.guardStages=[...(store.guards.find(g=>g.id===id)?.stages||[])];render();},
-  seGuardStage(stage,on){st.guardStages=on?[...new Set([...st.guardStages,stage])]:st.guardStages.filter(s=>s!==stage);},
-  seUpgradeResources(){const updated=upgradedStrategy(toRecord('draft'),catalog());fromRecord(updated);render();UI.toast('已更新草稿依赖，请检查后发布');},
+  seField(k, v) { if (edit() && ['name', 'desc'].includes(k)) { st[k] = v; dirty(); } },
+  seSet(k, v) { if (!edit()) return; if (k === 'mOpen' && v && st.step === 0) return actions.seCustom(); if (!['mFamily', 'mTurns', 'mOpen', 'bIndustry', 'bSource', 'bOpen'].includes(k)) return; st[k] = v; render(); },
   sePreset(id) {
-    const preset = methodPresets.find(p => p.id === id);
-    if (!preset) return;
-    const existing = new Map(st.methods.map(m => [m.name, m]));
-    st.methods = preset.methods.map(name => {
-      const m = methodOf(name), previous = existing.get(m.name);
-      return previous || { name: m.name, params: Object.fromEntries(m.params.map(p => [p.label, p.value])), generator: m.generator ? genModels()[0]?.id || '' : '', open: true };
-    });
-    if (!st.banks.length) {
-      const banks = selectableModelBanks(), bank = banks.find(b => b.id === 'bank-advbench') || banks[0];
-      st.banks = bank ? [{ bankId: bank.id, all: false, count: Math.min(preset.questions, bank.items.length), open: true }] : [];
-      st.bIndustry = bank?.industry || 'all'; st.bSource = bank?.source || 'all';
-    }
-    st.preset = id; st.mOpen = false; st.bOpen = true; render();
+    if (!edit()) return;
+    const preset = methodPresets.find(p => p.id === id); if (!preset) return;
+    const available = pickable();
+    if (preset.methods.some(name => !available.some(method => method.name.toLowerCase() === name.toLowerCase()))) return fail('该推荐组合中的方法不可用，请选择其他组合');
+    const banks = selectableModelBanks(), bank = banks.find(b => b.id === 'bank-advbench');
+    if (!bank || bank.items.length < preset.questions) return fail('推荐题库的有效题量不足，请使用自定义组合');
+    st.methods = preset.methods.map(name => { const method = methodOf(name); return { name: method.name, params: Object.fromEntries(method.params.map(p => [p.label, p.value])), generator: '', process: '', open: true }; });
+    st.banks = [{ bankId: bank.id, all: false, count: preset.questions, open: true }];
+    st.mode = 'preset'; st.preset = id; st.mOpen = true; st.bOpen = true; st.visited = 0; dirty(); render();
   },
+  seCustom() { if (!edit()) return; const error = validateBasic(); if (error) return fail(error); st.mode = 'custom'; st.preset = ''; st.step = 1; st.visited = Math.max(st.visited, 1); st.mOpen = true; dirty(); render({ top: true }); },
+  seCustomizeStep(step) { if (!edit() || ![1, 2].includes(step)) return; st.mode = 'custom'; st.preset = ''; st.step = step; st.visited = Math.max(st.visited, step); st.mOpen = true; st.bOpen = true; dirty(); render({ top: true }); },
+  seNext() {
+    if (!edit()) return;
+    const basic = validateBasic(); if (basic) return fail(basic);
+    if (st.step === 0 && st.mode === 'preset') { if (!st.preset) return fail('请选择推荐策略，或使用自定义方法组合'); st.step = 3; }
+    else if (st.step === 0) st.step = 1;
+    else if (st.step === 1) { if (!st.methods.length) return fail('请至少选择一种攻击方法'); st.step = 2; }
+    else if (st.step === 2) { const error = validate(); if (error) return fail(error); st.step = 3; }
+    st.visited = Math.max(st.visited, st.step); st.error = ''; render({ top: true });
+  },
+  sePrevious() { if (!edit()) return; st.step = st.mode === 'preset' ? 0 : Math.max(0, st.step - 1); st.error = ''; render({ top: true }); },
+  seStep(step) { if (!edit() || !Number.isInteger(step) || step < 0 || step > st.visited || st.mode === 'preset' && ![0, 3].includes(step)) return; if (step > st.step) { const error = step === 3 ? validate() : validateBasic(); if (error) return fail(error); } st.step = step; st.error = ''; render({ top: true }); },
   seMethod(name, on) {
-    name = decodeURIComponent(name);
-    st.preset = '';
-    st.methods = st.methods.filter((m) => m.name !== name);
-    if (on) {
-      const m = methodOf(name);
-      if(!compatible(m))return UI.toast(m.requirements);
-      st.methods.push({ name: m.name, params: Object.fromEntries(m.params.map((p) => [p.label, p.value])), generator: m.generator ? genModels()[0]?.id || '' : '', open: true });
-    }
-    render();
+    if (!edit()) return; name = decodeURIComponent(name); const method = pickable().find(item => item.name.toLowerCase() === name.toLowerCase()); if (!method) return fail('该攻击方法不可用');
+    st.mode = 'custom'; st.preset = ''; st.methods = st.methods.filter(item => item.name !== method.name);
+    if (on) st.methods.push({ name: method.name, params: Object.fromEntries(method.params.map(p => [p.label, p.value])), generator: '', process: '', open: true });
+    dirty(); render();
   },
-  seParam(i, label, v) { st.methods[i].params[label] = v; },
+  seParam(i, label, v) { if (!edit() || !st.methods[i] || !(label in st.methods[i].params)) return; st.methods[i].params[label] = v; dirty(); },
   seConfigureModels() { configureMoreModels(render, '返回策略配置'); },
-  seAux(i, k, v) { if (v === CONFIGURE_MODEL_VALUE) return actions.seConfigureModels(); st.methods[i][k] = v; },
-  seToggle(kind, i) { st[kind][i].open = !st[kind][i].open; render(); },
-  seBank(id, on) {
-    st.preset = '';
-    st.banks = st.banks.filter((b) => b.bankId !== id);
-    if (on) st.banks.push({ bankId: id, all: true, count: Math.min(20, store.getBank(id).items.length), open: true });
-    render();
+  sePickAux(i, key) {
+    const method = st.methods[i]; if (!edit() || !method || !['generator', 'process'].includes(key)) return;
+    openResourcePicker({ kind: 'model', value: method[key], title: key === 'generator' ? '选择攻击生成模型' : '选择过程裁判模型', onSelect: resource => { method[key] = resource.id; dirty(); render(); } });
   },
-  seBankAll(i, all) { st.banks[i].all = all; render(); },
-  seBankN(i, v) { st.banks[i].count = Number(v); },
-  sePublish() {
-    const err = validate();
-    if (err) return UI.toast(err);
-    store.saveStrategy(toRecord('published'));
-    done('策略已发布');
-  },
-  /* 草稿只要求名称不重复，其余可不完整 */
-  seDraft() {
-    if (!st.name.trim()) { render(); return UI.toast('请先填写策略名称再保存草稿'); }
-    if (nameTaken()) { render(); return UI.toast('策略名称重复，请修改后再保存'); }
-    store.saveStrategy(toRecord('draft'));
-    done('已保存为待发布策略');
-  },
-  seCancel() {
-    UI.modal('退出编辑策略', '<p>是否保存当前填写的内容？保存后在策略列表中为「待发布」状态。</p>',
-      `${UI.btn('继续编辑', { onclick: 'App.seBack()' })}${UI.btn('保存草稿', { onclick: 'App.seDraft()' })}${UI.btn('放弃退出', { kind: 'danger', onclick: 'UI.closeModal()' })}`);
-  },
-  seBack() { render(); },
+  seAux(i, key, value) { if (edit() && st.methods[i] && ['generator', 'process'].includes(key)) { st.methods[i][key] = value; dirty(); } },
+  seToggle(kind, i) { if (!['methods', 'banks'].includes(kind) || !st[kind][i]) return; st[kind][i].open = !st[kind][i].open; render(); },
+  seBank(id, on) { if (!edit()) return; const bank = store.getBank(id); if (!bank) return fail('题库不可用'); st.mode = 'custom'; st.preset = ''; st.banks = st.banks.filter(b => b.bankId !== id); if (on) st.banks.push({ bankId: id, all: true, count: Math.min(20, bank.items.length), open: true }); dirty(); render(); },
+  seBankAll(i, all) { if (!edit() || !st.banks[i]) return; st.banks[i].all = all; dirty(); render(); },
+  seBankN(i, value) { if (!edit() || !st.banks[i]) return; st.banks[i].count = Number(value); dirty(); },
+  sePublish() { if (!edit()) return; const error = validate(); if (error) return fail(error); if (st.step !== 3) return fail('请先进入确认步骤审阅配置'); try { store.saveStrategy(toRecord('published')); done('策略已发布'); } catch (error) { fail(error.message); } },
+  seDraft() { if (!edit()) return; try { saveDraft(); done('已保存为草稿'); } catch (error) { fail(error.message); } },
+  seCancel() { router.nav('strategy', 'attack'); },
+  seBack() { pendingNavigation = null; UI.closeModal(); },
+  seLeave(save) { try { if (save) saveDraft(); else st.dirty = false; st.routeKey = null; UI.closeModal(); const pending = pendingNavigation; pendingNavigation = null; pending?.proceed(); } catch (error) { UI.toast(error.message); } },
 };

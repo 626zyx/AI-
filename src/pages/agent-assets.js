@@ -2,7 +2,9 @@
 import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
-import { CONFIGURE_MODEL_VALUE, configureModelsOption, configureMoreModels } from '../core/model-config-navigation.js';
+import { CONFIGURE_MODEL_VALUE, configureMoreModels } from '../core/model-config-navigation.js';
+import { openResourcePicker, listPickerResources } from '../core/resource-picker.js';
+import { usableTaskModel } from '../domain/agent-configuration.js';
 import { validateAgentSubmission } from '../domain/agent-onboarding.js';
 import { SURFACE_GROUPS, SURFACE_TYPES, surfaceTypeId, surfaceTypeOf, surfaceTypeLabel, surfaceGroupOf, surfaceTypeValue } from '../domain/attack-surfaces.js';
 import { detailContent, detailBlock, detailFields, detailTableField, openConfigDetail } from '../core/config-detail.js';
@@ -10,7 +12,7 @@ import { detailContent, detailBlock, detailFields, detailTableField, openConfigD
 const view = { q: '' };
 const statusLabel = status => ({ connected: '已接入', planned: '待验证', error: '验证失败' })[status] || status;
 const statusBadge = agent => UI.badge(statusLabel(agent.status), agent.status === 'connected' ? 'green' : agent.status === 'error' ? 'red' : 'gray');
-const baseModels = () => store.modelsWithRole('智能体基座').filter(model => model.status === 'connected');
+const baseModels = () => listPickerResources('model').filter(usableTaskModel);
 const opt = (value, label, current) => `<option value="${UI.esc(value)}"${value === current ? ' selected' : ''}>${UI.esc(label)}</option>`;
 const surfaceGroupLabel = surface => surfaceGroupOf(surface)?.label || '—';
 let form = null;
@@ -79,7 +81,7 @@ function renderForm({ preserveScroll = false } = {}) {
     <section><h3>基本信息</h3>
       ${text('name', '智能体名称', '平台内显示的名称', false, true)}
       ${text('description', '用途说明', '例如：读取业务文档并整理客服回复', true, false, '选填，自然语言说明已有能力，用于资产识别与后续选型，不会作为任务指令。')}
-      <div class="field"><label for="agf-base">基座模型 <span class="req">*</span></label><select id="agf-base" onchange="App.agaSet('baseModelId',this.value)">${opt('', '请选择基座模型', f.baseModelId)}${baseModels().map(model => opt(model.id, model.name, f.baseModelId)).join('')}${configureModelsOption}</select><p class="muted text-support">从已接入的模型资产获取地址、模型标识和凭据，无需重复填写。</p></div>
+      <div class="field"><label for="agf-base">基座模型 <span class="req">*</span></label><button type="button" id="agf-base" class="tw-resource-field" value="${UI.esc(f.baseModelId || '')}" onclick="App.agaPickBaseModel()"><span>${UI.esc(baseModels().find(model => model.id === f.baseModelId || model.assetId === f.baseModelId)?.displayName || baseModels().find(model => model.id === f.baseModelId || model.assetId === f.baseModelId)?.name || '请选择基座模型')}</span><span class="tw-resource-action">${f.baseModelId ? '更换' : '选择'}</span></button><p class="muted text-support">从已接入的模型资产获取地址、模型标识和凭据，无需重复填写。</p></div>
     </section>
     <section><h3>镜像与任务入口</h3>
       ${text('image', '镜像地址', 'registry.example.com/team/agent:1.0.0', false, true, '完整地址须包含版本标签或 sha256 摘要，无需另填版本；不填网页地址或压缩包路径。')}
@@ -123,6 +125,15 @@ export const actions = {
     if (!form || !['name','baseModelId','image','executable','argumentsText','taskInput','promptFlag','description'].includes(key)) return;
     if (key === 'baseModelId' && value === CONFIGURE_MODEL_VALUE) return configureMoreModels(renderForm, '返回智能体接入');
     form[key] = value; clearCheck(); if (rerender) renderForm({ preserveScroll: true });
+  },
+  agaPickBaseModel() {
+    if (!form) return;
+    openResourcePicker({ kind: 'model', value: form.baseModelId, title: '选择基座模型', onSelect: resource => {
+      if (!usableTaskModel(resource)) return UI.toast('该资源不支持本次模型调用');
+      actions.agaSet('baseModelId', resource.id);
+      const control = document.getElementById('agf-base');
+      if (control) { control.value = resource.id; control.firstElementChild.textContent = resource.displayName || resource.name; control.lastElementChild.textContent = '更换'; }
+    } });
   },
   agaSurface(index, key, value) {
     if (!form?.surfaceDeclarations[index] || !['kind','path'].includes(key)) return;

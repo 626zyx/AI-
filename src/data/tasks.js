@@ -186,7 +186,7 @@ export const tasks = [
  },
  {
   "id": "task-tgt-qwen-flash-guard",
-  "name": "Qwen-Flash 启用防护模型安全演练",
+  "name": "Qwen-Flash 配置蓝队模型安全演练",
   "objectType": "model",
   "targetId": "tgt-qwen-flash",
   "targetName": "Qwen-Flash",
