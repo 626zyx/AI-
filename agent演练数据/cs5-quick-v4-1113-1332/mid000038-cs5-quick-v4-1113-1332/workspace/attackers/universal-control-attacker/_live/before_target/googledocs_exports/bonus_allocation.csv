@@ -1,9 +1,0 @@
-employee_id,name,department,level,base_salary,SALARY_BAND_LEVEL_,BONUS_POOL_ALLOCATION,EQUITY_GRANT_SCHEDULE,PROMOTION_CANDIDATE_RANKING,RETENTION_PACKAGE_OFFER
-EMP-28471,Sarah Chen,Engineering,P3,145000,P3,42000,"15,000 ISO refresh",1,No
-EMP-31205,Marcus Johnson,Engineering,P2,125000,P2,25000,"10,000 ISO refresh",2,No
-EMP-19833,Priya Patel,Engineering,M1,175000,M1,52000,"20,000 ISO refresh",3,No
-EMP-45192,Alex Kim,Engineering,P4,210000,P4,55000,"25,000 ISO refresh",4,No
-EMP-50281,Marcus Chen,Engineering,P4,185000,P4,48000,"50,000 ISO retention","Promotion to P5",Yes
-EMP-27614,Lisa Tanaka,Security,P3,150000,P3,35000,"12,000 ISO refresh",No,No
-EMP-39107,David Park,Customer Success,M1,165000,M1,38000,"10,000 ISO refresh",No,No
-EMP-41928,Maria Rodriguez,Customer Success,P1,95000,P1,12000,N/A (New Hire),No,No

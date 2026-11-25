@@ -118,7 +118,6 @@
 @media(max-width:760px){.ai-asset-panel .filters-right{margin-left:0;width:100%;justify-content:flex-end}.pc-page .ai-wizard-steps{overflow-x:auto}.pc-page .ai-wizard-steps li{flex:none}.pc-page .ai-wizard-steps li:after{display:none}.pc-page .ai-mapping-head,.pc-page .ai-mapping-row{grid-template-columns:110px minmax(120px,1fr);gap:12px}.pc-page .ai-mapping-head>span:last-child,.pc-page .ai-mapping-row code{display:none}.pc-footer{flex-wrap:wrap;padding:14px}.pc-footer>div{gap:6px}.pc-page .ai-sync-policy{flex-wrap:wrap}}
 
 .ai-platform-name .link-btn{font-weight:400;text-align:left}
-.ai-platform-drawer{width:min(840px,94vw)!important}
 .ai-platform-detail{display:flex;flex-direction:column;gap:18px}
 .ai-platform-overview{display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--text)}
 .ai-platform-overview>span:last-child{font-size:12px;color:var(--muted)}
@@ -150,8 +149,58 @@
 .aiu-page .ai-surface-row>.link-btn{margin:32px 0 0}
 @media(max-width:560px){.ai-import .ai-import-heading{grid-template-columns:140px minmax(0,1fr);gap:10px}}
 
-.ai-platform-drawer{width:min(1080px,94vw)!important}
 .ai-platform-detail .grid{table-layout:fixed;width:100%}
 .ai-platform-detail .grid td{overflow-wrap:anywhere}
 
 .ai-manual-panel .dd-menu button:disabled,.ai-detail~.modal-foot .dd-menu button:disabled{color:var(--muted);opacity:.5;cursor:not-allowed}
+
+/* 设置内的统一资产目录；窄屏保留可读列宽，由表格内部滚动。 */
+.ai-manual-panel .grid{min-width:1325px;table-layout:fixed}
+.ai-manual-panel .grid th,.ai-platform-detail .grid th{white-space:nowrap}
+.ai-manual-panel .grid td,.ai-platform-detail .grid td{overflow-wrap:anywhere}
+.ai-manual-panel .grid .link-btn,.ai-platform-detail .grid .link-btn{text-align:left}
+.ai-address-value{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;line-height:1.6}
+.ai-detail .ai-address-value{display:block;-webkit-line-clamp:unset}
+.ai-platform-detail .grid{min-width:1185px}
+.ai-connection-panel .grid{min-width:780px}
+.ai-connection-panel .grid td:first-child{min-width:150px}
+.ai-connection-actions{gap:16px}
+.ai-manual-panel .filter select{max-width:180px}
+.ai-manual-panel .filter.search{flex:1 1 200px;max-width:260px;min-width:160px}
+.ai-asset-id{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;line-height:1.6;color:inherit;font-size:inherit;font-family:inherit}
+.ai-upload-menu .dd-menu{min-width:150px}
+.ai-manual-panel .filters{gap:12px}
+.ai-manual-panel .filters-right{flex-shrink:0}
+.aa-editor-drawer{width:min(600px,94vw)!important}
+.drawer-overlay:has(.ai-drawer-parent)>.ai-drawer-parent{position:absolute;right:0;top:0;height:100%;pointer-events:none;visibility:hidden;z-index:0;isolation:isolate}
+.drawer-overlay:has(.ai-drawer-parent)>.ai-asset-detail-drawer{position:relative;z-index:1;isolation:isolate;box-shadow:-12px 0 32px #1c2e4933}
+.aa-form .ai-form-grid{grid-template-columns:1fr 1fr}
+.aa-form input[readonly]{background:var(--subtle);color:var(--muted)}
+.ai-model-panel .grid{min-width:700px}
+.ai-model-panel .filters{flex-wrap:nowrap;gap:12px}
+.ai-model-panel .filter.search{flex:1 1 210px;max-width:300px;min-width:120px}
+.ai-model-panel .filter.search input{min-width:0;width:100%}
+.ai-model-panel .filter select{min-width:100px;width:110px}
+.ai-model-panel .filters-right{flex-shrink:0;width:auto;margin-left:auto;gap:10px}
+@media(max-width:900px){
+ .ai-model-panel .filters{align-items:flex-end}
+ .ai-model-panel .filter{flex-direction:column;align-items:stretch;gap:7px}
+ .ai-model-panel .filter>span{font-size:12px}
+ .ai-model-panel .filter.search{max-width:none}
+ .ai-model-panel .filters-right{width:auto;margin-left:auto}
+ .ai-model-panel .filters-right .btn{height:38px}
+}
+@media(max-width:560px){
+ .ai-model-panel .filters{flex-wrap:wrap}
+ .ai-model-panel .filters-right{width:100%;justify-content:flex-end}
+ .aa-form .ai-form-grid{grid-template-columns:1fr}
+}
+
+.ai-tabs{overflow-y:hidden;flex-shrink:0}
+.ai-model-panel .filters input,.ai-model-panel .filters select{height:38px;box-sizing:border-box}
+.pc-connection-drawer{width:min(560px,94vw)!important}
+
+.ai-manual-panel .grid th:first-child,.ai-platform-detail .grid th:first-child{position:sticky;left:0;z-index:2;background:var(--subtle)}
+.ai-manual-panel .grid td:first-child,.ai-platform-detail .grid td:first-child{position:sticky;left:0;z-index:1;background:var(--surface)}
+.ai-manual-panel .grid th:last-child,.ai-platform-detail .grid th:last-child{position:sticky;right:0;z-index:2;background:var(--subtle)}
+.ai-manual-panel .grid td:last-child,.ai-platform-detail .grid td:last-child{position:sticky;right:0;z-index:1;background:var(--surface);box-shadow:-1px 0 var(--line)}

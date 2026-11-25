@@ -1,0 +1,30 @@
+.ql-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin:0 0 24px}.ql-tabs>button{border:0;border-bottom:3px solid transparent;background:transparent;padding:0 2px 14px;color:var(--muted);font:inherit;cursor:pointer;white-space:nowrap}.ql-tabs>button.active{color:var(--primary);border-bottom-color:var(--primary)}
+.ql-library>.filters,.ql-groups>.filters{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}.ql-library .filters-right,.ql-groups .filters-right,.ae-list-toolbar .filters-right{display:flex;gap:10px;margin-left:auto;align-items:center;flex-shrink:0}.ql-library .filter.search{min-width:220px;flex:1 1 240px}.ql-library .filter select{min-width:100px;max-width:180px}.ql-library table.grid{min-width:1410px;table-layout:fixed}.ql-library .ql-title-cell>.link-btn{display:block;max-width:260px;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;line-height:1.65}.ql-cell-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.ql-library .row-actions,.ql-groups .row-actions{flex-wrap:nowrap;white-space:nowrap}.ql-groups table.grid{min-width:700px}.ql-groups table.grid td:first-child{overflow-wrap:anywhere}.ql-form,.ql-group-form{display:grid;gap:16px}.ql-form .field,.ql-group-form .field{display:grid;gap:8px;margin:0}.ql-form input,.ql-form textarea,.ql-group-form input:not([type=checkbox]){width:100%;box-sizing:border-box}.ql-form textarea{resize:vertical;min-height:150px;line-height:1.7}.ql-full-prompt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;font-size:14px;margin:8px 0}.ql-question-detail>.field{display:block;margin-top:22px}.ql-error{color:var(--vd-breach);font-size:12px;line-height:1.7;margin:0}.ql-error:empty{display:none}.ql-import-tools{display:flex;align-items:center;gap:18px}.ql-import-tools .field{flex:1}.ql-group-picker-head{display:flex;align-items:center;justify-content:space-between;gap:14px}.ql-group-picker-head>span{font-size:12px;color:var(--muted)}.ql-member-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:normal;overflow-wrap:anywhere;line-height:1.7}.ql-group-form,.ql-group-detail{min-width:0}.ql-group-form .table-wrap,.ql-group-detail .table-wrap{max-width:100%;overflow-x:auto}.ql-group-form table.grid{table-layout:fixed;min-width:600px}.ql-group-form table.grid th:first-child,.ql-group-form table.grid td:first-child{text-align:center}.ql-group-form .pager{margin:0}.ql-group-detail table.grid{table-layout:fixed;min-width:420px}.ql-group-detail>p{line-height:1.7}.ae-list-toolbar .filters-right{align-self:flex-end;padding-bottom:0}.ae-library-table table.grid{min-width:1220px}
+@media(max-width:1000px){.ql-library .filters-right,.ql-groups .filters-right,.ae-list-toolbar .filters-right{margin-left:0}.ql-tabs{margin-bottom:18px}.ql-group-form table.grid{min-width:600px}.ql-group-form .table-wrap{overflow-x:auto}}
+/* Environment classification is editable metadata, including published entries. */
+.ae-managed-tags{white-space:normal;overflow-wrap:anywhere;line-height:1.7}
+.ae-library-table table.grid{min-width:1430px;table-layout:fixed}
+.ae-library-table table.grid td:nth-child(2),.ae-library-table table.grid th:nth-child(2){width:260px;max-width:260px;min-width:260px}
+.ae-library-table .ae-title{display:block;width:100%;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;-webkit-line-clamp:unset;line-height:1.65}
+.ae-library-table .ae-cell-text{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;line-height:1.7}
+.ae-list-toolbar .tf-filter{flex:0 1 190px;min-width:160px}
+.ae-list-toolbar .tf-option input{width:15px;box-sizing:border-box}
+.ae-create-menu>.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.ae-create-menu>.dd-menu{min-width:130px}
+.ql-group-tag-filters{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ql-group-tag-filters select{width:100%;min-width:0}
+.ae-batch-toolbar{flex-wrap:wrap;gap:12px}
+.ae-batch-toolbar>.row-actions{flex-wrap:wrap;gap:8px}
+.ae-publish-preview{max-height:45vh;overflow:auto;margin-top:16px}
+.ae-publish-preview table.grid{min-width:520px}
+.ae-publish-preview table.grid td{vertical-align:top;white-space:normal;overflow-wrap:anywhere}
+.ae-metadata-heading{display:flex;align-items:flex-end;gap:20px}.ae-metadata-heading>.field{flex:1;min-width:0}.ae-metadata-heading>.link-btn{flex-shrink:0;margin-bottom:17px}
+.ae-tag-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;font-size:12px;line-height:1.7}.ae-tag-summary>div{display:flex;align-items:baseline;gap:10px}.ae-tag-summary .faint{flex-shrink:0}.ae-tag-summary [data-environment-tags]{overflow-wrap:anywhere}
+@media(max-width:700px){.ae-tag-summary{grid-template-columns:1fr}}
+
+
+.ql-extra-tag{white-space:normal;overflow-wrap:anywhere;line-height:1.65}.ql-group-tag-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+.ql-toolbar-menu{display:inline-flex}.ql-toolbar-menu>.btn{gap:8px;white-space:nowrap}.ql-toolbar-menu>.btn>[aria-hidden]{font-size:14px}.ql-selection-tools{margin:-5px 0 14px;display:flex;justify-content:flex-end}.ql-library .filters{align-items:center}.ql-library .filter.search{flex:0 1 280px}
+
+/* Environment filters follow the same compact sizing as question filters. */
+.ae-list-toolbar .filter:not(.search){flex:0 0 130px;min-width:130px;max-width:160px}.ae-list-toolbar .filter.search{flex:0 1 280px;min-width:220px}.ae-list-toolbar .tf-filter{flex:0 0 160px;min-width:160px}.ae-ide .ae-tag-summary{align-items:center;flex-wrap:wrap}.ae-tag-summary>.link-btn{flex:none;align-self:center;white-space:nowrap}

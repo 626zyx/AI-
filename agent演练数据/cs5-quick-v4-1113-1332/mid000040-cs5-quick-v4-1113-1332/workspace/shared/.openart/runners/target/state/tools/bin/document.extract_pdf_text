@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-exec /opt/openart-venv/bin/python3 /workspace/.openart/runners/target/state/tools/src/document.extract_pdf_text/scripts/document_extract_pdf_text.py "$@"

@@ -52,7 +52,7 @@ const metadata = (task, sourceUnit) => task.objectType === 'agent' ? {
 
 export function projectReplay(task, source, sourceUnits, events, cursor = task.replayCursor || 0) {
   const visible = events.slice(0, Math.max(0, Math.min(events.length, cursor)));
-  const executionUnits = sourceUnits.map((u) => ({ ...metadata(task, u), executionStatus: 'pending', roundInfo: {
+  const executionUnits = sourceUnits.map((u) => ({ ...metadata(task, u), ...(u.classificationSnapshot?{classificationSnapshot:copy(u.classificationSnapshot)}:{}), executionStatus: 'pending', roundInfo: {
     maxRounds: roundInfo(source, u).maxRounds, completedRounds: task.objectType === 'agent' ? null : 0,
     currentRound: null, breachRound: null, firstBreachRound: null, endReason: null,
   } }));

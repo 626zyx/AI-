@@ -1,6 +1,15 @@
 /* Task detail scrolls as a page; evidence panes also retain their own scroll. */
 .tl-sub { display:block; color:var(--muted); font-size:var(--t-caption); margin-top:4px; }
 .tl-progress { min-width:115px; }
+.tl-progress-count { display:block; margin-bottom:7px; color:var(--muted); font-size:11px; white-space:nowrap; }
+.tl-progress-count strong { color:var(--text); font-size:15px; font-weight:500; }
+.tl-task-table table.grid { table-layout:fixed;min-width:1870px; }
+.tl-config-summary,.tl-task-name { display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.6;text-align:left; }
+.tl-progress.is-running .bar>i { position:relative; overflow:hidden; min-width:5px; }
+.tl-progress.is-done .bar>i { background:var(--vd-safe); }
+.tl-progress.is-running .bar>i::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff80,transparent);animation:tl-running 1.6s linear infinite; }
+@keyframes tl-running { from { transform:translateX(-100%); } to { transform:translateX(100%); } }
+@media(prefers-reduced-motion:reduce) { .tl-progress.is-running .bar>i::after { animation:none; } }
 .app-main:has(.ew-workspace) { min-height:0; min-width:0; overflow:auto; padding:12px clamp(12px,1.3vw,28px) 20px; }
 .page:has(>.ew-workspace) { height:auto; min-height:100%; padding-top:0; }
 .ew-workspace { position:relative; height:auto; min-height:0; display:flex; flex-direction:column; gap:12px; }
@@ -91,3 +100,66 @@
 @media(max-width:1300px) { .ew-details-grid { grid-template-columns:minmax(230px,1fr) minmax(0,2.3fr); }.ew-table th,.ew-table td { padding:9px 6px; }.ew-process-scroll { padding:14px; }.ew-workspace .tc-overview { gap:8px 12px; }.ew-workspace .tc-overview>div { gap:6px; } }
 @media(max-height:720px) { .app-main:has(.ew-workspace) { padding-top:8px; padding-bottom:10px; }.ew-workspace { gap:8px; }.ew-workspace>.page-heading { min-height:32px; }.ew-workspace .tc-summary-heading { padding-top:7px; }.ew-workspace .tc-overview { padding-top:7px; padding-bottom:8px; }.ew-execution-heading { min-height:44px; }.ew-execution-heading .btn { height:30px; } }
 @media(max-width:760px) { .ew-workspace .tc-overview { grid-template-columns:1fr 1fr; }.ew-details-grid { grid-template-columns:minmax(150px,.8fr) minmax(0,1.2fr); }.ew-process-toolbar { padding:10px; gap:10px; }.ew-progress { gap:6px; }.ew-progress>span:first-child { display:none; }.ew-tabs { gap:18px; }.ew-execution-heading { padding-inline:10px; } }
+
+/* Progress belongs to the metrics overview; source measurements stay beside each unit. */
+.ew-workspace.ew-with-telemetry .task-metric-dashboard>[data-ew-progress] { grid-column:1/-1; padding:0 14px 14px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+.ew-progress-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin-bottom:10px; font-size:var(--t-caption); }
+.ew-progress-heading>strong { color:var(--text); font-weight:var(--w-medium); }
+.ew-unit-counts { display:flex; flex-wrap:wrap; align-items:center; gap:10px 24px; color:var(--muted); }
+.ew-unit-counts b { margin-left:4px; font-weight:var(--w-medium); color:var(--text); }
+.ew-unit-counts .is-running,.ew-unit-counts .is-running b,.ew-current-units .num { color:var(--primary); }
+.ew-unit-counts .is-done,.ew-unit-counts .is-done b { color:var(--vd-safe); }
+.ew-unit-counts .is-error,.ew-unit-counts .is-error b { color:var(--st-error,var(--vd-breach)); }
+.ew-progress-summary.is-done .ew-progress .bar>i { background:var(--vd-safe); }
+.ew-progress-summary.is-done .ew-progress b { color:var(--vd-safe); }
+.ew-progress-summary.is-error .ew-progress .bar>i { background:var(--st-error,var(--vd-breach)); }
+.ew-progress-summary.is-error .ew-progress b { color:var(--st-error,var(--vd-breach)); }
+.ew-progress-summary.is-running .ew-progress .bar>i { min-width:4px; }
+.ew-current-units { margin-top:8px; color:var(--muted); font-size:var(--t-caption); }
+.ew-with-telemetry .ew-process-toolbar { min-height:30px; padding-block:6px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type] .ew-details-grid { grid-template-columns:minmax(400px,1.15fr) minmax(0,1.45fr); }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry { min-width:640px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:first-child { width:46px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(2) { width:180px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(3) { width:92px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(4) { width:66px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(5) { width:78px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(6) { width:100px; }
+.ew-workspace.ew-with-telemetry .ew-unit-telemetry th:nth-child(7) { width:78px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry { min-width:500px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry th:first-child { width:46px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry th:nth-child(2) { width:190px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry th:nth-child(3) { width:86px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry th:nth-child(4) { width:100px; }
+.ew-workspace.ew-with-telemetry[data-workspace-type="agent"] .ew-unit-telemetry th:nth-child(5) { width:78px; }
+.ew-unit-telemetry .ew-question-select,.ew-unit-method { display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.ew-unit-pagination { flex:none;border-top:1px solid var(--line);padding:8px 10px; }
+.ew-unit-pagination .pager { flex-wrap:wrap;justify-content:flex-end;gap:5px;margin:0;padding:0;border:0; }
+.ew-unit-pagination .pager>span:first-child { margin-right:auto;font-size:10px; }
+.ew-unit-pagination .pg-btn { width:auto;min-width:32px;padding:0 6px;font-size:11px; }
+.task-metric-dashboard [data-task-metric="asr"]:not(.is-unknown) .task-metric-value>strong,
+.task-metric-dashboard [data-task-metric="maxMethodAsr"]:not(.is-unknown) .task-metric-value>strong,
+.task-metric-dashboard [data-task-metric="maxScenarioAsr"]:not(.is-unknown) .task-metric-value>strong { color:var(--vd-breach); }
+.task-metric-dashboard [data-task-metric="executionRate"] .task-metric-value>strong { color:var(--vd-safe); }
+.ew-unit-duration,.ew-unit-tokens { white-space:nowrap; }
+.ew-duel { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; align-items:start; margin-bottom:14px; }
+.ew-duel-lane { min-width:0; overflow:hidden; border:1px solid #eadde0; border-radius:8px; background:#fffdfd; }
+.ew-duel-lane>header { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; min-height:46px; padding:10px 12px; border-bottom:1px solid #eadde0; background:#fcf2f3; }
+.ew-duel-role { color:#a84d5c; font-size:12px; font-weight:600; }
+.ew-duel-lane h5 { margin:0; font-size:12px; font-weight:500; }
+.ew-duel-blue { border-color:#d9e4f1; background:#fcfdff; }
+.ew-duel-blue>header { background:#eef5fc; border-color:#d9e4f1; }
+.ew-duel-blue .ew-duel-role { color:#3b6ea5; }
+.ew-duel-outcome { margin-left:auto; color:#567693; font-size:11px; }
+.ew-duel-content { max-height:420px; overflow:auto; padding:12px; scrollbar-gutter:stable; }
+.ew-duel-content .ew-evidence { margin-bottom:12px; }
+.ew-duel-content .ew-evidence:last-child { margin-bottom:0; }
+.ew-duel-content .ew-evidence h5 { font-size:11px; color:var(--muted); }
+.ew-duel-content .ew-evidence pre { background:transparent; padding:8px 0 8px 10px; font-size:12px; }
+.ew-duel-content .ew-blocked { padding:8px; font-size:12px; line-height:1.6; }
+.ew-duel-pending { color:var(--muted); font-size:12px; margin:0; }
+@media(max-width:1000px) {
+  .ew-workspace.ew-with-telemetry .ew-execution { height:clamp(640px,90vh,900px); }
+  .ew-workspace.ew-with-telemetry[data-workspace-type] .ew-details-grid { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(200px,.7fr) minmax(0,1fr); }
+  .ew-with-telemetry .ew-unit-panel { border-right:0; border-bottom:1px solid var(--line); }
+}

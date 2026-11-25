@@ -18,8 +18,7 @@ export function mount() {
 }
 
 /* 未读角标：条数由消息通知页面提供 */
-function bellBadge(initialHome = false) {
-  if (initialHome) return '';
+function bellBadge() {
   const n = window.App?.ntUnread?.() || 0;
   return `<span class="bell-badge num" ${n ? '' : 'hidden'}>${n > 99 ? '99+' : n}</span>`;
 }
@@ -34,8 +33,7 @@ function renderHeader(cur) {
     <nav class="top-nav" aria-label="平台主导航">${nav}</nav>
     <div class="header-actions">
       <button class="guide-button" title="使用指南" aria-label="使用指南" onclick="App.openUserGuide()">${icon('book', 18)}<span>使用指南</span></button>
-      <button class="icon-btn bell-btn" title="消息通知" aria-label="消息通知" onclick="Shell.notify()">${icon('bell', 18)}${bellBadge(cur.page === 'home')}</button>
-      <button class="icon-btn" title="账户" aria-label="账户" onclick="Shell.account()">${icon('user', 18)}</button>
+      <button class="icon-btn bell-btn" title="消息通知" aria-label="消息通知" onclick="Shell.notify()">${icon('bell', 18)}${bellBadge()}</button>
     </div>`;
 }
 
@@ -52,7 +50,7 @@ function renderSidebar(cur) {
   const nav = items
     .map(
       (i) => i.heading ? `<div class="side-nav-group">${esc(i.label)}</div>` : `<button class="${activeId === i.id ? 'active' : ''} ${i.child ? 'child' : ''}" onclick="Shell.go('${i.page || page}','${i.id}')">
-        ${i.child ? '' : icon(i.icon, 16)}${esc(i.label)}</button>`,
+        ${icon(i.icon, 16)}${esc(i.label)}</button>`,
     )
     .join('');
   sidebarEl.innerHTML = `<nav class="side-nav" aria-label="当前栏目导航">${nav}</nav>`;
@@ -107,26 +105,9 @@ export const api = {
     router.nav(page, sub, param);
   },
   notify() {
-    if (router.state().page === 'home') {
-      import('./ui.js').then(ui => ui.modal('消息通知', '<div class="empty">暂无演练通知。创建并运行任务后，可在这里查看进度与风险提醒。</div>', ui.btn('关闭', { onclick: 'UI.closeModal()' })));
-      return;
-    }
     window.App?.openNotices?.();
   },
   settings() {
     router.nav('platform', 'intake');
-  },
-  account() {
-    import('./ui.js').then((ui) =>
-      ui.modal(
-        '账户',
-        `<table class="kv"><tbody>
-           <tr><th>当前账号</th><td>安全运营</td></tr>
-           <tr><th>权限</th><td>演练任务、策略、资产、风险全部可读</td></tr>
-         </tbody></table>`,
-        `${ui.btn('关闭', { onclick: "UI.closeModal()" })}
-         ${ui.btn('退出登录', { kind: 'danger', onclick: "UI.closeModal();UI.toast('demo 不支持真实退出登录')" })}`,
-      ),
-    );
   },
 };

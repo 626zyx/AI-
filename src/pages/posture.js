@@ -3,6 +3,7 @@ import * as UI from '../core/ui.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { icon } from '../core/icons.js';
+import { BUSINESS_ICONS } from '../domain/constants.js';
 import { exerciseArena } from '../core/exercise-arena.js';
 import { exerciseDemoSequences } from '../domain/exercise-demo.js';
 
@@ -46,13 +47,14 @@ function assetDistribution(assets) {
 }
 
 function assetsCard(b) {
-  const rows = b.assets.length ? b.assets.map((a) => `<div class="ps-row" title="${UI.esc(a.name)}">
+  const pg=UI.paginate('posture-assets',b.assets);
+  const rows = b.assets.length ? pg.slice.map((a) => `<div class="ps-row" title="${UI.esc(a.name)}">
     <span class="ps-asset-dot ${a.kind}"></span>
     <span class="ps-row-main"><b>${UI.esc(a.name)}</b><span>${a.kind === 'agent' ? '智能体' : '模型'} · 演练 ${a.runs} 次</span></span>
     <span class="ps-asset-asr num" title="任务平均 ASR：所选时间范围内各已完成任务 ASR 的算术平均；无有效判定的任务不参与">${a.asr === null ? '—' : UI.pct(a.asr)}</span>
   </div>`).join('') : '<div class="ps-empty">范围内暂无演练资产</div>';
   return `<section class="ps-card" id="ps-assets-card"><div class="ps-card-h">资产态势<span class="ps-card-n num">${b.assets.length}</span>
-    ${b.assets.length > ROWS ? `<button class="link-btn ps-more" onclick="App.go('assets','models')">全部</button>` : ''}</div><div class="ps-assets-body">${assetDistribution(b.assets)}<div class="ps-asset-details"><div class="ps-asset-list-head"><span>资产明细</span><span>任务平均ASR</span></div><div class="ps-list">${rows}</div></div></div></section>`;
+    ${b.assets.length > ROWS ? `<button class="link-btn ps-more" onclick="App.go('assets','models')">全部</button>` : ''}</div><div class="ps-assets-body">${assetDistribution(b.assets)}<div class="ps-asset-details"><div class="ps-asset-list-head"><span>资产明细</span><span>任务平均ASR</span></div><div class="ps-list">${rows}</div>${pg.count>1?UI.pager(pg,'App.psAssetsPage({p})'):''}</div></div></section>`;
 }
 
 function riskCard(b) {
@@ -95,7 +97,7 @@ export function mountPosture(host = document, { sceneLoader = () => import('../c
     const roleStyle = event.role.endsWith('_guard') ? 'gate' : event.role;
     row.className = `ps-output ${roleStyle}`;
     row.dataset.role = event.role;
-    row.innerHTML = `<span class="ps-packet-node" aria-hidden="true"></span><span class="ps-packet-grain" aria-hidden="true"><i></i><i></i><i></i><i></i></span><h3><span class="ps-packet-role">${icon(roleStyle === 'src' ? 'layers' : roleStyle === 'gate' ? 'shield' : roleStyle === 'judge' ? 'check' : 'cpu',13)}</span>${UI.esc(event.label)}${event.verdict ? `<span class="ps-verdict ${event.verdict}">${verdictLabel(event.verdict)}</span>` : ''}</h3><p>${UI.esc(clip(event.text, 160))}</p>`;
+    row.innerHTML = `<span class="ps-packet-node" aria-hidden="true"></span><span class="ps-packet-grain" aria-hidden="true"><i></i><i></i><i></i><i></i></span><h3><span class="ps-packet-role">${icon(BUSINESS_ICONS[roleStyle === 'src' ? 'attacker' : roleStyle === 'gate' ? 'guard' : roleStyle === 'judge' ? 'evaluator' : type === 'agent' ? 'agent' : 'model'],13)}</span>${UI.esc(event.label)}${event.verdict ? `<span class="ps-verdict ${event.verdict}">${verdictLabel(event.verdict)}</span>` : ''}</h3><p>${UI.esc(clip(event.text, 160))}</p>`;
     box.appendChild(row);
     while (box.children.length > 3) box.firstElementChild.remove();
     [...box.children].forEach((child, i, all) => {
@@ -191,8 +193,9 @@ export function mountPosture(host = document, { sceneLoader = () => import('../c
 
 export const actions = {
   psToggle() { active?.toggle(); },
+  psAssetsPage(page) { UI.setPage('posture-assets',page,{rerender:false}); const host=document.getElementById('ps-assets-card'); if(host)host.outerHTML=assetsCard(store.postureBoard(state.range)); },
   psRange(days) {
-    state.range = days;
+    state.range = days; UI.resetPage('posture-assets');
     const board = store.postureBoard(days);
     const metrics = document.getElementById('ps-metrics'); if (metrics) metrics.innerHTML = board.metrics.map(metricCell).join('');
     const assets = document.getElementById('ps-assets-card'); if (assets) assets.outerHTML = assetsCard(board);

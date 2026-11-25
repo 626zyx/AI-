@@ -1,0 +1,17 @@
+.modal.rg-group-modal{width:min(1280px,calc(100vw - 48px));max-height:calc(100vh - 48px)}
+.rg-group-modal .modal-body{padding:20px 24px;min-height:0;overflow:auto}
+.rg-picker-form{gap:14px}
+.rg-group-metadata{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,2fr);gap:20px}
+.rg-picker-form .ql-group-picker-head{margin:2px 0 0}
+.rg-picker-form>.filters{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:0}
+.rg-picker-form>.filters .filter.search{flex:1;min-width:220px}
+.rg-picker-form>.filters .filter.search input{width:100%}
+.rg-picker-table{min-width:0;max-height:42vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius-sm)}
+.rg-picker-table>.table-wrap{overflow:visible}
+.rg-group-modal .rg-picker-table table.grid{table-layout:fixed;min-width:1040px;margin:0}
+.rg-picker-table table.grid th{position:sticky;top:0;z-index:1;background:var(--subtle)}
+.rg-picker-table table.grid td{vertical-align:middle;height:48px}
+.rg-cell-text{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.6}
+.rg-member-prompt{max-width:280px}
+.rg-group-modal .pager{padding:0;border:0;margin:0}
+@media(max-width:760px){.modal.rg-group-modal{width:calc(100vw - 24px);max-height:calc(100vh - 24px)}.rg-group-modal .modal-body{padding:16px}.rg-group-metadata{grid-template-columns:1fr;gap:12px}.rg-picker-table{max-height:36vh}.rg-picker-form .ql-group-picker-head{align-items:flex-start;flex-direction:column;gap:5px}}

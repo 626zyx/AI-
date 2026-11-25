@@ -1,6 +1,7 @@
 /* 指标口径唯一实现处。页面、报告、风险中心都从这里取，不允许各自计算。 */
 import { RISK_LEVEL, VERDICT, AGENT_VERDICT, RISK_LABEL } from './constants.js';
 import { advbench, scenes } from '../data/catalog.js';
+import { classificationTags } from './task-classification.js';
 
 /* ASR = 攻破数 / 有效判定数。分母不用样本总数：
  * 未判定的单元（judge_success 为 null）不参与，避免把「没判」算成「没攻破」。 */
@@ -250,9 +251,10 @@ export function modelTaskMetrics(task = {}) {
   units.forEach(unit => {
     const scenarioId = unit.scenarioId || unit.sceneId || scenarioByPrompt.get(unit.target);
     const scenarioName = unit.scenarioName || unit.sceneName || scenarioNames.get(scenarioId) || scenarioId;
+    const riskTags=classificationTags(unit,'risk')??(scenarioId||scenarioName?[{id:scenarioId||scenarioName,name:scenarioName}]:[]);
     const methodKey = unit.methodKey || unit.method;
     const method = (task.methods || []).find(item => item.name === unit.method || item.id === methodKey || item.key === methodKey);
-    add(scenarioGroups, scenarioId || scenarioName, scenarioName, unit);
+    for(const tag of new Map(riskTags.map(tag=>[tag.id,tag])).values())add(scenarioGroups,tag.id,tag.name,unit);
     add(methodGroups, methodKey, method?.label ? `${method.label}（${method.name || methodKey}）` : unit.method || methodKey, unit);
   });
   return {

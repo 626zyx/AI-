@@ -11,7 +11,7 @@ export const AGENT_REPLAY_CASES = ['task-agt-b5-dc-baseline', 'task-agt-b5-dc-un
 export function resolveAgentReplaySource(config, sources) {
   const source = sources.find(item => item.id === `task-agt-b5-dc-${config.technique}` && AGENT_REPLAY_CASES.includes(item.id));
   const mismatch = reason => ({ source: null, reason });
-  if (!source) return mismatch('该攻击模板没有对应的历史演示记录');
+  if (!source) return mismatch('该攻击者没有对应的历史演示记录，当前 Demo 不会执行自建攻击者或套用系统攻击者的运行结果');
   if (stableId(config.targetAssetId || config.targetId) !== source.targetId || config.targetImage !== source.targetSnapshot?.image)
     return mismatch('靶标或镜像与两条 Deep Agents 历史案例不同');
   if (stableId(config.targetModelId) !== 'mdl-deepseek-flash' || config.targetModelApi !== source.targetSnapshot?.model)
@@ -19,7 +19,7 @@ export function resolveAgentReplaySource(config, sources) {
   if (config.evaluationMode !== 'llm') return mismatch('Agent 演练仅支持 LLM 评估，请重新保存配置');
   if (config.technique !== 'baseline') {
     if (config.attackTemplateId !== 'universal' || !same(config.attackTemplateSnapshot, getAgentAttackTemplate('universal')))
-      return mismatch('攻击模板已变更，没有匹配的历史运行');
+      return mismatch('攻击者提示词已变更，没有匹配的历史运行');
     if (stableId(config.attackerId) !== 'mdl-deepseek-flash' || config.attackerModelApi !== 'deepseek-flash')
       return mismatch('攻击模型与历史案例不同');
     const paths = rows => (rows || []).map(row => `${row.vector}:${row.path}`).sort();

@@ -20,7 +20,7 @@ export function listPickerResources(kind = 'model') {
     const entry = catalog.find(row => row.id === versionId) || catalog.find(row => row.id === asset.id) || {};
     const resource = { ...copyResource(entry), assetId: asset.id, assetVersion: asset.version, assetSnapshot: structuredClone(asset),
       id: entry.id || versionId, name: kind==='model'?asset.name:entry.name || asset.name, displayName: asset.name, kind, version: asset.version, versionLabel:assetVersionLabel(asset),
-      status: statusFor(asset), source: asset.source || '人工上传', sourceKind: asset.sourceKind || 'manual',
+      status: statusFor(asset), source: !asset.platformConnectionId && asset.source === '人工上传' ? '手动上传' : asset.source || '手动上传', sourceKind: asset.sourceKind || 'manual',
       sourceRecordId: asset.sourceRecordId || asset.id, sourceDataset: asset.sourceDataset || '',
       apiModel: asset.apiModel || entry.apiModel, image: asset.image || entry.image,
       capabilities: asset.capabilities || [], intakeMode:asset.intakeMode, verificationMode: asset.intakeMode==='configuration'?'configuration':'demo', actualConnectionVerified: false };
@@ -45,7 +45,7 @@ function installStyle() {
 }
 
 /** Opens above an existing wizard/dialog; onSelect receives a secret-free catalog object. */
-export function openResourcePicker({ kind = 'model', value = '', onSelect, title } = {}) {
+export function openResourcePicker({ kind = 'model', value = '', onSelect, title, allowUnverified = false } = {}) {
   if (!TYPES[kind]) throw new Error('资源类型仅支持 model 或 agent');
   if (typeof onSelect !== 'function') throw new Error('请选择资源后的处理函数 onSelect');
   activePicker?.close(); installStyle();
@@ -56,11 +56,11 @@ export function openResourcePicker({ kind = 'model', value = '', onSelect, title
   document.body.append(layer);
   const currentValue = typeof value === 'object' ? value?.id : String(value || '');
   const initial = listPickerResources(kind).find(row => row.id === currentValue || `${row.assetId}@${row.assetVersion}` === currentValue || row.assetId === currentValue);
-  let selectedId = initial?.id || '', query = '', source = '', state = '', message = '', closed = false;
+  let selectedId = initial?.id || '', query = '', source = '', state = '', message = '', closed = false, page = 1;
   const checking = new Set();
   const localChecks = new Map();
   const resources = () => listPickerResources(kind).map(row => localChecks.has(row.id) ? { ...row, ...localChecks.get(row.id) } : row);
-  const selectable = row => row && row.status === 'connected' && !checking.has(row.id);
+  const selectable = row => row && !checking.has(row.id) && (row.status === 'connected' || kind === 'agent' && allowUnverified && !['disabled','checking'].includes(row.status));
   function close() {
     if (closed) return;
     closed = true; layer.remove();
@@ -73,30 +73,36 @@ export function openResourcePicker({ kind = 'model', value = '', onSelect, title
     const chosen = all.find(row => row.id === selectedId);
     const q = query.trim().toLowerCase();
     const visible = all.filter(row => (!q || [row.displayName,row.name,row.id,row.apiModel,row.image,row.source].join(' ').toLowerCase().includes(q)) && (!source || row.source === source) && (!state || row.status === state));
+    const count = Math.max(1, Math.ceil(visible.length / UI.PAGE_SIZE));
+    page = Math.min(page, count);
+    const pageRows = visible.slice((page - 1) * UI.PAGE_SIZE, page * UI.PAGE_SIZE);
     const sources = [...new Set(all.map(row => row.source))];
     layer.innerHTML = `<section class="resource-picker" role="dialog" aria-modal="true" aria-labelledby="resource-picker-title">
       <header class="rp-head"><div><h2 id="resource-picker-title">${UI.esc(title || `选择${TYPES[kind]}资源`)}</h2><p>从已接入资源中选择，所选配置会随任务保留。</p></div><button type="button" class="icon-btn" data-rp-action="close" aria-label="关闭资源选择">×</button></header>
-      <div class="rp-filters"><label class="rp-search"><span>搜索</span><input type="search" data-rp-query value="${UI.esc(query)}" placeholder="搜索名称或请求标识" aria-label="搜索资源"></label>${kind==='model'?'':`<label><span>来源</span><select data-rp-source aria-label="资源来源"><option value="">全部来源</option>${sources.map(s => `<option${s === source ? ' selected' : ''} value="${UI.esc(s)}">${UI.esc(s)}</option>`).join('')}</select></label>`}<label><span>接入状态</span><select data-rp-state aria-label="接入状态"><option value="">全部状态</option>${Object.entries(STATE).filter(([key]) => key !== 'checking').map(([key,[label]]) => `<option value="${key}"${state === key ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>
-      <div class="rp-table-wrap"><table class="rp-table"><thead><tr><th class="rp-select-col"></th><th>资源名称</th><th>${kind === 'model' ? '请求标识' : '运行镜像'}</th><th>${kind==='model'?'API 地址':'来源'}</th><th>接入状态</th><th>操作</th></tr></thead><tbody>${visible.map(row => {
+      <div class="rp-filters"><label class="rp-search"><span>搜索</span><input type="search" data-rp-query value="${UI.esc(query)}" placeholder="搜索名称或模型标识" aria-label="搜索资源"></label>${kind==='model'?'':`<label><span>来源</span><select data-rp-source aria-label="资源来源"><option value="">全部来源</option>${sources.map(s => `<option${s === source ? ' selected' : ''} value="${UI.esc(s)}">${UI.esc(s)}</option>`).join('')}</select></label>`}<label><span>接入状态</span><select data-rp-state aria-label="接入状态"><option value="">全部状态</option>${Object.entries(STATE).filter(([key]) => key !== 'checking').map(([key,[label]]) => `<option value="${key}"${state === key ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>
+      <div class="rp-table-wrap"><table class="rp-table"><thead><tr><th class="rp-select-col"></th><th>资源名称</th><th>${kind === 'model' ? '模型标识' : '运行镜像'}</th><th>${kind==='model'?'API 地址':'来源'}</th><th>接入状态</th><th>操作</th></tr></thead><tbody>${pageRows.map(row => {
         const busy = checking.has(row.id); const [label,tone] = row.intakeMode==='configuration'&&row.status==='connected'?['已登记','green']:STATE[busy ? 'checking' : row.status] || ['待检查','gray'];
         return `<tr data-rp-row="${UI.esc(row.id)}" class="${selectedId === row.id ? 'selected' : ''}"><td><input type="radio" name="rp-resource" data-rp-select="${UI.esc(row.id)}" ${selectedId === row.id ? 'checked' : ''} ${selectable(row) ? '' : 'disabled'} aria-label="选择 ${UI.esc(row.displayName)}${kind==='model'?'':' '+UI.esc(row.versionLabel||row.version)}"></td><td><strong>${UI.esc(row.displayName)}</strong>${kind==='model'?'':`<small>${UI.esc(row.versionLabel||row.version)} · ${UI.esc(row.assetId || row.id)}</small>`}</td><td class="rp-identity">${UI.esc(kind === 'model' ? row.apiModel || '—' : row.image || '—')}</td><td class="rp-identity">${kind==='model'?UI.esc(row.baseUrl||row.assetSnapshot?.baseUrl||'—'):UI.esc(row.source)+(row.sourceRecordId&&row.sourceRecordId!==row.assetId?`<small>源记录 ${UI.esc(row.sourceRecordId)}</small>`:'')}</td><td>${UI.badge(label,tone)}</td><td>${row.intakeMode==='configuration'?'—':`<button type="button" class="link-btn" data-rp-test="${UI.esc(row.id)}" ${busy || row.status === 'disabled' ? 'disabled' : ''}>${busy ? '检查中…' : '测试连通'}</button>`}</td></tr>`;
       }).join('') || '<tr><td colspan="6" class="rp-empty">没有匹配资源，请调整筛选或先在资产接入中添加。</td></tr>'}</tbody></table></div>
-      <div class="rp-status" role="status">${UI.esc(message || '连通测试为本地演示检查，不发送真实模型请求，也不读取或验证实际密钥。')}</div>
+      ${UI.pager({ page, count, total: visible.length })}
+      <div class="rp-status" role="status">${UI.esc(message || (kind==='agent'&&allowUnverified?'选择靶标后需在任务中完成运行验证，通过后才能开始演练。':'连通测试为本地演示检查，不发送真实模型请求，也不读取或验证实际密钥。'))}</div>
       <footer class="rp-foot"><span>${chosen ? '已选：' + UI.esc(chosen.displayName) + (kind==='model'?'':' · ' + UI.esc(chosen.versionLabel||chosen.version)) : '尚未选择资源'}<small>共 ${visible.length} 项</small></span><div><button type="button" class="btn" data-rp-action="close">取消</button><button type="button" class="btn primary" data-rp-action="confirm" ${selectable(chosen) ? '' : 'disabled'}>确认选择</button></div></footer>
     </section>`;
     if (focusSearch) { const search = layer.querySelector('[data-rp-query]'); search.focus(); search.setSelectionRange?.(query.length, query.length); }
   }
   layer.addEventListener('input', event => {
     if (!event.target.matches('[data-rp-query]')) return;
-    query = event.target.value; render({ focusSearch: true });
+    query = event.target.value; page = 1; render({ focusSearch: true });
   });
   layer.addEventListener('change', event => {
-    if (event.target.matches('[data-rp-source]')) source = event.target.value;
-    if (event.target.matches('[data-rp-state]')) state = event.target.value;
+    if (event.target.matches('[data-rp-source]')) { source = event.target.value; page = 1; }
+    if (event.target.matches('[data-rp-state]')) { state = event.target.value; page = 1; }
     if (event.target.matches('[data-rp-select]')) selectedId = event.target.dataset.rpSelect;
     render();
   });
   layer.addEventListener('click', async event => {
+    const pageButton = event.target.closest('[data-page]');
+    if (pageButton) { page = Number(pageButton.dataset.page); render(); return; }
     const action = event.target.closest('[data-rp-action]')?.dataset.rpAction;
     if (action === 'close') return close();
     if (action === 'confirm') {

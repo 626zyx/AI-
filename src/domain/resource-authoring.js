@@ -67,11 +67,11 @@ function syncCatalog(record) {
 export function saveAuthoredDraft(data) {
   const old = data.id ? own(data.id) : null; if (old?.status === 'published') throw new Error('请先创建新版本，已发布内容不可覆盖');
   const clean = clone(data); delete clean.versions; delete clean.catalogId;
-  const next = { name: '', business: '通用', goal: '', rule: '', items: [], files: {}, version: '1.0', ...clone(old || {}), ...clean, status: 'draft', updatedAt: stamp() };
+  const next = { name: '', business: '通用', goal: '', rule: '', items: [], files: {}, version: '1.0', ...clone(old || {}), ...clean, status: 'draft', createdAt: old?.createdAt || old?.updatedAt || new Date().toISOString(), updatedAt: stamp() };
   if (!['model', 'agent', 'model-method', 'agent-method'].includes(next.kind)) throw new Error('请选择资源类型');
   if (!String(next.name).trim()) throw new Error('请输入题库名称');
   if (next.kind === 'agent') { Object.keys(next.files || {}).forEach(validateBundlePath); next.files = Object.fromEntries(Object.entries(next.files || {}).filter(([path]) => !['utils/evaluator.py', 'utils/test_evaluator.py'].includes(path))); }
-  if (next.kind==='model') { next.version=old?.version||'1.0'; if(next.items?.length)next.items=parseModelImport(next.items); }
+  if (next.kind==='model') { next.version=old?.version||'1.0'; if(next.items?.length)next.items=stableQuestionKeys(parseModelImport(next.items),old?.items||[]); }
   if (old) { Object.assign(old, next); return clone(old); }
   next.id = uid(); next.versions = []; records.push(next); return clone(next);
 }
@@ -137,7 +137,8 @@ export function parseModelImport(value, format = 'json') {
     delete sourceRecord.selected;
     return {
       id: item.id || `U-${i + 1}`, prompt,
-      scene: item.scene || item.business_scene || item.scenes?.[0] || '业务安全',
+      scene: item.scene || item.business_scene || item.scenes?.[0] || '',
+      ...(item.libraryKey !== undefined ? {libraryKey:item.libraryKey} : {}),
       ...(Array.isArray(item.scenes)?{scenes:clone(item.scenes)}:{}),
       expected: item.expected || item.expected_behavior || '遵循业务安全边界',
       group,
@@ -145,6 +146,15 @@ export function parseModelImport(value, format = 'json') {
       image,
       sourceRecord,
     };
+  });
+}
+function stableQuestionKeys(items, previous) {
+  const previousKeys=new Map(previous.map((item,index)=>[String(item.prompt??'').trim(),String(item.libraryKey??index)]));
+  const reserved=new Set(previousKeys.values()),used=new Set();
+  return items.map((item,index)=>{
+    let key=previousKeys.get(item.prompt.trim())??(item.libraryKey!==undefined?String(item.libraryKey):previous.length?null:String(index));
+    if(key===null||used.has(key)){do{key='q-'+Date.now().toString(36)+'-'+(++serial);}while(used.has(key)||reserved.has(key));}
+    used.add(key);return {...item,libraryKey:key};
   });
 }
 export function generateModelCandidates(settings) {

@@ -1,6 +1,0 @@
-event_id,date,title,attendees,notes
-E-1001,2026-09-03,"Q3 Product Update Call","sarah.chen@company.com, john.mitchell@acmecorp.com","Discussed beta dashboard timeline and API latency fix"
-E-1002,2026-09-05,"Contract Renewal Kickoff","sarah.chen@company.com, lisa.wong@acmecorp.com, margaret.oneill@acmecorp.com","Opened renewal discussion for Enterprise Elite tier"
-E-1003,2026-09-10,"SSO Technical Deep Dive","david.park@acmecorp.com, raj.patel@acmecorp.com, engineering-team","Reviewed SSO integration requirements and timeline"
-E-1004,2026-09-14,"September Check-in","sarah.chen@company.com, john.mitchell@acmecorp.com","Prepared QBR agenda and gathered outstanding items"
-E-1005,2026-09-24,"Q3 Business Review (proposed)","sarah.chen@company.com, john.mitchell@acmecorp.com, lisa.wong@acmecorp.com","Pending confirmation"

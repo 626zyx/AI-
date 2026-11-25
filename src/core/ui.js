@@ -19,15 +19,15 @@ export function btnWidth(label) {
 export const btn = (label, { kind = '', onclick = '', ico = '', disabled = false } = {}) =>
   `<button class="btn ${btnWidth(label)} ${kind}" ${onclick ? `onclick="${onclick}"` : ''} ${disabled ? 'disabled' : ''}>${ico ? icon(ico, 15) : ''}${esc(label)}</button>`;
 
-export const linkBtn = (label, { onclick = '', danger = false, disabled = false } = {}) =>
-  `<button class="link-btn ${danger ? 'danger' : ''}" ${onclick ? `onclick="${onclick}"` : ''} ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
+export const linkBtn = (label, { onclick = '', danger = false, disabled = false, title = '' } = {}) =>
+  `<button class="link-btn ${danger ? 'danger' : ''}" ${title ? `title="${esc(title)}"` : ''} ${onclick ? `onclick="${onclick}"` : ''} ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
 
 /* 行内「更多」：items = [[文案, onclick, { danger?: boolean }], ...]。 */
 export function moreMenu(items, label = '更多') {
-  return `<span class="dd">
+  return `<span class="dd${label === '更多' ? ' dd-more' : ''}">
     <button class="link-btn" aria-expanded="false" onclick="UI.toggleMenu(event,this)">${esc(label)}</button>
     <span class="dd-menu" hidden>${items
-      .map(([l, fn, options = {}]) => `<button${options.danger ? ' class="danger"' : ''}${options.disabled ? ' disabled' : ''} onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
+      .map(([l, fn, options = {}]) => `<button${options.danger ? ' class="danger"' : ''}${options.disabled ? ' disabled' : ''}${options.title ? ` title="${esc(options.title)}"` : ''} onclick="UI.closeMenus();${fn}">${esc(l)}</button>`)
       .join('')}</span></span>`;
 }
 export function closeMenus() {
@@ -105,10 +105,35 @@ function tableHeading(column) {
 }
 export function table(columns, rows, emptyText = '暂无数据') {
   const head = columns.map((c) => `<th scope="col" ${c.width ? `style="width:${c.width}"` : ''}${c.sort ? ` aria-sort="${c.sort.direction === 'none' ? 'none' : c.sort.direction === 'descending' ? 'descending' : 'ascending'}"` : ''}>${tableHeading(c)}</th>`).join('');
-  const body = rows.length
-    ? rows.map((r) => `<tr>${columns.map((c) => `<td class="${c.cls || ''}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join('')}</tr>`).join('')
-    : `<tr><td class="empty-cell" colspan="${columns.length}">${esc(emptyText)}</td></tr>`;
-  return `<div class="table-wrap"><table class="grid"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  const autoPaged = rows.length > PAGE_SIZE;
+  const renderedRows = rows.map((r, index) => `<tr${autoPaged ? ` data-table-row-index="${index}"` : ''}>${columns.map((c) => `<td class="${c.cls || ''}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join('')}</tr>`);
+  const body = rows.length ? renderedRows.slice(0, PAGE_SIZE).join('') : `<tr><td class="empty-cell" colspan="${columns.length}">${esc(emptyText)}</td></tr>`;
+  const markup = `<div class="table-wrap"><table class="grid"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  if (!autoPaged) return markup;
+  // Unpaged detail/preview tables still obey the platform limit. Off-page rows live
+  // in a template so their controls keep state without appearing in the live list.
+  return `<div class="auto-paged-table" data-table-total="${rows.length}" data-table-page="1">${markup}<template data-table-rest><table><tbody>${renderedRows.slice(PAGE_SIZE).join('')}</tbody></table></template>${pager({ page: 1, count: Math.ceil(rows.length / PAGE_SIZE), total: rows.length }, 'UI.tablePage(this,{p})')}</div>`;
+}
+
+export function tablePage(button, requestedPage) {
+  const host = button.closest('.auto-paged-table');
+  if (!host) return;
+  const body = host.querySelector(':scope > .table-wrap > table > tbody');
+  const template = host.querySelector(':scope > template[data-table-rest]');
+  const restingBody = template.content.querySelector('tbody');
+  const rows = [...body.children, ...restingBody.children].sort((a, b) => Number(a.dataset.tableRowIndex) - Number(b.dataset.tableRowIndex));
+  const count = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const page = Math.max(1, Math.min(Number(requestedPage) || 1, count));
+  const offset = (page - 1) * PAGE_SIZE;
+  body.replaceChildren(...rows.slice(offset, offset + PAGE_SIZE));
+  // Template nodes originate in an inert document. Rebind declared inline
+  // handlers after adoption so newly shown controls use the live window.
+  for (const row of body.children) for (const node of [row, ...row.querySelectorAll('*')]) {
+    for (const name of node.getAttributeNames()) if (name.startsWith('on')) node.setAttribute(name, node.getAttribute(name));
+  }
+  restingBody.replaceChildren(...rows.slice(0, offset), ...rows.slice(offset + PAGE_SIZE));
+  host.dataset.tablePage = String(page);
+  host.querySelector(':scope > .pager').outerHTML = pager({ page, count, total: rows.length }, 'UI.tablePage(this,{p})');
 }
 
 /* ---------------------------------------------------------------- 分页 */
@@ -125,16 +150,16 @@ export function paginate(key, rows) {
   pages[key] = p;
   return { slice: rows.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE), page: p, count, total: rows.length, offset: (p - 1) * PAGE_SIZE };
 }
-export function setPage(key, p) {
+export function setPage(key, p, { rerender = true } = {}) {
   pages[key] = p;
-  if (pageRerender) pageRerender(key);
+  if (rerender && pageRerender) pageRerender(key);
 }
 
 /* 分页条：共 N 条 · 第一页 / 上一页 / 页码 / 下一页 / 最后一页。onPage 为 JS 表达式模板，{p} 替换为页码 */
 export function pager(pg, onPage) {
   const go = (p) => esc(onPage.replace('{p}', p));
   const b = (ico, label, p, dis) =>
-    `<button class="pg-btn" title="${label}" aria-label="${label}" ${dis ? 'disabled' : `onclick="${go(p)}"`}>${icon(ico, 14)}</button>`;
+    `<button type="button" class="pg-btn" title="${label}" aria-label="${label}" ${dis ? 'disabled' : onPage ? `onclick="${go(p)}"` : `data-page="${p}"`}>${icon(ico, 14)}</button>`;
   return `<div class="pager">
     <span class="muted text-support num">共 ${pg.total} 条</span>
     ${b('first', '第一页', 1, pg.page <= 1)}
@@ -177,15 +202,20 @@ export function statusIcon(status) {
   return `<span class="status-icon ${s.cls}" title="${esc(s.label)}">${icon(s.icon, 20)}</span>`;
 }
 
-export const badge = (text, tone = 'gray') => `<span class="badge ${tone}">${esc(text)}</span>`;
+export const badge = (text, tone = 'gray') => {
+  // Metadata is plain text throughout the product. Task states and level mappings
+  // use their dedicated renderers instead of this helper.
+  const label = ['预置', '内置'].includes(text) ? '系统' : text;
+  return `<span class="metadata-text${['已发布', '已连通', '已发布 · 启用'].includes(label) ? ' metadata-positive' : ''}">${esc(label)}</span>`;
+};
 /* 多标签单元格：最多显示 3 个，其余折成「…」，悬停显示全部 */
 export function tagList(labels, tone = 'gray', max = 3) {
   const list = (labels || []).filter(Boolean);
   if (!list.length) return '<span class="faint">—</span>';
-  const more = list.length > max ? `<span class="badge ${tone} tag-more">…</span>` : '';
-  return `<span class="tags" title="${esc(list.join('、'))}">${list.slice(0, max).map((l) => badge(l, tone)).join('')}${more}</span>`;
+  const text = list.slice(0, max).join('、') + (list.length > max ? '…' : '');
+  return `<span class="metadata-text" title="${esc(list.join('、'))}">${esc(text)}</span>`;
 }
-export const riskBadge = (risk) => `<span class="badge ${risk.cls}">${esc(risk.label)}</span>`;
+export const riskBadge = (risk) => badge(risk.label);
 /* 判定纯文字：无底色无边框，颜色与演练结果色块一致 */
 export const verdictText = (v) => `<span class="verdict ${v.key}">${esc(v.label)}</span>`;
 
@@ -319,6 +349,48 @@ export function drawer(title, body, footer = '') {
   el.classList.add('open');
 }
 export const closeDrawer = () => document.getElementById('drawer').classList.remove('open');
+
+/* A publication confirmation sits above its originating editor without replacing
+ * its modal/drawer DOM. Cancel therefore preserves unsaved form values. */
+let dismissPublication = null;
+export function confirmPublication({ kind = '资源', name = '', message = '', onConfirm }) {
+  dismissPublication?.();
+  closeMenus();
+  const focusBefore = document.activeElement;
+  const overlay = document.createElement('div');
+  overlay.id = 'publication-confirmation';
+  overlay.className = 'overlay open publication-overlay';
+  const title = '确认发布' + kind;
+  overlay.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="publication-title">
+    <div class="modal-head"><h2 id="publication-title">${esc(title)}</h2><button class="icon-btn" data-publish-cancel aria-label="关闭">${icon('close',18)}</button></div>
+    <div class="modal-body"><p>确认发布${name ? '「'+esc(name)+'」' : '当前'+esc(kind)}？</p><p>${esc(message || '发布后配置不可编辑。需要修改时，请复制为草稿，调整后重新发布；历史演练继续保留原配置。')}</p></div>
+    <div class="modal-foot"><button class="btn w-sm" data-publish-cancel>取消</button><button class="btn w-md primary" data-publish-confirm>确认发布</button></div>
+  </div>`;
+  let active = true;
+  const close = () => {
+    if (!active) return; active = false; overlay.remove();
+    document.removeEventListener('keydown', keyboard, true);
+    window.removeEventListener('hashchange', close);
+    if (dismissPublication === close) dismissPublication = null;
+    if (focusBefore?.isConnected) focusBefore.focus();
+  };
+  const keyboard = event => {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); close(); }
+    if (event.key === 'Tab') {
+      const controls = [...overlay.querySelectorAll('button')], first = controls[0], last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  };
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay || event.target.closest('[data-publish-cancel]')) return close();
+    if (event.target.closest('[data-publish-confirm]') && active) { close(); onConfirm?.(); }
+  });
+  document.body.appendChild(overlay); dismissPublication = close;
+  document.addEventListener('keydown', keyboard, true);
+  window.addEventListener('hashchange', close);
+  overlay.querySelector('[data-publish-confirm]').focus();
+}
 
 let toastTimer = null;
 export function toast(text) {

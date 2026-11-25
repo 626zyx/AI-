@@ -168,7 +168,7 @@ export function comparePage(cur) {
     ['有效判定', (t) => `<span class="num">${t.judged}</span>`],
   ].map(([k, f]) => {
     const va = f(a), vb = f(b), diff = va !== vb;
-    return { k: `${UI.esc(k)}${diff ? ' <span class="badge amber">不同</span>' : ''}`, a: va, b: vb, hl: diff };
+    return { k: `${UI.esc(k)}${diff ? ' <span class="metadata-text">不同</span>' : ''}`, a: va, b: vb, hl: diff };
   });
 
   const asrCard = (t, role, chip = '', k = 'base') => `<div class="cmp-box ${k}">

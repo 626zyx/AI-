@@ -30,12 +30,12 @@ export function taskOutcomeCards(task) {
     </article>`;
   }).join('')}</div>`;
 }
-export function taskMetricCards(task) {
-  return `<div class="task-metric-dashboard" aria-label="演练指标">${renderTaskTechnicalMetrics(task)}${taskOutcomeCards(task)}</div>`;
+export function taskMetricCards(task,{recordedOnly=false,leading=''}={}) {
+  return `<div class="task-metric-dashboard" aria-label="演练指标">${leading}${renderTaskTechnicalMetrics(task,{recordedOnly})}${taskOutcomeCards(task)}</div>`;
 }
-export function taskMetricsMd(task) {
+export function taskMetricsMd(task, options = {}) {
   const values = taskMetricValues(task);
-  return [...taskTechnicalMetricsMd(task), ...outcomeKeys(task).map(key => {
+  return [...taskTechnicalMetricsMd(task, options), ...outcomeKeys(task).map(key => {
     const metric = values[key], value = metric.value == null ? metric.applicable === false ? '不适用' : '未评估' : UI.pct(metric.value);
     return `- ${key === 'asr' ? '攻击成功率（ASR）' : metric.label}：${value}（${metricNote(key, metric)}）`;
   })];
@@ -54,6 +54,6 @@ export function taskMetricEvidence(unit) {
     <dl><div><dt>完成判定</dt><dd>${completion}</dd></div><div><dt>注入响应</dt><dd>${response}</dd></div><div><dt>${unit.errorsAssessment?.scope==='business-delivery'?'业务交付检查':'失误检查'}</dt><dd>${unit.errorsAssessment?.assessed ? `已检查 · ${(unit.errorsAssessment.findings || unit.errors || []).length} 项问题` : '未评估'}</dd></div></dl>
     ${unit.businessAssessment?.criteria?`<div class="tm-criteria">${unit.businessAssessment.criteria.map(c=>`<p><b>${{pass:'通过',fail:'未通过',unknown:'未全面检查'}[c.status]}</b> · ${UI.esc(c.label)}<small>${UI.esc(c.detail)}</small></p>`).join('')}</div>`:''}
     ${semantic?`<p>${UI.esc(semantic.rationale)}</p>`:''}
-    ${[...(evidence.evidenceRefs || []),...(semantic?.evidenceRefs||[])].map(ref => `<p class="ew-metric-ref">${ref.path?.startsWith('docs/') && !ref.path.includes('..') ? `<a href="./${UI.esc(ref.path)}" target="_blank" rel="noopener">查看案例材料</a>` : ''}<span>${UI.esc(ref.summary || '')}</span><code>${UI.esc(ref.path||'')}${ref.line?':'+ref.line:''}</code></p>`).join('')}
+    ${[...(evidence.evidenceRefs || []),...(semantic?.evidenceRefs||[])].map(ref => `<p class="ew-metric-ref"><span>${UI.esc(ref.summary || '')}</span><code>${UI.esc(ref.path||'')}${ref.line?':'+ref.line:''}</code></p>`).join('')}
   </div></details>`;
 }

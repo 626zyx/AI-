@@ -86,7 +86,7 @@
 .cmp-title { font-size: var(--t-section); font-weight: var(--w-strong); color: var(--text); }
 .cmp-big { display: flex; align-items: center; gap: 12px; }
 .cmp-big strong { font-size: var(--t-xl); font-weight: var(--w-strong); line-height: var(--lh-num); }
-.diff-chip { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: var(--radius-sm); font-size: var(--t-support); font-weight: var(--w-strong); color: #fff; line-height: 1.6; font-variant-numeric: tabular-nums; vertical-align: middle; }
+.diff-chip { display: inline; margin-right: 8px; font: inherit; color: inherit; font-variant-numeric: tabular-nums; }
 .cmp-big .diff-chip { margin-right: 0; }
 .cmp-tbl { display: flex; flex-direction: column; }
 .cmp-tr { display: grid; grid-template-columns: 180px 1fr 1fr; border-bottom: 1px solid var(--line); }
@@ -94,9 +94,7 @@
 .cmp-tr > div { padding: 10px 14px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .cmp-k { color: var(--text-2, #4b5563); font-weight: var(--w-medium); }
 .cmp-tr.hl .cmp-k { color: #111; font-weight: var(--w-strong); }
-.diff-chip.up { background: #b42335; }
-.diff-chip.down { background: #12805c; }
-.diff-chip.same { background: #4b5563; }
+
 
 /* ---------------------------------------------------------------- 单元格截断 */
 
@@ -162,11 +160,9 @@
 .tl-row-actions > .link-btn:last-of-type { grid-column: 2; }
 .tl-row-actions > .dd { grid-column: 3; justify-self: start; }
 
-/* 已发布策略按详情、复制、删除排列；草稿编辑占中栏，删除统一对齐。 */
-.strategy-row-actions { display: grid; grid-template-columns: repeat(3, 2em); gap: 14px; justify-content: start; }
-.strategy-row-actions > button { justify-self: start; white-space: nowrap; }
-.strategy-row-actions[data-strategy-status="draft"] > button:first-child { grid-column: 2; }
-.strategy-row-actions[data-strategy-status="draft"] > button:last-child { grid-column: 3; }
+/* 策略固定操作从左依次排列，草稿与已发布记录保持相同位置。 */
+.strategy-row-actions { display: flex; flex-wrap: nowrap; gap: 14px; justify-content: flex-start; }
+.strategy-row-actions > button { flex: none; white-space: nowrap; }
 
 /* ---------------------------------------------------------------- 模型演练 · 攻防明细详情 */
 /* 同层级同呈现：模块标题 ud-mod-title；字段名 ud-label；短值纯文本；自然语言长文本一律 ud-text 文本框 */

@@ -1,15 +1,15 @@
 import * as UI from '../core/ui.js';
 import { taskOperationalMetrics } from '../domain/task-technical-metrics.js';
 
-const number = value => Number(value).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
-const seconds = value => `${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s`;
+const number = value => value==null?'—':Number(value).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+const seconds = value => value==null?'—':`${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s`;
 const demo = value => value ? '<span class="tm-demo" title="当前缺少完整遥测，使用演示数据">演示</span>' : '';
 function range(key, values, format, simulated) {
   return `<details class="tm-metric-range" data-metric-range="${key}"><summary>每单元统计${simulated ? ' · 演示' : ''}</summary><dl>${[['平均', values[0]], ['最大', values[1]], ['最小', values[2]]].map(([label, value]) => `<div><dt>${label}</dt><dd class="num">${format(value)}</dd></div>`).join('')}</dl></details>`;
 }
 
-export function renderTaskTechnicalMetrics(task) {
-  const { execution, timing, tokens } = taskOperationalMetrics(task);
+export function renderTaskTechnicalMetrics(task,options={}) {
+  const { execution, timing, tokens } = taskOperationalMetrics(task,options);
   return `<div class="task-technical-metrics" data-task-technical-metrics>
     <article class="tm-operational" data-task-metric="executionRate" title="正常执行结束的单元数 ÷ 预期单元数。安全或不安全的判定不影响执行成功。">
       <div class="task-metric-label">执行成功率</div><div class="task-metric-value"><strong class="num">${UI.pct(execution.value)}</strong></div><p class="num">${execution.executed} / ${execution.expected} 个单元</p>
@@ -23,8 +23,8 @@ export function renderTaskTechnicalMetrics(task) {
   </div>`;
 }
 
-export function taskTechnicalMetricsMd(task) {
-  const { execution, timing, tokens } = taskOperationalMetrics(task);
+export function taskTechnicalMetricsMd(task, options = {}) {
+  const { execution, timing, tokens } = taskOperationalMetrics(task, options);
   const mark = value => value ? '（演示数据）' : '';
   return [
     `- 执行成功率：${UI.pct(execution.value)}（${execution.executed} / ${execution.expected} 个单元）`,

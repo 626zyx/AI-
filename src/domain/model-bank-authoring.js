@@ -19,7 +19,6 @@ export function parseModelBankJsonl(text,{deduplicate=true}={}){
   if(!raw||typeof raw!=='object'||Array.isArray(raw)){errors.push({line:index+1,message:'每行必须是 JSON 对象'});return;}
   const prompt=raw.jailbreak_prompt??raw.prompt;
   if(typeof prompt!=='string'||!prompt.trim()){errors.push({line:index+1,message:'jailbreak_prompt 必须为非空字符串'});return;}
-  if(!itemScenes(raw).length){errors.push({line:index+1,message:'题目缺少 scene / scenes 场景'});return;}
   try{
    const item=Authoring.parseModelImport([{...raw,prompt,sourceRecord:raw.sourceRecord||raw}])[0],key=identity(item);
    item.id=clean(raw.id)||`L-${index+1}`;item.scenes=itemScenes(raw);item.scene=item.scenes[0];
@@ -59,12 +58,10 @@ export function getModelBankVersion(id,versionOrCatalogId){
 function metadata(data){
  const name=clean(data.name),business=clean(data.business),scenes=[...new Set((data.items||[]).flatMap(itemScenes))];
  if(!name)throw Error('请输入题库名称');
- if(!business)throw Error('请选择业务领域');
  return{name,business,scenes};
 }
 function normalizeItems(items){
  if(!Array.isArray(items))throw Error('题目列表必须是数组');
- items.forEach((item,index)=>{if(!itemScenes(item).length)throw Error(`第 ${index+1} 条题目缺少场景`);});
  return items.length?Authoring.parseModelImport(items).map((item,index)=>({...item,scene:itemScenes(items[index])[0],scenes:itemScenes(items[index])})):[];
 }
 export function saveModelBankDraft(data){

@@ -27,8 +27,9 @@ import { agentTasksPage, agentTaskDetailPage, agentDraftsPage, actions as agTask
 import { agentResultsPage, actions as agResultActions } from './pages/agent-results.js';
 import { agentReportsPage, agentReportDetailPage, actions as agReportActions } from './pages/agent-reports.js';
 import { agentStrategyPage, agentStrategyDetailPage, agentStrategyDraftsPage, actions as agStrategyActions } from './pages/agent-strategy.js';
-import { sceneBanksPage, actions as sceneBankActions } from './pages/scene-banks.js';
+import { sceneBanksPage, registerEnvironmentTags, actions as sceneBankActions } from './pages/scene-banks.js';
 import { agentMethodsPage, actions as agMethodActions } from './pages/agent-attack-library.js';
+import { questionLibraryPage, listLibraryQuestions, actions as questionLibraryActions } from './pages/question-library.js';
 import { modelAttackLibraryPage } from './pages/model-attack-library.js';
 import { modelEvaluatorsPage, actions as evaluatorActions } from './pages/model-evaluators.js';
 import { actions as agentDetailActions } from './pages/agent-detail.js';
@@ -44,6 +45,11 @@ import { initializeAssetBridge } from './domain/asset-bridge.js';
 import { resourceAuthoringPage, actions as authoringActions } from './pages/resource-authoring.js';
 import { modelBankAuthoringPage, actions as modelBankActions } from './pages/model-bank-authoring.js';
 import { dataRulePage, actions as resultLevelActions } from './pages/result-level-rules.js';
+import { tagManagementPage, actions as tagManagementActions } from './pages/tag-management.js';
+import { actions as tagFilterActions } from './core/tag-filter.js';
+import { actions as modelComposerActions } from './core/model-composer.js';
+import { syncIdeScroll, syncIdeEditor, ideCodeKey } from './core/web-ide.js';
+import { agentWebIdePage, actions as agentWebIdeActions } from './pages/agent-web-ide.js';
 
 initializeAssetBridge();
 
@@ -60,14 +66,15 @@ router.register('agent', 'ag-tasks', exerciseHubPage);
 router.register('agent', 'ag-task-detail', exerciseHubPage);
 router.register('agent', 'ag-drafts', exerciseHubPage);
 router.register('agent', 'ag-task-create', taskWizardPage);
+router.register('agent', 'webide', agentWebIdePage);
 router.register('agent', 'ag-reports', exerciseHubPage);
 router.register('agent', 'ag-report-detail', exerciseHubPage);
 router.register('strategy', 'authoring', resourceAuthoringPage);
 router.register('strategy', 'bank-authoring', modelBankAuthoringPage);
 router.register('strategy', 'strategy-create', strategyEditorPage);
 router.register('strategy', 'attack', modelAttackLibraryPage);
-router.register('strategy', 'methods', modelAttackLibraryPage);
-router.register('strategy', 'banks', modelAttackLibraryPage);
+router.register('strategy', 'methods', methodsPage);
+router.register('strategy', 'banks', questionLibraryPage);
 router.register('strategy', 'evaluators', modelEvaluatorsPage);
 router.register('strategy', 'guard', guardStrategyPage);
 router.register('strategy', 'ag-strategy', agentStrategyPage);
@@ -89,6 +96,7 @@ router.register('platform', 'agent-version', manualAgentIntake);
 router.register('platform', 'connection-create', platformConnectionPage);
 router.register('platform', 'connection-edit', platformConnectionPage);
 router.register('platform', 'datarule', dataRulePage);
+router.register('platform', 'tags', () => { listLibraryQuestions(); registerEnvironmentTags(); return tagManagementPage(); });
 
 /* 全局命名空间：页面内 onclick 只调 App / UI / Shell 三个 */
 window.App = Object.assign(
@@ -109,6 +117,7 @@ window.App = Object.assign(
   reportFormatActions,
   strategyActions,
   libraryActions,
+  questionLibraryActions,
   assetActions,
   riskActions,
   platformActions,
@@ -133,10 +142,14 @@ window.App = Object.assign(
   authoringActions,
   modelBankActions,
   resultLevelActions,
+  tagManagementActions,
+  tagFilterActions,
+  modelComposerActions,
+  agentWebIdeActions,
   evaluatorActions,
   agentDetailActions,
 );
-window.UI = ui;
+window.UI = {...ui, syncIdeScroll, syncIdeEditor, ideCodeKey};
 window.Shell = shell.api;
 
 shell.mount();

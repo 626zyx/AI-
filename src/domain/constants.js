@@ -132,10 +132,18 @@ export const VERDICT = {
 /* 蓝队：产品层面已部署，用户在任务里选择是否配置 */
 export const GUARD_NONE = '未配置';
 
+/* Business identity icons: navigation, home metrics and process views share these keys. */
+export const BUSINESS_ICONS = Object.freeze({
+  tasks: 'task', reports: 'file', strategy: 'layers', methods: 'wrench',
+  questions: 'book', guard: 'shield', evaluator: 'gauge', attacker: 'target',
+  environment: 'box', assets: 'assets', tags: 'tag', levels: 'levels',
+  platform: 'network', model: 'cpu', agent: 'agent',
+});
+
 export const NAV = [
   { id: 'home', label: '首页', icon: 'chart' },
-  { id: 'exercise', label: '演练场', icon: 'shield' },
-  { id: 'strategy', label: '演练策略', icon: 'layers' },
+  { id: 'exercise', label: '演练场', icon: BUSINESS_ICONS.tasks },
+  { id: 'strategy', label: '演练策略', icon: BUSINESS_ICONS.strategy },
   { id: 'platform', label: '设置', icon: 'settings' },
 ];
 
@@ -152,41 +160,44 @@ export const SUB_PARENT = {
   'task-detail': 'tasks', 'task-create': 'tasks', drafts: 'tasks',
   'report-detail': 'reports',
   /* Agent 演练 */
-  'ag-task-detail': 'ag-tasks', 'ag-task-create': 'ag-tasks', 'ag-drafts': 'ag-tasks',
+  'ag-task-detail': 'ag-tasks', 'ag-task-create': 'ag-tasks', 'ag-drafts': 'ag-tasks', webide:'ag-tasks',
   'ag-report-detail': 'ag-reports',
   /* 策略中心 · Agent 演练策略 */
   'ag-strategy-detail': 'ag-strategy', 'ag-strategy-drafts': 'ag-strategy',
   /* 资产中心 · 智能体 */
   'agent-detail': 'intake',
   authoring: 'banks',
-  'bank-authoring': 'attack',
+  'bank-authoring': 'banks',
   'strategy-create': 'attack',
-  methods: 'attack', banks: 'attack',
+  methods: 'methods', banks: 'banks',
 };
 
 const EXERCISE_NAV = [
   { id: 'model-group', label: '模型演练', heading: true },
-  { id: 'tasks', label: '演练任务', icon: 'shield', page: 'exercise' },
-  { id: 'reports', label: '演练报告', icon: 'file', page: 'exercise' },
+  { id: 'tasks', label: '演练任务', icon: BUSINESS_ICONS.tasks, page: 'exercise' },
+  { id: 'reports', label: '演练报告', icon: BUSINESS_ICONS.reports, page: 'exercise' },
   { id: 'agent-group', label: '智能体演练', heading: true },
-  { id: 'ag-tasks', label: '演练任务', icon: 'shield', page: 'agent' },
-  { id: 'ag-reports', label: '演练报告', icon: 'file', page: 'agent' },
+  { id: 'ag-tasks', label: '演练任务', icon: BUSINESS_ICONS.tasks, page: 'agent' },
+  { id: 'ag-reports', label: '演练报告', icon: BUSINESS_ICONS.reports, page: 'agent' },
 ];
 export const SIDE_NAV = {
   exercise: EXERCISE_NAV,
   agent: EXERCISE_NAV,
   strategy: [
     { id: 'model-group', label: '模型演练', heading: true },
-    { id: 'attack', label: '攻击库', icon: 'layers' },
-    { id: 'guard', label: '防护库', icon: 'shield' },
-    { id: 'evaluators', label: '评估器', icon: 'check' },
+    { id: 'attack', label: '攻击策略库', icon: BUSINESS_ICONS.strategy },
+    { id: 'methods', label: '方法库', icon: BUSINESS_ICONS.methods },
+    { id: 'banks', label: '题库', icon: BUSINESS_ICONS.questions },
+    { id: 'guard', label: '防护策略库', icon: BUSINESS_ICONS.guard },
+    { id: 'evaluators', label: '评估器', icon: BUSINESS_ICONS.evaluator },
     { id: 'agent-group', label: '智能体演练', heading: true },
-    { id: 'ag-methods', label: '攻击库', icon: 'layers' },
-    { id: 'scenebanks', label: '环境库', icon: 'box' },
+    { id: 'ag-methods', label: '攻击者', icon: BUSINESS_ICONS.attacker },
+    { id: 'scenebanks', label: '环境库', icon: BUSINESS_ICONS.environment },
   ],
   assets: [],
   platform: [
-    { id: 'datarule', label: '数据等级规则', icon: 'alert' },
-    { id: 'intake', label: '资产接入', icon: 'box' },
+    { id: 'intake', label: '资产接入', icon: BUSINESS_ICONS.assets },
+    { id: 'tags', label: '标签管理', icon: BUSINESS_ICONS.tags },
+    { id: 'datarule', label: '数据等级', icon: BUSINESS_ICONS.levels },
   ],
 };

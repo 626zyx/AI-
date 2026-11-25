@@ -13,7 +13,7 @@ function current(id,version){const r=directory.get(clean(id));return r?.versions
 function copyConfig(x){return Object.fromEntries(configKeys.filter(k=>x[k]!==undefined).map(k=>[k,clone(x[k])]));}
 function normalize(data,prev={}){
  const kind=clean(data.kind||data.type||prev.kind).toLowerCase();
- const x={...copyConfig(prev),kind,name:clean(data.name??prev.name),owner:clean(data.owner??prev.owner)||'待分配',source:clean(data.source??prev.source)||'人工上传',sourceStatus:clean(data.sourceStatus??prev.sourceStatus)||'未发布',sourceKind:clean(data.sourceKind??prev.sourceKind)||'manual',sourceDataset:clean(data.sourceDataset??prev.sourceDataset),sourceRecordId:clean(data.sourceRecordId??prev.sourceRecordId),platformConnectionId:clean(data.platformConnectionId??prev.platformConnectionId),credentialRef:clean(data.credentialRef??prev.credentialRef)};
+ const x={...copyConfig(prev),kind,name:clean(data.name??prev.name),owner:clean(data.owner??prev.owner)||'待分配',source:clean(data.source??prev.source)||'手动上传',sourceStatus:clean(data.sourceStatus??prev.sourceStatus)||'未发布',sourceKind:clean(data.sourceKind??prev.sourceKind)||'manual',sourceDataset:clean(data.sourceDataset??prev.sourceDataset),sourceRecordId:clean(data.sourceRecordId??prev.sourceRecordId),platformConnectionId:clean(data.platformConnectionId??prev.platformConnectionId),credentialRef:clean(data.credentialRef??prev.credentialRef)};
  for(const key of ['enterpriseVersion','sourceUpdatedAt'])x[key]=clean(data[key]??prev[key]);
  if(!x.platformConnectionId&&!x.sourceKind.startsWith('enterprise')&&x.sourceStatus==='停止')x.sourceStatus='已停用';
  if(kind==='model')Object.assign(x,{apiType:clean(data.apiType??prev.apiType)||'openai',authType:clean(data.authType??prev.authType)||'bearer',apiModel:clean(data.apiModel??prev.apiModel),baseUrl:clean(data.baseUrl??prev.baseUrl).replace(/\/+$/,'')});
@@ -160,7 +160,7 @@ function manualAgentPlan(data,{mode='edit'}={}){
  return {data:{...data,...normalized,id:clean(data.id),version:previous?.version},mode:next?'new-version':mode};
 }
 export function saveManualAgent(data,options={}){
- if(data.kind&&data.kind!=='agent')throw Error('人工上传仅支持 Agent');
+ if(data.kind&&data.kind!=='agent')throw Error('手动上传仅支持 Agent');
  const plan=manualAgentPlan(data,options);
  return registerManualAgent(saveAsset(plan.data,{mode:plan.mode}));
 }
@@ -168,7 +168,7 @@ export function previewManualAgents(items){
  const seen=new Set();
  return previewAssets(items).map(item=>{
   const errors=[...item.errors];let operation=item.operation;
-  if(item.data.kind!=='agent')errors.push('人工上传仅支持 Agent；模型请前往模型接入配置');
+  if(item.data.kind!=='agent')errors.push('手动上传仅支持 Agent；模型请前往模型接入配置');
   else try{
    const plan=manualAgentPlan(item.raw),label=assetVersionLabel(plan.data),identity=plan.data.name+'\0'+label;
    if(seen.has(identity))errors.push('同一批次同名资产的配置版本号重复');seen.add(identity);
@@ -180,7 +180,7 @@ export function previewManualAgents(items){
  });
 }
 export function importManualAgents(items){
- if(items.some(item=>item.kind!=='agent'))throw Error('人工上传仅支持 Agent；模型请前往模型接入配置');
+ if(items.some(item=>item.kind!=='agent'))throw Error('手动上传仅支持 Agent；模型请前往模型接入配置');
  const preview=previewManualAgents(items),imported=[],changed=[],errors=preview.filter(item=>item.errors.length).map(item=>({row:item.row,errors:item.errors}));
  for(const item of preview.filter(item=>!item.errors.length))try{
   const asset=saveManualAgent(item.raw);imported.push(asset);if(item.operation!=='内容未变')changed.push(asset);
@@ -189,7 +189,7 @@ export function importManualAgents(items){
 }
 export function manualAgentDeleteError(id,version){
  const asset=current(id,version);
- if(!asset||asset.kind!=='agent'||asset.platformConnectionId)return '只能删除人工上传的 Agent 配置';
+ if(!asset||asset.kind!=='agent'||asset.platformConnectionId)return '只能删除手动上传的 Agent 配置';
  if(asset.immutable||asset.usedBy?.length)return '此资产配置已用于演练，不能删除';
  if(asset.busy||checks.has(key(id,asset.version)))return '资产正在检查，请稍后删除';
  return '';
@@ -248,6 +248,9 @@ const platformSecrets=new Map();
 const platformConnections=new Map([['platform-enterprise-demo',{
  id:'platform-enterprise-demo',name:'企业 AI 资产平台（演示）',endpoint:'https://assets.example.com',baseUrl:'https://assets.example.com',resourcePath:'/api/v1/assets',credentialRef:'',credentialConfigured:false,authType:'none',owner:'平台管理员',
  state:'connected',mode:'demo',actualConnected:false,createdAt:now(),updatedAt:now(),lastImportedAt:null,lastSyncedAt:'2026-11-24T01:30:00.000Z',
+}],['platform-enterprise-pending',{
+ id:'platform-enterprise-pending',name:'研发资产平台（演示）',endpoint:'https://dev-assets.example.com/api/assets',baseUrl:'https://dev-assets.example.com/api/assets',resourcePath:'',credentialRef:'',credentialConfigured:false,authType:'none',owner:'平台管理员',
+ state:'disconnected',mode:'demo',actualConnected:false,createdAt:now(),updatedAt:now(),lastImportedAt:null,lastSyncedAt:null,
 }]]);
 export function listPlatformConnections(){return clone([...platformConnections.values()]);}
 export function getPlatformConnection(id){const row=platformConnections.get(id);return row?clone(row):null;}
@@ -259,11 +262,11 @@ export function savePlatformConnection(data){
  if(!/^[\w.:-]{1,100}$/.test(id))throw Error('平台连接 ID 格式不正确');
  const allowed=['connector','resourcePath','authType','apiKeyHeader','timeout','pageMode','listPath','mapping','kinds','environment','department','selectedIds','interval','reconcile','autoInclude','notifyChanges','webhook','lastSyncedAt','lastImportedAt','lastCount'];
  const extended={};for(const key of allowed)if(data[key]!==undefined)extended[key]=clone(data[key]);
- const row={...previous,...extended,id,name,endpoint,baseUrl:endpoint,credentialRef:clean(data.credentialRef??previous?.credentialRef),owner:clean(data.owner??previous?.owner)||'平台管理员',state:data.state||previous?.state||'connected',mode:'demo',actualConnected:false,createdAt:previous?.createdAt||now(),updatedAt:now(),lastImportedAt:data.lastImportedAt??previous?.lastImportedAt??null,lastSyncedAt:data.lastSyncedAt??previous?.lastSyncedAt??null};
+ const row={...previous,...extended,id,name,endpoint,baseUrl:endpoint,credentialRef:clean(data.credentialRef??previous?.credentialRef),owner:clean(data.owner??previous?.owner)||'平台管理员',state:data.state||previous?.state||'connected',mode:'demo',actualConnected:false,createdAt:previous?.createdAt||(Number.isFinite(Date.parse(data.createdAt))?data.createdAt:now()),updatedAt:now(),lastImportedAt:data.lastImportedAt??previous?.lastImportedAt??null,lastSyncedAt:data.lastSyncedAt??previous?.lastSyncedAt??null};
  delete row.statusMap;
  if(clean(data.credential))platformSecrets.set(id,clean(data.credential));
  if(row.authType==='none')platformSecrets.delete(id);
- row.credentialConfigured=row.authType!=='none'&&Boolean(platformSecrets.has(id)||row.credentialRef);
+ row.credentialConfigured=row.authType!=='none'&&Boolean(platformSecrets.has(id)||row.credentialRef||data.credentialConfigured||previous?.credentialConfigured);
  platformConnections.set(id,row);emit();return clone(row);
 }
 export function platformCatalog(id){

@@ -321,6 +321,7 @@ table.kv td { color: var(--text); word-break: break-word; }
   font-weight: var(--w-medium);
   white-space: nowrap;
 }
+.metadata-text.metadata-positive { color: var(--st-done); }
 .badge.gray { background: var(--subtle); color: var(--muted); }
 .badge.blue { background: var(--primary-bg); color: var(--primary); }
 .badge.green { background: var(--tint-green); color: var(--st-done); }

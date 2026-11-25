@@ -31,12 +31,12 @@ function markDirty() { editor.dirty = true; editor.error = ''; }
 function makeEditor({id,version,mode='edit'}={},routeKey='') {
   const existing = id ? Assets.getAsset(id,version) : null;
   if (id && (!existing || existing.kind !== 'agent')) return null;
-  const form = existing ? copy(existing) : {id:'',kind:'agent',name:'',owner:'',source:'人工上传',sourceKind:'manual',sourceStatus:'未发布',version:'V1',enterpriseVersion:'',image:'',command:[],taskInput:'stdin',promptFlag:'',surfaceDeclarations:[]};
+  const form = existing ? copy(existing) : {id:'',kind:'agent',name:'',owner:'',source:'手动上传',sourceKind:'manual',sourceStatus:'未发布',version:'V1',enterpriseVersion:'',image:'',command:[],taskInput:'stdin',promptFlag:'',surfaceDeclarations:[]};
   const actualMode = existing?.immutable && mode !== 'new-version' ? 'connection' : mode;
   if (existing && !form.enterpriseVersion) form.enterpriseVersion=Assets.assetVersionLabel(existing);
   if (actualMode === 'new-version') form.enterpriseVersion='';
   const args=form.command?.slice(1).join('; ')||'';
-  return {routeKey,form,mode:actualMode,creating:!existing,command:form.command?.[0]||'',args,initialArgs:args,step:0,dirty:false,saving:false,error:''};
+  return {routeKey,form,mode:actualMode,creating:!existing,command:form.command?.[0]||'',args,initialArgs:args,step:0,surfacePage:1,dirty:false,saving:false,error:''};
 }
 function begin(cur) {
   const routeKey = `${cur.sub}/${cur.param||''}`;
@@ -114,12 +114,16 @@ function runtimeConfiguration() {
 }
 function injectionSurfaces() {
   const dis = locked()?'disabled':'';
-  return `<h2 class="pc-section-title">允许的文件注入面</h2><div id="aiu-surfaces">${editor.form.surfaceDeclarations.map((surface,index)=>{
+  const total=editor.form.surfaceDeclarations.length,count=Math.ceil(total/UI.PAGE_SIZE)||1;
+  editor.surfacePage=Math.max(1,Math.min(editor.surfacePage||1,count));
+  const offset=(editor.surfacePage-1)*UI.PAGE_SIZE;
+  return `<h2 class="pc-section-title">允许的文件注入面</h2><div id="aiu-surfaces">${editor.form.surfaceDeclarations.slice(offset,offset+UI.PAGE_SIZE).map((surface,rowIndex)=>{
+    const index=offset+rowIndex;
     const kind = surface.subtype?`${surface.kind}:${surface.subtype}`:surface.kind;
     const example = agentFileExample(kind);
     const groups = AGENT_FILE_GROUPS.map(group=>`<optgroup label="${e(group.label)}">${options(group.types.map(type=>[type,AGENT_FILE_EXAMPLES[type].label]),kind)}</optgroup>`).join('');
     return `<div class="ai-surface-row">${field('分类',`<select id="aiu-surface-kind-${index}" onchange="App.aiuSurface(${index},'kind',this.value)" ${dis}>${groups}${AGENT_FILE_EXAMPLES[kind]?'':options([[kind,kind]],kind)}</select>`)}${field('明确文件路径',`<input id="aiu-surface-path-${index}" value="${e(surface.path)}" placeholder="${e(example.path)}" oninput="App.aiuSurface(${index},'path',this.value)" ${dis}><small id="aiu-surface-hint-${index}">${e(example.hint)}</small>`)}${UI.linkBtn('移除',{onclick:`App.aiuRemoveSurface(${index})`,disabled:locked()})}</div>`;
-  }).join('')||'<p class="ai-help">暂未声明文件注入面，可按需添加。</p>'}</div><div>${UI.btn('添加文件注入面',{onclick:'App.aiuAddSurface()',disabled:locked()})}</div><p class="ai-help">填写允许注入的明确文件路径，不使用通配符。</p>`;
+  }).join('')||'<p class="ai-help">暂未声明文件注入面，可按需添加。</p>'}</div>${UI.pager({page:editor.surfacePage,count,total},'App.aiuSurfacePage({p})')}<div>${UI.btn('添加文件注入面',{onclick:'App.aiuAddSurface()',disabled:locked()})}</div><p class="ai-help">填写允许注入的明确文件路径，不使用通配符。</p>`;
 }
 export function agentIntakePage(cur=router.state()) {
   if (!begin(cur)) return UI.pageHead('Agent 资产不存在',{back:back()})+'<div class="empty">资产已移除或链接无效。</div>';
@@ -148,7 +152,8 @@ export const actions = {
   },
   aiuNext() { collect(); try { validateStep(editor.step); editor.step=Math.min(2,editor.step+1); editor.error=''; refresh({top:true}); } catch(error) { editor.error=error.message; refresh(); } },
   aiuPrev() { collect(); editor.step=Math.max(0,editor.step-1); editor.error=''; refresh({top:true}); },
-  aiuAddSurface() { if (!editor||locked()) return; collect(); editor.form.surfaceDeclarations.push({kind:'instruction',path:'',description:'用户声明的文件注入面'}); markDirty(); refresh(); },
+  aiuSurfacePage(page) { if(!editor)return; collect(); editor.surfacePage=Number(page)||1; refresh(); },
+  aiuAddSurface() { if (!editor||locked()) return; collect(); editor.form.surfaceDeclarations.push({kind:'instruction',path:'',description:'用户声明的文件注入面'}); editor.surfacePage=Math.ceil(editor.form.surfaceDeclarations.length/UI.PAGE_SIZE); markDirty(); refresh(); },
   aiuSurface(index,key,value) {
     if (!editor||locked()) return;
     const surface=editor.form.surfaceDeclarations[index]; if(!surface) return;

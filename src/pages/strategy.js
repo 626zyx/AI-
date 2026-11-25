@@ -4,25 +4,27 @@ import * as UI from '../core/ui.js';
 import * as store from '../domain/store.js';
 import * as router from '../core/router.js';
 import { detailFields, detailBlock, detailContent, detailTableField, methodConfigurationTable, openConfigDetail } from '../core/config-detail.js';
-import { openEditor } from './strategy-editor.js';
+import { modelStrategyPublishError, publishSavedModelStrategy } from './strategy-editor.js';
 
 /* ---------------------------------------------------------------- 攻击策略 */
 const sView = { q: '', status: 'all' };
 
 export function attackStrategyPage({ embedded = false } = {}) {
-  let rows = [...store.strategies];
+  if(store.strategies.some(row=>row.id===router.state().param)){sView.q='';sView.status='all';UI.resetPage('strategies');}
+  let rows = [...store.strategies].reverse();
   if (sView.status !== 'all') rows = rows.filter((s) => s.status === sView.status);
   if (sView.q.trim()) {
     const q = sView.q.trim().toLowerCase();
     rows = rows.filter((s) => s.name.toLowerCase().includes(q));
   }
-  rows = [...rows].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt));
+  rows.sort((x, y) => (Date.parse(y.createdAt)||0)-(Date.parse(x.createdAt)||0));
   const flt = UI.filters({
     search: { label: '搜索', id: 'sg-q', value: sView.q, placeholder: '搜索策略名称', oninput: 'App.sgSearch(this.value)' },
     selects: [{
       label: '状态', id: 'sg-status', value: sView.status, onchange: 'App.sgStatus(this.value)',
       options: [['all', '全部状态'], ['published', '已发布'], ['draft', '草稿']],
     }],
+    right: UI.btn('新建攻击策略', {kind:'primary',ico:'plus',onclick:'App.newStrategy()'}),
   });
   const table = UI.pagedTable(
     'strategies',
@@ -33,11 +35,13 @@ export function attackStrategyPage({ embedded = false } = {}) {
       { title: '状态', width: '100px', render: (s) => UI.badge(store.STRATEGY_STATUS[s.status], s.status === 'published' ? 'blue' : 'gray') },
       { title: '更新时间', width: '150px', cls: 'num', render: (s) => UI.esc(s.updatedAt) },
       {
-        title: '操作', width: '190px', cls: 'actions',
+        title: '操作', width: '310px', cls: 'actions',
         render: (s) => `<div class="row-actions sg-row-actions" data-strategy-status="${s.status}">
-          ${s.status === 'draft'
-            ? '<span class="sg-action-placeholder" aria-hidden="true"></span>' + UI.linkBtn('编辑', { onclick: `App.editStrategy('${s.id}')` }) + UI.linkBtn('删除', { danger: true, onclick: `App.delStrategy('${s.id}')` })
-            : UI.linkBtn('详情', { onclick: `App.openStrategy('${s.id}')` }) + UI.linkBtn('复制配置', { onclick: `App.copyStrategy('${s.id}')` }) + UI.linkBtn('删除', { danger: true, disabled: store.modelStrategyUsage(s.id).used, onclick: `App.delStrategy('${s.id}')` })}
+          ${UI.linkBtn('发布', {onclick:`App.publishStrategy('${s.id}')`,disabled:s.status!=='draft'||Boolean(modelStrategyPublishError(s)),title:s.status!=='draft'?'已发布':modelStrategyPublishError(s)})}
+          ${UI.linkBtn('详情', {onclick:`App.openStrategy('${s.id}')`})}
+          ${UI.linkBtn('编辑', {onclick:`App.editStrategy('${s.id}')`,disabled:s.status!=='draft',title:s.status!=='draft'?'已发布配置只读':''})}
+          ${UI.linkBtn('复制', {onclick:`App.copyStrategy('${s.id}')`})}
+          ${UI.linkBtn('删除', {danger:true,onclick:`App.delStrategy('${s.id}')`,disabled:store.modelStrategyUsage(s.id).used,title:store.modelStrategyUsage(s.id).used?'已参与演练，不可删除':''})}
         </div>`,
       },
     ],
@@ -45,9 +49,7 @@ export function attackStrategyPage({ embedded = false } = {}) {
     '暂无攻击策略',
   );
 
-  return `${embedded ? '' : UI.pageHead('攻击策略', {
-    actions: UI.btn('新建攻击策略', { kind: 'primary', ico: 'plus', onclick: 'App.newStrategy()' }),
-  })}${flt}
+  return `${embedded ? '' : UI.pageHead('攻击策略库')}${flt}
   ${UI.card('', table, '', true)}`;
 }
 
@@ -69,13 +71,14 @@ export function guardStrategyPage() {
     store.guards,
     '暂无防护策略',
   );
-  return `${UI.pageHead('防护库')}
+  return `${UI.pageHead('防护策略库', {actions:UI.btn('新增防护策略',{kind:'research-placeholder',disabled:true})})}
   ${UI.card('', table, '', true)}`;
 }
 
 export const actions = {
+  publishStrategy(id, confirmed=false) { try { const row=store.strategies.find(item=>item.id===id);if(!row||row.status!=='draft')throw Error('仅草稿策略可发布');const error=modelStrategyPublishError(row);if(error)throw Error(error);if(!confirmed)return UI.confirmPublication({kind:'攻击策略',name:row.name,onConfirm:()=>actions.publishStrategy(id,true)});publishSavedModelStrategy(id); router.nav('strategy','attack'); UI.toast('策略已发布'); } catch(error) { UI.toast(error.message); } },
   copyStrategy(id) {
-    try { const copied = store.copyStrategy(id); UI.closeDrawer(); openEditor(copied); UI.toast('配置已复制为独立草稿'); return copied; }
+    try { const copied = store.copyStrategy(id); UI.closeDrawer(); router.nav('strategy','attack',copied); UI.toast('配置已复制为独立草稿'); return copied; }
     catch (error) { UI.toast(error.message); }
   },
   delStrategy(id) {
@@ -96,13 +99,12 @@ export const actions = {
   openStrategy(id) {
     const s = store.strategies.find((x) => x.id === id);
     if (!s) return;
-    if (s.status === 'draft') { UI.closeDrawer(); return openEditor(id); }
     const body = detailContent(detailBlock('策略基础信息', detailFields([
       ['策略名称', s.name], ['策略描述', s.desc], ['状态', store.STRATEGY_STATUS[s.status]],
       [s.status === 'published' ? '发布时间' : '更新时间', s.updatedAt],
     ])) + detailBlock('详细配置信息', detailFields([['题库范围', store.strategyBankLines(s).join('；')]])
       + detailTableField('攻击方法', methodConfigurationTable([...s.methods].sort((a, b) => a.order - b.order)))));
-    const foot = UI.btn('复制配置', { onclick: `App.copyStrategy('${s.id}')` }) + UI.btn('删除', { kind: 'danger', disabled: store.modelStrategyUsage(s.id).used, onclick: `App.delStrategy('${s.id}')` }) + UI.btn('关闭', { onclick: 'UI.closeDrawer()' });
+    const foot = UI.btn('复制', { onclick: `App.copyStrategy('${s.id}')` }) + UI.btn('删除', { kind: 'danger', disabled: store.modelStrategyUsage(s.id).used, onclick: `App.delStrategy('${s.id}')` }) + UI.btn('关闭', { onclick: 'UI.closeDrawer()' });
     openConfigDetail('攻击策略详情', body, foot);
   },
   openGuard(id) {

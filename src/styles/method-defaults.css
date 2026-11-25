@@ -1,0 +1,17 @@
+/* Method defaults are read in the table and edited in a right-side drawer. */
+.md-library .table-wrap{overflow-x:auto}
+.md-library table.grid{min-width:1360px;table-layout:fixed}
+.md-library table.grid td{vertical-align:middle}
+.md-list-description{white-space:nowrap}
+.md-list-params{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-library .md-list-actions{flex-wrap:nowrap;white-space:nowrap;gap:14px}
+.md-defaults-drawer{width:min(520px,100vw)}
+.md-defaults-form{display:grid;gap:22px;min-width:0}
+.md-defaults-note{margin:0;color:var(--muted);font-size:var(--t-support);line-height:1.8}
+.md-defaults-fields{display:grid;gap:20px}
+.md-param-field{display:grid;gap:8px;margin:0;font-size:var(--t-support)}
+.md-param-field>span{color:var(--text);font-weight:500}
+.md-param-field>small{color:var(--text-faint);font-size:12px;line-height:1.6}
+.md-param-field input,.md-param-field select{min-width:0;width:100%;box-sizing:border-box}
+.md-defaults-form .ai-error{margin:0}
+.md-defaults-form .ai-error:empty{display:none}

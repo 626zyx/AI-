@@ -20,6 +20,7 @@ import { methodCatalog, scenes as rawScenes, advbench } from '../data/catalog.js
 import { taskRepository } from './task-repository.js';
 import { createTaskService } from './task-service.js';
 import { buildModelConfiguration } from './task-configuration.js';
+import { methodModelRoles, methodModelSelection } from './method-model-roles.js';
 import { buildAgentConfiguration } from './agent-configuration.js';
 import { copyStrategyRecord, createStrategyVersion } from './strategy-service.js';
 import { ATTACK_SURFACE_CATALOG } from './attack-surfaces.js';
@@ -27,6 +28,9 @@ import { AGENT_ASSETS } from './agent-assets-catalog.js';
 import { guardCatalog } from './guard-catalog.js';
 export { selectableAgentSurfaces as agentInjectionFiles } from './agent-surfaces.js';
 import { roundInfo } from './task-rounds.js';
+import { captureTaskClassification,classificationTags } from './task-classification.js';
+import { listAuthoredResources } from './resource-authoring.js';
+import { getAgentQuestions } from './agent-environments.js';
 export { roundInfo, roundAnalysis } from './task-rounds.js';
 
 
@@ -78,8 +82,9 @@ const {
   subscribeTasks, advanceTaskReplay, initializeTaskRuntime,
 } = createTaskService({ modelTasks: rawTasks, modelUnits: rawUnits,
   agentTasks: rawAgentTasks, agentUnits: rawAgentUnits, nowText,
-  modelConfiguration: (data, options) => buildModelConfiguration(data, { models, strategies, banks, guards }, options),
+  modelConfiguration: (data, options) => buildModelConfiguration(data, { models, strategies, banks, guards, methods }, options),
   agentConfiguration: (data, options) => buildAgentConfiguration(data, { agents, agentStrategies, models, agentMethods, sceneBanks }, options),
+  captureClassification:(config,options)=>captureTaskClassification(config,{...options,modelBanks:[...banks.filter(bank=>!bank.authoringId),...listAuthoredResources('model')],executionBanks:banks,environmentQuestions:getAgentQuestions({status:'all'}),sceneLabel:value=>sceneLabel(value)==='—'?value:sceneLabel(value)}),
   assertTargetAvailable: (config, type) => {
     if (!config.targetAssetId) return null;
     const target = (type === 'agent' ? agents : models).find(row => row.id === config.targetId);
@@ -168,9 +173,10 @@ export const STRATEGY_STATUS = { published: '已发布', draft: '草稿' };
 
 /* 策略引用的题库，一行一套：名称·前 N 题 / 名称·全部 N 题 */
 export function strategyBankLines(s) {
-  return s.banks.map(({ bankId, count }) => {
+  return s.banks.map(({ bankId, count, itemIds }) => {
     const b = getBank(bankId);
     if (!b) return '—';
+    if(Array.isArray(itemIds))return `${b.name}·已选 ${new Set(itemIds).size} 题`;
     return count && count < b.items.length ? bankRefText(b.name, count) : `${b.name}·全部 ${b.items.length} 题`;
   });
 }
@@ -186,7 +192,7 @@ export function saveStrategy(data) {
   const old = data.id && strategies.find((x) => x.id === data.id);
   if (data.id && !old) throw new Error('策略不存在');
   if (old?.status === 'published') throw new Error('已发布的组合攻击策略不可修改，请新建策略');
-  const rec = structuredClone({ taskCount: 0, ...old, ...data, source: old?.source || 'custom', updatedAt: nowText() });
+  const rec = structuredClone({ taskCount: 0, ...old, ...data, source: old?.source || 'custom', createdAt: old?.createdAt || old?.updatedAt || new Date().toISOString(), updatedAt: nowText() });
   for (const key of ['version', 'familyId', 'parentId', 'copiedFrom']) delete rec[key];
   rec.name = String(rec.name || '').trim();
   rec.status ||= 'draft'; rec.methods ||= []; rec.banks ||= [];
@@ -198,18 +204,21 @@ export function saveStrategy(data) {
     for (const method of rec.methods) {
       const definition = methods.find(item => item.name.toLowerCase() === String(method.name).toLowerCase());
       if (!definition || definition.available === false) throw new Error('所选攻击方法不可用，请重新选择');
-      for (const [key, label] of [['generator', '攻击生成模型'], ['process', '过程裁判']]) {
-        if (!definition[key]) continue;
-        const selectedId = method.aux?.[key];
-        const selectedName = Array.isArray(method.params) ? method.params.find(([name]) => name === label)?.[1] : '';
-        const model = models.find(item => selectedId ? item.id === selectedId || item.assetId === selectedId : item.name === selectedName);
-        if (!model || model.status !== 'connected' || model.testable === false) throw new Error(`请为 ${definition.name} 选择可用的${label}`);
+      for (const role of methodModelRoles(definition)) {
+        const selected=methodModelSelection(method,role);
+        const model = models.find(item => selected.id ? item.id === selected.id || item.assetId === selected.id : item.name === selected.name);
+        if (!model || model.status !== 'connected' || model.testable === false || model.sourceStatus === '已停用') throw new Error(`请为 ${definition.name} 选择可用的${role.role}`);
       }
     }
     if (!rec.banks.length) throw new Error('请至少选择一套已发布攻击题库');
     for (const ref of rec.banks) {
       const bank = getBank(ref.bankId);
       if (!bank || bank.status === 'draft' || !bank.items.length) throw new Error('攻击策略引用的题库尚未发布或不可用');
+      if(Array.isArray(ref.itemIds)){
+        ref.itemIds=[...new Set(ref.itemIds)];
+        if(!ref.itemIds.length||ref.itemIds.some(id=>!bank.items.some(item=>item.id===id)))throw Error('部分所选题目已删除或不再可用');
+        ref.count=ref.itemIds.length;
+      }
       if (ref.count != null && (!Number.isInteger(ref.count) || ref.count < 1 || ref.count > bank.items.length)) throw new Error('题库选题数量无效');
     }
   }
@@ -248,8 +257,8 @@ export function deleteStrategy(id) {
 }
 
 export function copyStrategy(id) {
-  const source = strategies.find(strategy => strategy.id === id && strategy.status === 'published');
-  if (!source) throw new Error('仅已发布策略可复制配置');
+  const source = strategies.find(strategy => strategy.id === id);
+  if (!source) throw new Error('策略不存在');
   return saveStrategy({ ...copyStrategyRecord(source, strategies), authoringStep: 0, authoringVisited: 0 });
 }
 export function newStrategyVersion(id) {
@@ -342,10 +351,15 @@ export const verdictCounts = (t) => vc(t.units, t.total);
 
 /* 单元所属攻击场景：按题目原文回查题库 */
 const sceneByPrompt = new Map(advbench.map((q) => [q.prompt, q.scene]));
-export const sceneOfUnit = (u) => sceneByPrompt.get(u.target) || null;
+const archivedSceneNames=new Map(rawScenes.map(scene=>[scene.id,scene.label]));
+export const sceneTagsOfUnit=u=>classificationTags(u,'risk')??[u.scenarioId||u.sceneId||sceneByPrompt.get(u.target)].filter(Boolean).map(id=>({id,name:u.scenarioName||u.sceneName||archivedSceneNames.get(id)||id}));
+export const scenesOfUnit=u=>sceneTagsOfUnit(u).map(tag=>tag.id);
+export const sceneLabelsOfUnit=u=>sceneTagsOfUnit(u).map(tag=>tag.name);
+export const sceneOfUnit = (u) => scenesOfUnit(u)[0] || null;
 export function byScene(task) {
-  return rawScenes
-    .map((sc) => ({ id: sc.id, label: sc.label, ...asr(task.units.filter((u) => sceneByPrompt.get(u.target) === sc.id)) }))
+  const dimensions=[...new Map(task.units.flatMap(sceneTagsOfUnit).map(tag=>[tag.id,tag])).values()];
+  return dimensions
+    .map((sc) => ({ id: sc.id, label: sc.name, ...asr(task.units.filter((u) => scenesOfUnit(u).includes(sc.id))) }))
     .filter((x) => x.total > 0);
 }
 
@@ -493,7 +507,7 @@ export function agentStrategyTaskIds(s) {
 export function saveAgentStrategy(data) {
   const old = data.id && agentStrategies.find((x) => x.id === data.id);
   if (old && old.status === 'published') return null;
-  const rec = { taskCount: 0, source: 'custom', version: '1.0', banks: [], methodId: 'baseline', attackerModelId: null, ...old, ...data, updatedAt: nowText() };
+  const rec = { taskCount: 0, source: 'custom', version: '1.0', banks: [], methodId: 'baseline', attackerModelId: null, ...old, ...data, createdAt: old?.createdAt || old?.updatedAt || new Date().toISOString(), updatedAt: nowText() };
   if (old) { Object.assign(old, rec); return old.id; }
   rec.id = `agstg-${globalThis.crypto.randomUUID()}`;
   rec.familyId ||= rec.id;
@@ -507,8 +521,8 @@ export function deleteAgentStrategy(id) {
 }
 
 export function copyAgentStrategy(id) {
-  const source = agentStrategies.find(strategy => strategy.id === id && strategy.status === 'published');
-  if (!source) throw new Error('仅已发布策略可复制');
+  const source = agentStrategies.find(strategy => strategy.id === id);
+  if (!source) throw new Error('策略不存在或已删除');
   return saveAgentStrategy(copyStrategyRecord(source, agentStrategies));
 }
 export function newAgentStrategyVersion(id) {
@@ -726,7 +740,7 @@ export function postureReplay() {
     for (const u of units) {
       const t = getTask(u.taskId);
       modelScript.push({
-        method: u.method, target: t.targetName, scene: sceneLabel(sceneOfUnit(u)),
+        method: u.method, target: t.targetName, scene: sceneLabelsOfUnit(u).join('、')||'未打标签',
         guardStages: t.guardId ? (t.guardStages || ['输入', '输出']) : [],
         verdict: u.judgeSuccess ? 'breach' : 'safe', score: u.judgeScore, rounds: u.rounds, judgedRound: u.judgedRound,
         turns: u.history.map((h) => ({
@@ -785,10 +799,7 @@ export function notifications() {
       add({ type: 'report', kind, at: plus(t.finishedAt, 1), title: `${t.name} 报告已生成`, meta: `${src} · 风险等级 ${t.risk.label}`, go: report });
     }
   }
-  for (const e of riskEvents()) {
-    add({ type: 'risk', kind: e.source, riskKey: e.risk.key, at: String(e.at).slice(0, 16), title: `${e.targetName} 触发${e.risk.label}风险`, meta: `${e.typeName} · ${agentMetricLabel(e.source === 'agent' ? getAgentTask(e.id) : null, true)} ${(e.asr * 100).toFixed(1)}%`, go: e.source === 'agent' ? `App.openAgTask('${e.id}')` : `App.openTask('${e.id}')` });
-  }
-  return out.sort((a, b) => b.sort - a.sort || (a.type === 'risk' ? -1 : 1));
+  return out.sort((a, b) => b.sort - a.sort);
 }
 
 export function getUnit(taskId, unitId) {

@@ -58,4 +58,4 @@
 @media(max-width:1100px){.sa-steps{gap:12px;padding:20px}.sa-steps button{gap:7px;font-size:12px}.sa-steps small{display:none}.sa-content{padding:22px}.sa-presets{gap:10px}.sa-preset{padding:14px}.sa-preset-top strong{font-size:13px}}
 @media(max-width:760px){.sa-basic-fields{grid-template-columns:1fr}.sa-presets{grid-template-columns:1fr}.sa-preset-methods{min-height:0}.sa-steps{gap:6px;padding:16px 12px}.sa-steps button{flex-direction:column;align-items:center;gap:5px;font-size:11px}.sa-overview{grid-template-columns:1fr 1fr}.sa-footer{padding:14px 16px;align-items:flex-start}.sa-footer>span{display:none}.sa-footer>div{width:100%}}
 
-.sg-row-actions{display:grid;grid-template-columns:30px 62px 30px;gap:14px;align-items:center;justify-content:end}.sg-row-actions>.link-btn{justify-self:start;white-space:nowrap}.sg-action-placeholder{width:30px;height:1px;pointer-events:none}
+.sg-row-actions{display:flex;flex-wrap:nowrap;gap:14px;align-items:center;justify-content:flex-start}.sg-row-actions>.link-btn{flex:none;white-space:nowrap}.sg-action-placeholder{width:30px;height:1px;pointer-events:none}

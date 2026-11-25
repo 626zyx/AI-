@@ -11,11 +11,15 @@ function fingerprintInput(kind, input = {}) {
     return { id: q.id, title: q.title, business: q.business, riskLabels: q.riskLabels, files: q.files };
   }
   const target = input.target || {}, model = input.model || {};
-  return { target: { id: target.id, image: target.image, command: target.command, args: target.args,
+  return { target: { id: target.id, assetId: target.assetId, assetVersion: target.assetVersion, version: target.version, image: target.image, command: target.command, args: target.args,
+    application: target.targetApplicationSnapshot ? { id: target.targetApplicationSnapshot.id, assetId: target.targetApplicationSnapshot.assetId,
+      platformConnectionId: target.targetApplicationSnapshot.platformConnectionId, enterpriseVersion: target.targetApplicationSnapshot.enterpriseVersion,
+      addressType: target.targetApplicationSnapshot.addressType, address: target.targetApplicationSnapshot.address, sourceStatus: target.targetApplicationSnapshot.sourceStatus } : undefined,
+    applicationAvailability: target.applicationAvailability, applicationCurrentState: target.applicationCurrentState, applicationIssues: target.applicationIssues,
     taskInput: target.taskInput, promptFlag: target.promptFlag, framework: target.framework,
-    status: target.status, testable: target.testable, surfaces: target.surfaces, surfaceDeclarations: target.surfaceDeclarations },
-  model: { id: model.id, apiType: model.apiType, apiModel: model.apiModel || model.model,
-    baseUrl: model.baseUrl, status: model.status, testable: model.testable, connectionRevision: model.connectionRevision } };
+    status: target.status, sourceStatus: target.sourceStatus, testable: target.testable, surfaces: target.surfaces, surfaceDeclarations: target.surfaceDeclarations },
+  model: { id: model.id, assetId: model.assetId, assetVersion: model.assetVersion, version: model.version, apiType: model.apiType, apiModel: model.apiModel || model.model,
+    baseUrl: model.baseUrl, status: model.status, sourceStatus: model.sourceStatus, testable: model.testable, connectionRevision: model.connectionRevision } };
 }
 export function sandboxValidationFingerprint(kind, input) {
   const text = JSON.stringify(stable(fingerprintInput(kind, input)));
@@ -26,6 +30,11 @@ export function sandboxValidationFingerprint(kind, input) {
 export function sandboxValidationIsCurrent(report, input) {
   return !!report && report.mode === 'demo' && report.actualExecuted === false
     && report.fingerprint === sandboxValidationFingerprint(report.kind, input);
+}
+export function sandboxTargetValidationPassed(report, input) {
+  return report?.kind === 'target' && report.state === 'passed' && sandboxValidationIsCurrent(report, input)
+    && Number.isFinite(Date.parse(report.checkedAt)) && !report.blockingIssues?.length
+    && targetSteps.every(([id]) => report.steps?.some(step => step.id === id && step.state === 'passed'));
 }
 export function sandboxTargetSurfaces(target) {
   if (!target) return [];
@@ -50,16 +59,19 @@ export function createSandboxValidation(kind = 'target', input = {}) {
 }
 function targetProblems(input) {
   const target = input.target || {}, model = input.model || {}, problems = [];
+  if (target.targetApplicationSnapshot && target.applicationIssues?.length) problems.push(...target.applicationIssues);
   if (!target.id) problems.push('请选择靶标 Agent');
   if (!clean(target.image)) problems.push('靶标缺少镜像引用');
   if (!(Array.isArray(target.command) ? target.command.some(clean) : clean(target.command))) problems.push('靶标缺少启动命令');
   if (!['stdin', 'argv'].includes(target.taskInput)) problems.push('靶标缺少有效的任务输入方式');
-  if (target.taskInput === 'argv' && !clean(target.promptFlag)) problems.push('命令行任务输入缺少任务参数标记');
+  // An empty argv flag means a positional prompt (for example, `opencode run ... "$prompt"`).
+  if (target.taskInput === 'argv' && clean(target.promptFlag) && !/^--?[a-zA-Z][\w-]*$/.test(clean(target.promptFlag))) problems.push('任务参数标记需为单个参数名；位置参数留空');
   if (target.status === 'disabled' || target.sourceStatus === '已停用' || target.testable === false) problems.push('靶标已停用或不可用于演练');
   if (!model.id) problems.push('请选择靶标基模');
   else {
-    if (model.status !== 'connected' || model.testable === false) problems.push('靶标基模尚未连通');
-    if (!clean(model.apiModel || model.model)) problems.push('靶标基模缺少请求标识');
+    if (model.status !== 'connected' || model.sourceStatus === '已停用' || model.testable === false) problems.push('靶标基模尚未连通');
+    if (/embedding/i.test(model.apiType || '') || (model.capabilities?.length && model.capabilities.every(value => /embedding/i.test(value)))) problems.push('靶标基模需要支持文本生成');
+    if (!clean(model.apiModel || model.model)) problems.push('靶标基模缺少模型标识');
     try { if (!['http:', 'https:'].includes(new URL(model.baseUrl).protocol)) throw new Error(); }
     catch { problems.push('靶标基模缺少有效 API 地址'); }
   }
@@ -73,7 +85,7 @@ function targetProblems(input) {
 function stepOutcome(kind, step, input) {
   if (kind === 'target') {
     const target = input.target || {};
-    if (step.id === 'configuration') return { issues: targetProblems(input), detail: '镜像、命令、任务输入及模型连接配置完整（静态检查）', remedy: '在资产接入中补齐镜像、启动命令和任务输入配置；选择已连通且有请求标识与 API 地址的基模后重试。' };
+    if (step.id === 'configuration') return { issues: targetProblems(input), detail: '镜像、命令、任务输入及模型连接配置完整（静态检查）', remedy: '在资产接入中补齐镜像、启动命令和任务输入配置；选择已连通且有模型标识与 API 地址的基模后重试。' };
     if (step.id === 'pull' && /^(?:missing|invalid|unreachable):/i.test(target.image || '')) return { issues: ['镜像引用包含演示失败标记'], remedy: '在资产接入中修改镜像引用，重新选择资源后重试。' };
     return { detail: ({ pull: '模拟镜像拉取完成', start: '模拟沙箱启动并装载基模配置', task: '模拟提交最小任务并接收响应', surfaces: `从资源配置模拟读取 ${sandboxTargetSurfaces(target).length} 个可选注入文件或范围` })[step.id] };
   }

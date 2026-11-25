@@ -2,7 +2,8 @@
 import { selectedAgentSurfaces } from './agent-surfaces.js';
 import { getAgentQuestions } from './agent-environments.js';
 import { getAgentAttackTemplate } from './agent-attack-library.js';
-import { sandboxValidationIsCurrent, sandboxTargetSurfaces } from './sandbox-validation.js';
+import { sandboxTargetValidationPassed, sandboxTargetSurfaces } from './sandbox-validation.js';
+import { resolveApplicationTarget } from './application-target.js';
 
 const copy = value => value == null ? null : structuredClone(value);
 export const modelApiIdentity = model => model?.apiModel || model?.model || model?.modelName || '';
@@ -16,20 +17,33 @@ export function agentQuestionFingerprint(question) {
 }
 
 export function buildAgentConfiguration(data, catalog, { draft = false } = {}) {
-  const target = catalog.agents.find(agent => agent.id === data.targetId && agent.status !== 'disabled' && agent.sourceStatus !== '已停用' && agent.testable !== false);
-  if ((!draft || data.targetId) && !target) throw new Error('请选择已接入的靶标智能体');
-  if (!draft && !data.sandboxValidationRequired && target?.status !== 'connected') throw new Error('请先验证靶标运行配置');
+  const application = data.targetApplicationSnapshot ? (Object.hasOwn(catalog, 'applicationAssets')
+    ? resolveApplicationTarget(data.targetApplicationSnapshot, catalog.agents, catalog.applicationAssets?.find(row => row.id === data.targetApplicationSnapshot.id) || null)
+    : resolveApplicationTarget(data.targetApplicationSnapshot, catalog.agents)) : null;
+  const target = application?.target || catalog.agents.find(agent => agent.id === data.targetId && agent.status !== 'disabled' && agent.sourceStatus !== '已停用' && agent.testable !== false);
+  const sandboxValidationRequired = data.sandboxValidationRequired === true || !!application;
+  if (!application && (!draft || data.targetId) && !target) throw new Error('请选择已接入的靶标智能体');
+  if (!draft && application) {
+    if (application.issues.length) throw new Error(application.issues.join('；'));
+    if (application.missingFields.length) throw new Error(`靶标运行配置缺少${application.missingFields.join('、')}`);
+    if (data.targetId && data.targetId !== application.executableId) throw new Error('应用对应的运行配置已变更，请重新选择并验证');
+    if (target.status === 'disabled' || target.sourceStatus === '已停用' || target.testable === false) throw new Error('靶标运行配置已停用或不可用于演练');
+  }
+  if (!draft && !sandboxValidationRequired && target?.status !== 'connected') throw new Error('请先验证靶标运行配置');
   const legacyStrategy = catalog.agentStrategies?.find(strategy => strategy.id === data.strategyId);
   const exerciseMode = data.exerciseMode || (data.technique && data.technique !== 'baseline' ? 'attack' : legacyStrategy?.methodId === 'universal' ? 'attack' : 'baseline');
   if (!['baseline', 'attack'].includes(exerciseMode)) throw new Error('请选择基础安全演练或加入攻击');
-  const attackTemplateId = exerciseMode === 'attack' ? (data.attackTemplateId || data.technique || legacyStrategy?.methodId || 'universal') : null;
+  const attackTemplateId = exerciseMode === 'attack' ? (Object.hasOwn(data,'attackTemplateId') ? String(data.attackTemplateId || '').trim() || null : data.technique || legacyStrategy?.methodId || 'universal') : null;
   const template = attackTemplateId ? getAgentAttackTemplate(attackTemplateId) : null;
-  if (attackTemplateId && (!template || template.status !== 'published')) throw new Error('请选择已发布的攻击模板');
+  if ((attackTemplateId || exerciseMode === 'attack' && !draft) && (!template || template.status !== 'published')) throw new Error('请选择已发布的攻击者');
   const targetModelId = data.targetModelId ?? (target?.baseModelVersion ? `${target.baseModelId}@${target.baseModelVersion}` : target?.baseModelId) ?? '';
   const baseModel = catalog.models.find(model => model.id === targetModelId);
-  if ((!draft || targetModelId) && !usableTaskModel(baseModel)) throw new Error('请选择可用的靶标基模');
-  const sandboxValid = data.sandboxValidation?.state === 'passed' && sandboxValidationIsCurrent(data.sandboxValidation, { target, model: baseModel });
-  if (!draft && data.sandboxValidationRequired && !sandboxValid) throw new Error('请先完成当前靶标与基模配置的沙箱演示验证');
+  if ((!draft || targetModelId) && !usableTaskModel(baseModel)) {
+    if (baseModel?.status && baseModel.status !== 'connected' && baseModel.status !== 'disabled') throw new Error('靶标基模尚未连通，请先检查连接');
+    throw new Error('请选择可用的靶标基模');
+  }
+  const sandboxValid = sandboxTargetValidationPassed(data.sandboxValidation, { target, model: baseModel });
+  if (!draft && sandboxValidationRequired && !sandboxValid) throw new Error('请先完成当前靶标与基模配置的沙箱演示验证');
   const attackerId = exerciseMode === 'attack' ? (data.attackerId ?? legacyStrategy?.attackerModelId ?? '') : null;
   const attacker = catalog.models.find(model => model.id === attackerId);
   if (exerciseMode === 'attack' && (!draft || attackerId) && !usableTaskModel(attacker)) throw new Error('请选择可用的攻击模型');
@@ -45,9 +59,9 @@ export function buildAgentConfiguration(data, catalog, { draft = false } = {}) {
   if (!draft && !selected.length) throw new Error('请至少选择一个已发布的环境');
   if (selected.some(question => !question.hasLlm)) throw new Error('所选环境缺少 LLM 评估定义');
   const surfaceTarget = sandboxValid ? { ...target, intakeMode: 'configuration', surfaces: sandboxTargetSurfaces(target).map(surface => ({ ...surface, configurationOnly: true })) } : target;
-  const requestedSurfaces = exerciseMode === 'attack' ? selectedAgentSurfaces(surfaceTarget, data.injectionSurfaceIds || []) : [];
+  const requestedSurfaces = exerciseMode === 'attack' && !(draft && application && !application.matched) ? selectedAgentSurfaces(surfaceTarget, data.injectionSurfaceIds || []) : [];
   if (!draft && exerciseMode === 'attack' && !requestedSurfaces.length) throw new Error('请至少选择一个可用的注入面');
-  if (template && requestedSurfaces.some(surface => !template.surfaceKinds?.includes(surface.kind))) throw new Error('所选注入面不受攻击模板支持');
+  if (template && requestedSurfaces.some(surface => !template.surfaceKinds?.includes(surface.kind))) throw new Error('所选注入面不受攻击者支持');
   const banks = [...new Set(selected.map(question => question.bankId))].map(bankId => {
     const rows = selected.filter(question => question.bankId === bankId);
     return { bankId, name: rows[0].business, count: rows.length, taskIds: rows.map(question => question.taskId) };
@@ -57,14 +71,15 @@ export function buildAgentConfiguration(data, catalog, { draft = false } = {}) {
     historicalTaskId: question.source === 'system' ? question.historicalTaskId || question.taskId : null,
     contentFingerprint: agentQuestionFingerprint(question), llmDefinition: copy(question.llmDefinition) }));
   return {
-    objectType: 'agent', targetId: target?.id || '', targetName: target?.name || '',
-    sandboxValidationRequired: data.sandboxValidationRequired === true, sandboxValidation: copy(data.sandboxValidation),
+    objectType: 'agent', targetId: application ? application.executableId : target?.id || '', targetName: application?.applicationSnapshot.name || target?.name || '',
+    ...(application ? { targetApplicationSnapshot: copy(application.applicationSnapshot) } : {}),
+    sandboxValidationRequired, sandboxValidation: copy(data.sandboxValidation),
     ...(target?.assetId && target.assetSnapshot ? { targetAssetId: target.assetId, targetAssetVersion: target.assetVersion, targetSnapshot: copy(target.assetSnapshot) } : {}),
     targetImage: target?.image || '', targetModelId: baseModel?.id || '', targetModelName: baseModel?.name || '', targetModelApi: modelApiIdentity(baseModel),
     ...(baseModel?.assetSnapshot ? { targetModelSnapshot: copy(baseModel.assetSnapshot) } : {}),
     exerciseMode, attackTemplateId, attackTemplateName: template?.name || null, attackTemplateSnapshot: template ? copy(template) : null,
-    strategyId: '', strategyName: template?.name || '基础安全演练',
-    technique: exerciseMode === 'baseline' ? 'baseline' : template?.id || 'universal', techniqueName: template?.name || '基础安全演练',
+    strategyId: '', strategyName: exerciseMode === 'baseline' ? '基础安全演练' : template?.name || '',
+    technique: exerciseMode === 'baseline' ? 'baseline' : template?.id || '', techniqueName: exerciseMode === 'baseline' ? '基础安全演练' : template?.name || '',
     attackerId: attacker?.id || null, attackerName: attacker?.name || null, attackerModelApi: modelApiIdentity(attacker) || null,
     questionIds: selected.map(question => question.id), questionSnapshots, taskIdSnapshot: selected.map(question => question.taskId), total: selected.length,
     banks, sceneBankId: banks.map(bank => bank.bankId).join(','), sceneBankName: [...new Set(banks.map(bank => bank.name))].join('、'),

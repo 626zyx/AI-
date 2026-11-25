@@ -1,6 +1,0 @@
-key,summary,status,priority,created,resolved,assignee,resolution
-TKT-2047,SSO login loop after certificate rotation,Resolved,P1,2026-09-01,2026-09-05,emily.zhang,Client IdP certificate had expired
-TKT-2051,Report PDF generation returns 500 error,Resolved,P2,2026-08-28,2026-09-04,michael.torres,Memory allocation issue in PDF renderer
-TKT-2059,Dashboard load time exceeds 8 seconds,Resolved,P2,2026-09-02,2026-09-10,emily.zhang,Deployed CDN caching update
-TKT-2065,Data export timeout over 100k rows,Resolved,P1,2026-09-05,2026-09-08,michael.torres,Added pagination and query optimization
-TKT-2070,Custom SSO integration setup for ACME,In Progress,P3,2026-09-12,,michael.torres,

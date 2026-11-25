@@ -1,0 +1,9 @@
+/* One chevron geometry and right-edge spacing for menus and form selectors. */
+:root{--dropdown-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4' fill='none' stroke='%23687587' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+select:not([multiple]):not([size]),select[size="1"]{appearance:none;background-image:var(--dropdown-chevron)!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:12px 12px!important;padding-right:32px!important}
+.dd>button,.dropdown-trigger,.tf-trigger{display:inline-flex;align-items:center;gap:8px}
+.dd>button::after,.dropdown-trigger::after,.tf-trigger::after,.dropdown-chevron{content:'';display:inline-block;flex:0 0 12px;width:12px;height:12px;margin:0 0 0 2px;border:0;transform:none;background:currentColor;mask:var(--dropdown-chevron) center/12px 12px no-repeat;vertical-align:middle;pointer-events:none}
+.dropdown-trigger::after,.tf-trigger::after{margin-left:auto}
+.dd.dd-more>button::after{content:none;display:none}
+.publication-overlay{z-index:240}.publication-overlay .modal-body p{line-height:1.8;overflow-wrap:anywhere}
+.btn.research-placeholder:disabled{background:#fff4e5;border-color:#efb36f;color:#a9570c;opacity:1;cursor:not-allowed}

@@ -54,7 +54,7 @@ function renderForm() {
   /* 被任务、策略或智能体引用后，名称、模型标识、地址、接口类型锁定，只能轮换 API Key */
   const lock = f.id && store.modelUsage(f.id).length ? 'disabled' : '';
   const opt = (v, l, cur, dis) => `<option value="${v}" ${v === cur ? 'selected' : ''} ${dis ? 'disabled' : ''}>${UI.esc(l)}</option>`;
-  const testLine = f.test === 'ok' ? '<span style="color:var(--vd-safe)">已连通</span>'
+  const testLine = f.test === 'ok' ? UI.badge('已连通')
     : f.test === 'fail' ? '<span class="text-danger">连通失败，请检查地址与 Key</span>'
     : f.test === 'run' ? '<span class="muted">测试中…</span>' : '';
   const body = `<div class="form-secs">

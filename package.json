@@ -1,12 +1,8 @@
 {
-  "name": "auton-arena-demo",
+  "name": "ai-range-demo",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test _tools/*.test.mjs",
-    "check": "node _tools/check.mjs"
-  },
-  "devDependencies": {
-    "jsdom": "26.1.0"
+    "start": "python serve.py --port 8093"
   }
 }

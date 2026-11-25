@@ -1,5 +1,6 @@
 /* 演练报告：列表 + 报告详情（结果分析 / 攻防明细）+ 导出 */
 import * as UI from '../core/ui.js';
+import { classificationFields } from '../domain/task-classification.js';
 import * as router from '../core/router.js';
 import * as store from '../domain/store.js';
 import { verdictOf } from '../domain/metrics.js';
@@ -11,6 +12,11 @@ import { configSummary } from '../core/task-config.js';
 import { roundInfo } from '../domain/task-rounds.js';
 import { roundCountText, breachRoundText, methodRoundMetrics, methodRoundColumns, methodRoundNote, methodPerformanceMd } from './report-rounds.js';
 import { reportQuestionCell, reportSection, reportDocument } from './report-format.js';
+import { reportListResult } from './report-list-result.js';
+import { reportListTelemetryColumns } from './report-list-telemetry.js';
+import { modelMethodInsights } from './model-method-insights.js';
+import { resolveResultLevel, resultLevelRange } from '../domain/result-level-rules.js';
+import { riskMethodMatrix, riskMethodMatrixHTML, riskMethodMatrixMd, matrixInsight, synthesisHTML, scenarioTagsHTML, reportUnitMetricHTML, reportUnitMetricMd, reportUnitMetricColumns } from './report-insights.js';
 
 const view = { q: '', targetId: 'all', sortDesc: true };
 const detail = { tab: 'analysis', method: 'all', verdict: 'all', scene: 'all' };
@@ -47,6 +53,8 @@ export function reportsPage() {
     [
       { title: '报告名称', render: (r) => `<button class="link-btn" onclick="App.openReport('${r.taskId}')">${UI.esc(r.name)}</button>` },
       { title: '靶标名称', render: (r) => UI.esc(r.targetName) },
+      { title: 'ASR / 等级', width:'200px', render:r=>reportListResult(store.getTask(r.taskId),'model') },
+      ...reportListTelemetryColumns(store.getTask),
       { title: '生成时间', width: '160px', cls: 'num', sort: { direction: view.sortDesc ? 'descending' : 'ascending', onclick: 'App.rpSort()' }, render: (r) => UI.esc(r.createdAt) },
       {
         title: '操作', width: '120px', cls: 'actions',
@@ -118,10 +126,11 @@ function findings(t) {
     : '本次已判定的方法均未取得攻破。';
   const scenes = store.byScene(t).filter(scene => scene.judged).sort((a, b) => b.value - a.value);
   const scene = scenes[0];
+  const level = resolveResultLevel('model.asr', t.agg.value);
   return [
     { title: '方法表现', text: methodText },
     ...(scene?.breach ? [{ title: '重点场景', text: `「${scene.label}」的攻破率最高，为 ${UI.pct(scene.value)}（${scene.breach}/${scene.judged}）；各场景的覆盖量与结果见下文。` }] : []),
-    { title: `风险判断：${t.risk.label}`, text: `按平台 ASR 阈值判定：≥${UI.pct(store.riskRule.critical, 0)} 为高危、≥${UI.pct(store.riskRule.high, 0)} 为中危、>${UI.pct(store.riskRule.trigger, 0)} 为低危。结论适用于本次题库和方法组合。` },
+    { title: level ? `结果等级：${level.name}` : '结论范围', text: `${level ? `按「${level.ruleName}」判定，本次 ASR 落在 ${resultLevelRange(level)}，与顶部结果等级一致。` : ''}结论适用于本次题库和方法组合。` },
   ];
 }
 
@@ -143,14 +152,14 @@ function suggestions(t) {
 }
 
 /* 雷达（全部维度）+ 条形（攻破最多的前 3 项在全部攻破中的占比）+ 明细表 */
-function riskBlock(title, firstCol, allDims, rows, task = null) {
+function riskBlock(title, firstCol, allDims, rows, task = null, insights = [], {overlapping=false,distinctBreach=null} = {}) {
   const rankedRows = [...rows].sort((a, b) => b.value - a.value);
   const byKey = new Map(rows.map((r) => [r.key, r]));
   const radarItems = allDims.map((d) => {
     const r = byKey.get(d.key);
     return { label: d.label, value: r ? r.value : 0, covered: !!(r && r.judged) };
   });
-  const totalBreach = rows.reduce((n, r) => n + r.breach, 0);
+  const totalBreach = overlapping ? distinctBreach||0 : rows.reduce((n, r) => n + r.breach, 0);
   const top = rows.filter((r) => r.breach > 0).sort((a, b) => b.breach - a.breach).slice(0, 3);
   const bar = top.length
     ? UI.bars(top.map((r, i) => ({ label: r.label, value: r.breach / totalBreach, color: UI.chartColor(i) })), { max: 1 })
@@ -162,13 +171,13 @@ function riskBlock(title, firstCol, allDims, rows, task = null) {
       { title: '守住', width: '80px', render: (r) => `<span class="num">${r.judged - r.breach}</span>` },
       { title: '攻破', width: '80px', render: (r) => `<span class="num">${r.breach}</span>` },
       ...(task ? methodRoundColumns : []),
-      { title: '攻破率', width: '96px', render: (r) => `<span class="num${r === rankedRows[0] && r.judged ? ' report-key-metric' : ''}">${UI.pct(r.value)}</span>` },
+      { title: '攻破率', width: '96px', render: (r) => `<span class="num metric-asr${r === rankedRows[0] && r.judged ? ' report-key-metric' : ''}">${r.judged ? UI.pct(r.value) : '—'}</span>` },
     ],
     rankedRows,
   );
-  return reportSection(title, `<div class="risk-charts">
-      <div><div class="sub-label">各${firstCol}攻破率（共 ${allDims.length} 个维度，本次覆盖 ${rows.filter((r) => r.judged).length} 个）</div>${UI.radar(radarItems)}</div>
-      <div><div class="sub-label">攻破占比 Top ${top.length || 3}（占全部 ${totalBreach} 次攻破）</div>${bar}</div>
+  return reportSection(title, `${synthesisHTML(insights)}<div class="risk-charts">
+      <div><div class="sub-label">各${firstCol}攻破率（共 ${allDims.length} 个维度，本次覆盖 ${rows.filter((r) => r.judged).length} 个）</div>${radarItems.length>=3?UI.radar(radarItems,{size:250}):UI.bars(radarItems,{max:1})}</div>
+      <div><div class="sub-label">攻破占比 Top ${top.length || 3}（占本次 ${totalBreach} 个攻破单元${overlapping?'，多标签可重叠':''}）</div>${bar}</div>
     </div>
     <div class="mt-16">${task ? `<p class="rr-note">${UI.esc(methodRoundNote(task))}</p>` : ''}${table}</div>`);
 }
@@ -178,14 +187,37 @@ const methodRows = (t) => {
   const rounds = methodRoundMetrics(t);
   return t.methodsAgg.map(m => ({ ...m, ...rounds.get(m.name), key: m.name.toLowerCase(), label: m.name }));
 };
-const allSceneDims = () => store.scenes.map((s) => ({ key: s.id, label: s.label }));
+const allSceneDims = t => store.byScene(t).map(s=>({key:s.id,label:s.label}));
 const allMethodDims = () => store.methods.filter((m) => m.family !== '多模态').map((m) => ({ key: m.name.toLowerCase(), label: m.name }));
+
+const methodInsights = modelMethodInsights;
+
+function sceneInsights(t) {
+  const rows = sceneRows(t), judged = rows.filter(row => row.judged), breached = judged.filter(row => row.breach).sort((a, b) => b.breach - a.breach);
+  if (!judged.length) return ['尚无可用于场景比较的有效判定；已执行但未判定的记录不作为守住结果。'];
+  const top = breached[0];
+  const methods = top ? [...new Set(t.units.filter(unit => store.scenesOfUnit(unit).includes(top.id) && unit.judgeSuccess === true).map(unit => unit.method))] : [];
+  return [`本次 ${judged.length} 个场景有有效判定，其中 ${breached.length} 个场景出现攻破。${top ? `「${top.label}」贡献最多攻破记录（${top.breach}/${top.judged}，${UI.pct(top.value)}），涉及 ${methods.join('、')}。${methods.length > 1 ? '同一场景在多种方法下暴露边界薄弱点，应按场景统一补充防护和回归样例。' : '当前风险集中于单一方法，需补充其他方法验证是否可复现。'}` : '已覆盖场景未观察到攻破，仍需结合题量判断证据范围。'}各场景题量不同，不能只按百分比判断风险规模。`];
+}
+
+function modelMatrix(t) {
+  const risks = allSceneDims(t);
+  if (t.units.some(unit => !store.sceneOfUnit(unit))) risks.push({ key: 'unclassified', label: '未标注场景' });
+  return riskMethodMatrix({ units: t.units, risks,
+    methods: t.methods.map(method => ({ key: method.name, label: method.name })),
+    riskOf: unit => store.scenesOfUnit(unit).length ? store.scenesOfUnit(unit) : ['unclassified'], methodOf: unit => unit.method, outcomeOf: unit => unit.judgeSuccess });
+}
+
+function overallPerformance(t) {
+  const matrix = modelMatrix(t);
+  return reportSection('靶标整体表现', synthesisHTML([matrixInsight(matrix)]) + riskMethodMatrixHTML(matrix));
+}
 
 /* 蓝队防护分析：只描述本任务内蓝队做了什么，不做防护前后对比（对比在任务外层的结果对比里做）。
  * 统计口径与攻防明细的「蓝队结果」一致：每条单元只看最后一轮。
  * 从上往下：核心数据（单元去向）→ 拦截涉及的攻击方法 → 拦截涉及的风险类别。 */
 function guardStats(t) {
-  const flow = { in: 0, out: 0, self: 0, leak: 0 };
+  const flow = { in: 0, out: 0, self: 0, leak: 0, unknown: 0 };
   const byMethod = new Map(), byCat = new Map();
   for (const u of t.units) {
     const g = u.history[u.history.length - 1]?.guard;
@@ -193,22 +225,25 @@ function guardStats(t) {
     const blocked = g.action === 'block_input' || g.action === 'block_output';
     if (g.action === 'block_input') flow.in += 1;
     else if (g.action === 'block_output') flow.out += 1;
-    else if (u.judgeSuccess) flow.leak += 1;
-    else flow.self += 1;
+    else if (u.judgeSuccess === true) flow.leak += 1;
+    else if (u.judgeSuccess === false) flow.self += 1;
+    else flow.unknown += 1;
     if (!blocked) continue;
     byMethod.set(u.method, (byMethod.get(u.method) || 0) + 1);
     const side = g.action === 'block_input' ? g.input : g.output;
     for (const c of side?.categories || []) byCat.set(c, (byCat.get(c) || 0) + 1);
   }
-  const total = flow.in + flow.out + flow.self + flow.leak;
+  const total = flow.in + flow.out + flow.self + flow.leak + flow.unknown;
   return { flow, total, blocked: flow.in + flow.out, byMethod, byCat };
 }
 const guardFlow = (s) => [
   { key: 'in', label: '输入拦截', value: s.flow.in, color: 'var(--c1)' },
   { key: 'out', label: '输出拦截', value: s.flow.out, color: 'var(--c2)' },
-  { key: 'self', label: '靶标自拒', value: s.flow.self, color: 'var(--vd-safe)' },
+  { key: 'self', label: '放行后未攻破', value: s.flow.self, color: 'var(--vd-safe)' },
   { key: 'leak', label: '漏防', value: s.flow.leak, color: 'var(--vd-breach)' },
+  ...(s.flow.unknown ? [{ key: 'unknown', label: '未判定', value: s.flow.unknown, color: 'var(--text-faint)' }] : []),
 ];
+const guardInsight = s => `蓝队在 ${s.total} 个有审核记录的单元中拦截 ${s.blocked} 个（输入 ${s.flow.in} 个、输出 ${s.flow.out} 个）。放行后仍有 ${s.flow.leak} 个被判为攻破${s.flow.self ? `、${s.flow.self} 个未攻破` : ''}。${s.flow.leak ? '重点复核放行且攻破的输入与输出，确定漏防集中在哪些类别，再补充对应规则。' : '本次有明确判定的放行记录未观察到漏防，仍需保留原有业务可用性验证。'}${s.flow.unknown ? `${s.flow.unknown} 个放行单元缺少判定，不能计为防护成功。` : ''}`;
 function guardBlock(t) {
   if (!t.guardId) return '';
   const s = guardStats(t);
@@ -234,6 +269,7 @@ function guardBlock(t) {
   const catItems = (store.guardOf(t.guardId)?.dims || []).map(([label]) => ({ label, value: s.byCat.get(label) || 0, covered: true }));
   const radarOpt = { count: true, color: 'var(--vd-safe)' };
   return reportSection('蓝队防护分析', `
+    ${synthesisHTML([guardInsight(s)])}
     <div class="sub-label">攻击单元去向（共 ${all} 条，蓝队拦截 ${s.blocked} 条）</div>
     <div class="gd-flow">${donut}${funnel}</div>
     <div class="risk-charts mt-16">
@@ -252,8 +288,9 @@ function analysisHTML(t) {
   return reportDocument([
     reportSection('演练结果', resultPanel(t)),
     reportSection('核心发现', `<ol class="conclusions">${f}</ol>`),
-    riskBlock('攻击方法表现', '攻击方法', allMethodDims(), methodRows(t), t),
-    riskBlock('场景风险分析', '攻击场景', allSceneDims(), sceneRows(t)),
+    riskBlock('攻击方法表现', '攻击方法', allMethodDims(), methodRows(t), t, methodInsights(t)),
+    riskBlock('场景风险分析', '攻击场景', allSceneDims(t), sceneRows(t), null, sceneInsights(t), {overlapping:Boolean(t.classificationSnapshot),distinctBreach:t.agg.breach}),
+    overallPerformance(t),
     guardBlock(t),
     reportSection('下一步建议', `<ol class="conclusions">${s}</ol>`),
   ]);
@@ -264,7 +301,7 @@ function filteredUnits(t) {
   return t.units.filter((u) => {
     if (detail.method !== 'all' && u.method !== detail.method) return false;
     if (detail.verdict !== 'all' && verdictOf(u).key !== detail.verdict) return false;
-    if (detail.scene !== 'all' && store.sceneOfUnit(u) !== detail.scene) return false;
+    if (detail.scene !== 'all' && !store.scenesOfUnit(u).includes(detail.scene)) return false;
     return true;
   });
 }
@@ -316,9 +353,11 @@ function detailHTML(t) {
       { title: '序号', width: '64px', render: (u) => `<span class="num">${unitNo(u)}</span>` },
       { title: '攻击方法', width: '130px', render: (u) => UI.clip(u.method) },
       { title: '攻击题目', render: (u) => reportQuestionCell(u.target) },
+      { title: '风险场景', width: '120px', render: (u) => scenarioTagsHTML(store.sceneLabelsOfUnit(u)) },
       { title: '完成/总轮数', width: '115px', render: (u) => `<span class="num">${roundCountText(t, u)}</span>` },
       { title: '攻破轮次', width: '110px', render: (u) => breachRoundText(t, u) },
       { title: '判定结果', width: '100px', render: (u) => UI.verdictText(verdictOf(u)) },
+      ...reportUnitMetricColumns(t),
       { title: '操作', width: '80px', cls: 'actions',
         render: (u) => `<div class="row-actions">${UI.linkBtn('详情', { onclick: `App.openUnit('${t.id}','${u.id}')` })}</div>` },
     ],
@@ -371,12 +410,15 @@ function roundBody(h) {
 
 function summaryMod(t, u) {
   const gr = guardResult(u);
-  return mod('摘要', `<div class="ud-kv">
+  return mod('摘要', `${scenarioTagsHTML(store.sceneLabelsOfUnit(u))}<div class="ud-kv">
     ${field('攻击方法', UI.esc(methodText(t, u)))}
-    ${field('攻击场景', UI.esc(store.sceneLabel(store.sceneOfUnit(u))))}
+    ${field('攻击场景', UI.esc(store.sceneLabelsOfUnit(u).join('、')||'未打标签'))}
+    ${classificationFields(u).filter(d=>d.id!=='risk').map(d=>field(d.name,UI.esc(d.labels.join('、')||'未打标签'))).join('')}
     ${field('判定结果', UI.verdictText(verdictOf(u)))}
     ${field('完成/总轮数', roundCountText(t, u))}
     ${field('攻破轮次', breachRoundText(t, u))}
+    ${field('耗时', reportUnitMetricHTML(t, u, 'duration'))}
+    ${field('Token', reportUnitMetricHTML(t, u, 'tokens'))}
     ${gr ? field('蓝队结果', gtag(gr)) : ''}
   </div>`);
 }
@@ -389,7 +431,7 @@ function processMod(t, u) {
     const steps = h0.steps?.length
       ? [text('原始题目', h0.original), ...h0.steps.map((s, i) => text(`变换第 ${i + 1} 步 · ${s.label}${i === h0.steps.length - 1 ? '（送给靶标的提示词）' : ''}`, s.prompt))].join('')
       : '';
-    return mod('攻击过程', steps + roundBody(h0));
+    return mod('攻击过程', roundVisual(t, u) + steps + roundBody(h0));
   }
   /* 折叠条只放轮次与提示词摘要；攻击者拒绝、蓝队拦截等标记都在展开后展示 */
   const first = roundInfo(t, u).breachRound;
@@ -401,7 +443,16 @@ function processMod(t, u) {
       <span class="ud-round-sum">${UI.esc((h.prompt || '').replace(/\s+/g, ' ').slice(0, 120))}</span></summary>
       <div class="ud-round-body">${refused}${roundBody(h)}</div></details>`;
   }).join('');
-  return mod('攻击过程', `<div class="ud-rounds">${rounds}</div>`);
+  return mod('攻击过程', `${roundVisual(t, u)}<div class="ud-rounds">${rounds}</div>`);
+}
+
+function roundVisual(t, u) {
+  const first = roundInfo(t, u).breachRound;
+  return `<div class="rr-round-visual" aria-label="各轮判定">${u.history.map(h => {
+    const state = h.judgeSuccess === true || h.round === first ? 'breach' : h.judgeSuccess === false ? 'safe' : 'unknown';
+    const label = state === 'breach' ? '已攻破' : state === 'safe' ? '未攻破' : '未记录判定';
+    return `<div class="${state}"><span>第 ${UI.esc(h.round)} 轮</span><strong>${label}</strong></div>`;
+  }).join('')}</div>`;
 }
 
 const basisMod = (u) => mod('判定依据', text('裁判理由', u.judgeReason, '裁判未给出理由'));
@@ -429,7 +480,11 @@ function analysisMd(t) {
     '## 核心发现', '', ...findings(t).map((f, i) => `${i + 1}. **${f.title}**：${f.text}`), ''];
   const tbl = (title, col, rows) => [`## ${title}`, '', `| ${col} | 有效数量 | 守住 | 攻破 | 攻破率 |`, '|---|---|---|---|---|',
     ...rows.map((r) => `| ${r.label} | ${r.judged} | ${r.judged - r.breach} | ${r.breach} | ${UI.pct(r.value)} |`), ''];
-  return [...L, ...methodPerformanceMd(t, methodRows(t)), ...tbl('场景风险分析', '攻击场景', sceneRows(t)), ...guardMd(t),
+  const methodMd = methodPerformanceMd(t, methodRows(t));
+  methodMd.splice(2, 0, ...methodInsights(t), '');
+  const scenesMd = tbl('场景风险分析', '攻击场景', sceneRows(t));
+  scenesMd.splice(2, 0, ...sceneInsights(t), '');
+  return [...L, ...methodMd, ...scenesMd, '## 靶标整体表现', '', ...riskMethodMatrixMd(modelMatrix(t)), ...guardMd(t),
     '## 下一步建议', '', ...suggestions(t).map((s, i) => `${i + 1}. **${s.title}**：${s.text}`), ''].join('\n');
 }
 function guardMd(t) {
@@ -438,6 +493,7 @@ function guardMd(t) {
   if (!s.total) return [];
   const row = (m) => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `| ${k} | ${v} |`);
   return ['## 蓝队防护分析', '',
+    guardInsight(s), '',
     `- 攻击单元去向：共 ${s.total} 条，${guardFlow(s).map((f) => `${f.label} ${f.value}`).join('，')}`,
     `- 拦截率：${UI.pct(s.blocked / s.total)}`, '',
     '| 拦截涉及的攻击方法 | 拦截单元数 |', '|---|---|', ...row(s.byMethod), '',
@@ -469,8 +525,10 @@ function unitsMd(t, units) {
       return [
         `### ${unitNo(u)}. ${u.method} · ${verdictOf(u).label}`, '',
         '#### 摘要', '',
-        `- 攻击方法：${methodText(t, u)}`, `- 攻击场景：${store.sceneLabel(store.sceneOfUnit(u))}`,
+        `- 攻击方法：${methodText(t, u)}`, `- 攻击场景：${store.sceneLabelsOfUnit(u).join('、')||'未打标签'}`,
+        ...classificationFields(u).filter(d=>d.id!=='risk').map(d=>`- ${d.name}：${d.labels.join('、')||'未打标签'}`),
         `- 判定结果：${verdictOf(u).label}`,
+        `- 耗时：${reportUnitMetricMd(t, u, 'duration')}`, `- Token：${reportUnitMetricMd(t, u, 'tokens')}`,
         `- 完成/总轮数：${roundCountText(t, u)}`, `- 攻破轮次：${breachRoundText(t, u)}`, ...(gr ? [`- 蓝队结果：${gr.label}`] : []), '',
         '#### 攻击题目', '', '```', u.target, '```', '',
         '#### 攻击过程', '', ...proc,

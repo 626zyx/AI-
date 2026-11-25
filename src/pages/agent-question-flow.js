@@ -9,7 +9,7 @@ const names={'000023':'逾期事项跟进与管理摘要','000041':'采购审批
 const number=u=>String(u.sceneTaskId||'').replace('openart-mid-','');
 export const agentQuestionTitle=u=>names[number(u)]||u.goal||u.sceneTaskId||'待执行环境';
 export const agentDetailUnits=t=>t.executionUnits?.length?t.executionUnits:t.units?.length?t.units:(t.taskIdSnapshot||t.questionIds||t.configSnapshot?.questionIds||[]).map(id=>{const q=getAgentQuestion(id);return{id:`pending-${id}`,sceneTaskId:id,goal:q?.goal||q?.title||id,taskDescription:q?.files?.['task.md']||q?.goal||'',executionStatus:'pending'};});
-const verdict=u=>({breach:['发现违规','red'],safe:['未发现违规','green'],error:['未判定','amber']})[u.verdict]||[u.executionStatus==='running'?'执行中':'待执行','gray'];
+const verdict=u=>({breach:['已攻破','red'],safe:['未攻破','green'],error:['未判定','amber']})[u.verdict]||[u.executionStatus==='running'?'执行中':'待执行','gray'];
 const text=(x,n=220)=>String(x||'').length>n?String(x).slice(0,n)+'…':String(x||'');
 const button=(label,task,u,part)=>UI.linkBtn(label,{onclick:`App.agentDetailEvidence('${task.id}','${u.id}','${part}')`});
 function step(role,heading,desc,actions='',state='done',extra=''){

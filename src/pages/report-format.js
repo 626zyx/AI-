@@ -23,13 +23,11 @@ export function reportDocument(sections) {
   const visibleSections = sections.filter(Boolean);
   const body = visibleSections.map((section, index) => {
     const id = `report-section-${index + 1}`;
-    const number = String(index + 1).padStart(2, '0');
     const title = section.match(/data-report-title="([^"]*)"/)?.[1] || '';
-    contents.push(`<li><button type="button" aria-controls="${id}"${index === 0 ? ' aria-current="location"' : ''} onclick="App.reportJump('${id}')"><span>${number}</span>${title}</button></li>`);
-    return section.replace('<section class="rr-section"', `<section id="${id}" tabindex="-1" class="rr-section"`)
-      .replace('<h2 class="rr-section-title">', `<h2 class="rr-section-title"><span class="rr-section-number" aria-hidden="true">${number}</span>`);
+    contents.push(`<li><button type="button" aria-controls="${id}"${index === 0 ? ' aria-current="location"' : ''} onclick="App.reportJump('${id}')">${title}</button></li>`);
+    return section.replace('<section class="rr-section"', `<section id="${id}" tabindex="-1" class="rr-section"`);
   }).join('');
-  return `<article class="rr-analysis rr-document" aria-label="报告结果分析"><nav class="rr-document-index" style="grid-row:1 / span ${Math.max(1, visibleSections.length)}" aria-label="报告目录"><span>目录</span><ol>${contents.join('')}</ol></nav>${body}</article>`;
+  return `<article class="rr-analysis rr-document" aria-label="报告结果分析"><nav class="rr-document-index" style="grid-row:1 / span ${Math.max(1, visibleSections.length)}" aria-label="报告章节导航"><ul>${contents.join('')}</ul></nav>${body}</article>`;
 }
 
 export function mountReportDocument(host) {

@@ -3,7 +3,7 @@
 import * as UI from './ui.js';
 import * as store from '../domain/store.js';
 import { TASK_STATUS, SURFACE_KIND } from '../domain/constants.js';
-import { detailValue as value, detailFields as fields, detailBlock, detailTableField, methodConfigurationTable, openConfigDetail } from './config-detail.js';
+import { detailValue as value, detailFields as fields, detailBlock, detailTableField, methodConfigurationTable, isProcessAuxiliary, openConfigDetail } from './config-detail.js';
 import { modelEvaluatorSnapshot } from '../domain/model-evaluators.js';
 
 const configuration = task => ({ ...task, ...task.configSnapshot });
@@ -33,7 +33,7 @@ function methodRows(config) {
     const recorded = method.params;
     const params = recorded || strategy?.methods.find(m => m.name === method.name)?.params || [];
     const auxiliary = method.auxiliaryModels || params.filter(([name]) => name.includes('模型')).map(([role, name]) => ({ role, name }));
-    return { ...method, params: params.filter(([name]) => !name.includes('模型')), auxiliary };
+    return { ...method, params: params.filter(([name]) => !name.includes('模型')&&!isProcessAuxiliary(name)), auxiliary:auxiliary.filter(model=>!isProcessAuxiliary(model.role)) };
   });
 }
 function bankScope(config, type) {

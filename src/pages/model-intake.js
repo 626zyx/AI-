@@ -57,7 +57,7 @@ function renderEditor() {
   const body=`<form class="mi-form" onsubmit="event.preventDefault();App.miSave()" autocomplete="off">
     <div class="mi-fields">
       ${field('name','模型名称',input('name',c.name,'例如：企业对话模型'),{required:true})}
-      ${field('apiModel','请求模型标识 (model)',input('apiModel',c.apiModel,'例如：deepseek-chat'),{required:true})}
+      ${field('apiModel','模型标识',input('apiModel',c.apiModel,'例如：deepseek-chat'),{required:true})}
       ${field('baseUrl','API 地址 (BaseURL)',input('baseUrl',c.baseUrl,'https://api.example.com/v1'),{required:true,wide:true})}
       ${field('apiType','接口类型',`<select id="mi-apiType" onchange="App.miField('apiType',this.value)" ${disabled}><option value="openai" selected>OpenAI 兼容对话接口</option></select>`)}
       ${field('authType','鉴权方式',`<select id="mi-authType" onchange="App.miField('authType',this.value)" ${disabled}><option value="bearer" selected>API Key</option></select>`)}
@@ -81,7 +81,7 @@ export function modelDetail(id,{onEdit,onDelete,onTest}={}) {
   editor=null;detail={id,onEdit,onDelete,onTest};
   const validation=asset.validation||{},lastIssue=validation.steps?.find(step=>step.state==='failed')?.detail;
   const result=(lastIssue||validation.state==='passed')?(lastIssue||'演示连通测试通过'):'';
-  const rows=[['模型名称',asset.name],['请求模型标识 (model)',asset.apiModel],['API 地址 (BaseURL)',asset.baseUrl],['接口类型','OpenAI 兼容对话接口'],['鉴权方式','API Key'],['API Key',asset.credentialConfigured?'已配置':'未配置']];
+  const rows=[['模型名称',asset.name],['模型标识',asset.apiModel],['API 地址 (BaseURL)',asset.baseUrl],['接口类型','OpenAI 兼容对话接口'],['鉴权方式','API Key'],['API Key',asset.credentialConfigured?'已配置':'未配置']];
   const body=`<div class="mi-detail"><dl>${rows.map(([label,value])=>`<div><dt>${e(label)}</dt><dd>${e(value||'—')}</dd></div>`).join('')}<div><dt>接入状态</dt><dd>${UI.badge(...(STATUS[asset.status]||STATUS.pending))}</dd></div></dl>${result?`<p class="mi-detail-result${lastIssue?' failed':''}">${e(result)}</p>`:''}</div>`;
   const footer=`<div class="mi-footer-left">${onTest?UI.btn('测试连通',{onclick:'App.miDetailTest()',disabled:asset.busy}):''}</div><div class="mi-footer-right">${onDelete?UI.btn('删除',{onclick:'App.miDelete()'}):''}${UI.btn('关闭',{onclick:'App.miCancel()'})}${UI.btn('编辑信息',{kind:'primary',onclick:'App.miEdit()'})}</div>`;
   UI.closeModal();UI.drawer(asset.name,body,footer);decorateDrawer();

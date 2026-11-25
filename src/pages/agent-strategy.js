@@ -12,7 +12,7 @@ import { detailFields, detailBlock, detailContent, detailTableField, methodConfi
 import { selectableAgentBanks, selectableMethods } from '../domain/resource-authoring.js';
 import { latestStrategyRows, releaseLabel, releaseNumber } from '../domain/strategy-service.js';
 
-const view = { q: '', status: 'all', sortDesc: true, draftsSortDesc: true };
+const view = { q: '', status: 'all', sortKey:'createdAt', draftsSortKey:'createdAt', sortDesc: true, draftsSortDesc: true };
 const statusBadge = (s) => UI.badge(store.AG_STRATEGY_STATUS[s.status], s.status === 'published' ? 'blue' : 'gray');
 const methodText = (s) => {
   const m = store.agentMethodOf(s.methodId);
@@ -20,16 +20,29 @@ const methodText = (s) => {
   return m.requiresRole ? `${m.name}（攻击生成模型：${store.modelName(s.attackerModelId)}）` : m.name;
 };
 const lines = (arr) => `<div class="cfg-lines">${arr.map((l) => `<div>${UI.esc(l)}</div>`).join('') || '—'}</div>`;
+function publicationError(s) {
+  if(s.status!=='draft')return '已发布';
+  if(!s.name?.trim())return '请填写策略名称';
+  const method=store.agentMethodOf(s.methodId);if(!method)return '请选择攻击方法';
+  if(method.requiresRole&&!store.models.some(model=>model.id===s.attackerModelId&&usableTaskModel(model)))return '请选择可用的攻击生成模型';
+  if(!s.banks?.length)return '请选择场景题库';
+  for(const ref of s.banks){const bank=selectableAgentBanks().find(bank=>bank.id===ref.bankId);if(!bank)return '所选场景题库不可用';const total=bank.items.length||bank.total;if(!total||ref.count!=null&&(!Number.isInteger(ref.count)||ref.count<1||ref.count>total))return '请检查选题范围';}
+  return '';
+}
+function strategyActions(s) {
+  return `<div class="row-actions strategy-row-actions" data-strategy-status="${s.status}">${UI.linkBtn('发布',{onclick:`App.pubAgStrategy('${s.id}')`,disabled:Boolean(publicationError(s)),title:publicationError(s)})}${UI.linkBtn('详情',{onclick:`App.openAgStrategy('${s.id}')`})}${UI.linkBtn('编辑',{onclick:`App.editAgStrategy('${s.id}')`,disabled:s.status!=='draft'})}${UI.linkBtn('复制',{onclick:`App.copyAgStrategy('${s.id}')`})}${UI.linkBtn('删除',{danger:true,onclick:`App.delAgStrategy('${s.id}')`})}</div>`;
+}
 
 /* ---------------------------------------------------------------- 列表 */
 export function agentStrategyPage() {
-  let rows = latestStrategyRows(store.agentStrategies);
+  if(store.agentStrategies.some(row=>row.id===router.state().param)){Object.assign(view,{q:'',status:'all',sortKey:'createdAt',sortDesc:true});UI.resetPage('ag-strategies');}
+  let rows = latestStrategyRows(store.agentStrategies).reverse();
   if (view.status !== 'all') rows = rows.filter((s) => s.status === view.status);
   if (view.q.trim()) {
     const q = view.q.trim().toLowerCase();
     rows = rows.filter((s) => s.name.toLowerCase().includes(q));
   }
-  rows = [...rows].sort((x, y) => compareValues(x.updatedAt, y.updatedAt, view.sortDesc));
+  rows = [...rows].sort((x, y) => compareValues(x[view.sortKey], y[view.sortKey], view.sortDesc));
   const flt = UI.filters({
     search: { label: '搜索', id: 'ags-q', value: view.q, placeholder: '搜索策略名称', oninput: 'App.agsSearch(this.value)' },
     selects: [{
@@ -45,14 +58,9 @@ export function agentStrategyPage() {
       { title: '场景题库', render: (s) => lines(store.agentStrategyBankLines(s)) },
       { title: '版本', width: '90px', render: s => s.source === 'system' ? '<span class="faint">系统</span>' : UI.linkBtn(releaseLabel(s.version), { onclick: `App.agsVersions('${s.id}')` }) },
       { title: '状态', width: '100px', render: statusBadge },
-      { title: '更新时间', width: '150px', cls: 'num', sort: { direction: view.sortDesc ? 'descending' : 'ascending', onclick: 'App.agsSort()' }, render: (s) => UI.esc(s.updatedAt || '—') },
+      { title: '更新时间', width: '150px', cls: 'num', sort: { direction: view.sortKey==='updatedAt'?(view.sortDesc ? 'descending' : 'ascending'):'none', onclick: 'App.agsSort()' }, render: (s) => UI.esc(s.updatedAt || '—') },
       {
-        title: '操作', width: '190px', cls: 'actions',
-        render: (s) => `<div class="row-actions strategy-row-actions" data-strategy-status="${s.status}">
-          ${s.status === 'draft'
-            ? UI.linkBtn('编辑', { onclick: `App.editAgStrategy('${s.id}')` }) + UI.linkBtn('删除', { danger: true, onclick: `App.delAgStrategy('${s.id}')` })
-            : UI.linkBtn('详情', { onclick: `App.openAgStrategy('${s.id}')` }) + (s.source === 'system' ? '' : UI.linkBtn('新版本', { onclick: `App.agsNewVersion('${s.id}')` })) + UI.linkBtn('复制', { onclick: `App.copyAgStrategy('${s.id}')` }) + (s.source === 'system' ? UI.linkBtn('删除', { danger: true, onclick: `App.delAgStrategy('${s.id}')` }) : '')}
-        </div>`,
+        title: '操作', width: '310px', cls: 'actions', render: strategyActions,
       },
     ],
     rows,
@@ -133,20 +141,16 @@ function renderForm() {
 
 /* ---------------------------------------------------------------- 草稿箱 */
 export function agentStrategyDraftsPage() {
-  const rows = store.agentStrategies.filter((s) => s.status === 'draft').sort((x, y) => compareValues(x.updatedAt, y.updatedAt, view.draftsSortDesc));
+  const rows = store.agentStrategies.filter((s) => s.status === 'draft').reverse().sort((x, y) => compareValues(x[view.draftsSortKey], y[view.draftsSortKey], view.draftsSortDesc));
   const table = UI.pagedTable(
     'ag-stg-drafts',
     [
       { title: '策略名称', render: (s) => UI.linkBtn(s.name || '未命名策略', { onclick: `App.editAgStrategy('${s.id}')` }) },
       { title: '攻击方法', width: '160px', render: (s) => UI.esc(store.agentMethodOf(s.methodId)?.name || '未选择') },
       { title: '场景题库', render: (s) => lines(store.agentStrategyBankLines(s)) },
-      { title: '更新时间', width: '150px', cls: 'num', sort: { direction: view.draftsSortDesc ? 'descending' : 'ascending', onclick: 'App.agsSort(true)' }, render: (s) => UI.esc(s.updatedAt || '—') },
+      { title: '更新时间', width: '150px', cls: 'num', sort: { direction: view.draftsSortKey==='updatedAt'?(view.draftsSortDesc ? 'descending' : 'ascending'):'none', onclick: 'App.agsSort(true)' }, render: (s) => UI.esc(s.updatedAt || '—') },
       {
-        title: '操作', width: '170px', cls: 'actions',
-        render: (s) => `<div class="row-actions">
-          ${UI.linkBtn('编辑', { onclick: `App.editAgStrategy('${s.id}')` })}
-          ${UI.linkBtn('删除', { danger: true, onclick: `App.delAgStrategy('${s.id}')` })}
-        </div>`,
+        title: '操作', width: '310px', cls: 'actions', render: strategyActions,
       },
     ],
     rows,
@@ -156,17 +160,16 @@ export function agentStrategyDraftsPage() {
 }
 
 export const actions = {
-  agsNewVersion(id) { try { const next = store.newAgentStrategyVersion(id); UI.closeDrawer(); actions.editAgStrategy(next); } catch (error) { UI.toast(error.message); } },
+  agsNewVersion(id) { try { const next = store.newAgentStrategyVersion(id); UI.closeDrawer(); router.nav('strategy','ag-strategy',next); } catch (error) { UI.toast(error.message); } },
   agsVersions(id) { const s = store.getAgentStrategy(id); if (!s) return; const rows = store.agentStrategies.filter(row => (row.familyId || row.id) === (s.familyId || s.id)).sort((a, b) => releaseNumber(b.version) - releaseNumber(a.version)); UI.drawer(`${s.name} · 版本记录`, '<p class="ra-note">每个发布版本独立保存；旧任务始终保留原策略、题库及方法。</p>' + UI.table([{ title: '版本', render: row => releaseLabel(row.version) }, { title: '状态', render: row => statusBadge(row) }, { title: '更新时间', render: row => UI.esc(row.updatedAt) }, { title: '操作', render: row => UI.linkBtn(row.status === 'draft' ? '编辑' : '查看', { onclick: `App.${row.status === 'draft' ? 'editAgStrategy' : 'openAgStrategy'}('${row.id}')` }) }], rows), UI.btn('关闭', { onclick: 'UI.closeDrawer()' })); },
   agsSearch(v) { view.q = v; UI.resetPage('ag-strategies'); router.nav('strategy', 'ag-strategy'); },
   agsStatus(v) { view.status = v; UI.resetPage('ag-strategies'); router.nav('strategy', 'ag-strategy'); },
-  agsSort(drafts = false) { const key = drafts ? 'draftsSortDesc' : 'sortDesc'; view[key] = !view[key]; router.nav('strategy', drafts ? 'ag-strategy-drafts' : 'ag-strategy'); },
+  agsSort(drafts = false) { const key = drafts ? 'draftsSortDesc' : 'sortDesc',sortKey=drafts?'draftsSortKey':'sortKey'; view[key] = view[sortKey]==='updatedAt'?!view[key]:true;view[sortKey]='updatedAt'; router.nav('strategy', drafts ? 'ag-strategy-drafts' : 'ag-strategy'); },
   copyAgStrategy(id) {
     try {
       const copiedId = store.copyAgentStrategy(id);
       view.q = ''; view.status = 'all'; UI.resetPage('ag-strategies');
-      UI.closeDrawer(); router.nav('strategy', 'ag-strategy');
-      actions.editAgStrategy(copiedId);
+      UI.closeDrawer();UI.closeModal();router.nav('strategy', 'ag-strategy',copiedId);UI.toast('配置已复制为独立草稿');
       return copiedId;
     } catch (error) { UI.toast(error.message); }
   },
@@ -174,7 +177,6 @@ export const actions = {
   openAgStrategy(id) {
     const s = store.getAgentStrategy(id);
     if (!s) return;
-    if (s.status === 'draft') { UI.closeDrawer(); return actions.editAgStrategy(id); }
     const method = store.agentMethodOf(s.methodId);
     const body = detailContent(detailBlock('策略基础信息', detailFields([
       ['策略名称', s.name], ['策略描述', s.desc], ['版本', s.source === 'system' ? '系统' : releaseLabel(s.version)], ['状态', store.AG_STRATEGY_STATUS[s.status]],
@@ -215,7 +217,7 @@ export const actions = {
       if (control) { control.value = resource.id; control.firstElementChild.textContent = resource.displayName || resource.name; control.lastElementChild.textContent = '更换'; }
     } });
   },
-  agsSave(publish) {
+  agsSave(publish,confirmed=false) {
     const f = form;
     if (!f.name.trim()) return UI.toast('请填写策略名称');
     if (store.agentStrategies.some(s => s.id !== f.id && (s.familyId || s.id) !== f.familyId && s.name.trim().toLowerCase() === f.name.trim().toLowerCase())) return UI.toast('策略名称重复，请修改');
@@ -226,17 +228,20 @@ export const actions = {
     const total = b ? b.items.length || b.total : 0;
     if (b && f.count !== null && (!Number.isInteger(f.count) || f.count < 1 || f.count > total)) return UI.toast(`题量需在 1–${total} 之间`);
     const count = f.count !== null && f.count < total ? f.count : null;
-    store.saveAgentStrategy({
+    if(publish&&!confirmed)return UI.confirmPublication({kind:'演练策略',name:f.name,onConfirm:()=>actions.agsSave(true,true)});
+    const savedId=store.saveAgentStrategy({
       id: f.id || undefined, familyId: f.familyId, version: f.version || '1.0', name: f.name.trim(), desc: f.desc, methodId: f.methodId,
       attackerModelId: f.attackerModelId || null, banks: b ? [{ bankId: f.bankId, count }] : [],
       status: publish ? 'published' : 'draft',
     });
     UI.closeModal();
-    UI.toast(publish ? '策略已发布' : '已保存到草稿箱');
-    router.nav('strategy', 'ag-strategy');
+    UI.toast(publish ? '策略已发布' : '策略草稿已保存');
+    router.nav('strategy', 'ag-strategy',savedId);
   },
-  pubAgStrategy(id) {
-    actions.editAgStrategy(id);
+  pubAgStrategy(id,confirmed=false) {
+    const row=store.getAgentStrategy(id);if(!row)return UI.toast('策略不存在');const error=publicationError(row);if(error)return UI.toast(error);
+    if(!confirmed)return UI.confirmPublication({kind:'演练策略',name:row.name,onConfirm:()=>actions.pubAgStrategy(id,true)});
+    store.saveAgentStrategy({...row,status:'published'});router.nav('strategy','ag-strategy');UI.toast('策略已发布');
   },
   delAgStrategy(id) {
     const s = store.getAgentStrategy(id);

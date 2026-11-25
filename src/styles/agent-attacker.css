@@ -1,0 +1,14 @@
+.aat-actions{display:flex;align-items:center;gap:18px;white-space:nowrap}
+.aat-editor,.aat-detail{display:grid;gap:20px}
+.aat-editor .field,.aat-detail .field{display:grid;gap:8px;min-width:0}
+.aat-editor .field>span,.aat-detail .field>span,.aat-prompt-heading label,.aat-detail h3{font-size:13px;font-weight:500;margin:0}
+.aat-editor input,.aat-editor textarea,.aat-detail textarea{box-sizing:border-box;width:100%;min-width:0;border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:10px 12px;background:var(--surface);color:var(--text);font:inherit}
+.aat-editor textarea,.aat-detail textarea{resize:vertical;line-height:1.7}
+.aat-editor .aat-prompt,.aat-detail .aat-prompt{min-height:280px;font-family:var(--font-mono,monospace);font-size:12px}
+.aat-detail textarea[readonly]{background:var(--subtle)}
+.aat-prompt-heading,.aat-meta{display:flex;align-items:center;gap:14px}
+.aat-prompt-heading{justify-content:space-between}
+.aat-meta{font-size:12px;color:var(--muted)}
+.aat-detail p{margin:8px 0 0;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+
+.aat-validation-note{margin:0;color:var(--muted);font-size:var(--t-support);line-height:1.75}

@@ -101,12 +101,15 @@ function renderForm({ preserveScroll = false } = {}) {
   UI.modal(f.id ? '编辑接入信息' : '接入智能体', body, `${UI.btn('校验信息', { onclick: 'App.agaTest()' })}${UI.btn('取消', { onclick: 'UI.closeModal()' })}${UI.btn('保存接入信息', { kind: 'primary', onclick: 'App.agaSave()' })}`, { wide: true, cls: 'agent-onboarding-modal' });
   if (preserveScroll) document.querySelector('.agent-onboarding-modal .modal-body').scrollTop = scrollTop;
 }
-function refreshDeclarations() {
+function refreshDeclarations({ page } = {}) {
   const editor = document.querySelector('.ag-surface-editor');
   if (!editor) return;
   // Update only the rows: keep the surrounding modal, scroll position and other fields.
   const body = editor.closest('.modal-body'), scrollTop = body.scrollTop;
+  const currentPage=page||Number(editor.querySelector('.auto-paged-table')?.dataset.tablePage)||1;
   editor.outerHTML = declarationsHTML();
+  const pagerButton=document.querySelector('.ag-surface-editor .auto-paged-table > .pager button');
+  if(pagerButton) UI.tablePage(pagerButton,currentPage);
   body.scrollTop = scrollTop;
   clearCheck();
 }
@@ -147,7 +150,7 @@ export const actions = {
       } catch (error) { UI.toast(error.message); }
     } else { row.path = value; clearCheck(); }
   },
-  agaAddSurface() { form.surfaceDeclarations.push({ kind: 'instruction', path: '' }); refreshDeclarations(); },
+  agaAddSurface() { form.surfaceDeclarations.push({ kind: 'instruction', path: '' }); refreshDeclarations({page:Math.ceil(form.surfaceDeclarations.length/UI.PAGE_SIZE)}); },
   agaRemoveSurface(index) { form.surfaceDeclarations.splice(index, 1); refreshDeclarations(); },
   agaTest() {
     try { validatedForm(); document.getElementById('agf-check').textContent = '填写信息校验通过；运行能力和注入面加载条件尚待验证。'; }

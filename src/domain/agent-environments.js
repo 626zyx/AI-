@@ -47,7 +47,7 @@ function environmentFiles(files) {
   }));
 }
 function environmentRecord(question) {
-  const record = { ...copy(question), files: environmentFiles(question.files) };
+  const record = { ...copy(question), createdAt: question.createdAt || question.updatedAt, files: environmentFiles(question.files) };
   delete record.hasRule; delete record.ruleDefinition;
   return record;
 }
@@ -79,7 +79,8 @@ export function saveAgentQuestion(data) {
   const files = environmentFiles(inputFiles);
   const id = previous?.id || uid(), business = String(data.business || AGENT_BUSINESS_DEFAULT).trim();
   const riskLabels = [...new Set(data.riskLabels || previous?.riskLabels || [])].filter(label => label in RISK_LABEL);
-  const next = { ...copy(previous || {}), ...copy(data), id, taskId: previous?.taskId || id, title: String(data.title || previous?.title || '未命名环境').trim(), goal: String(data.goal || previous?.goal || ''), business, bankId: business === AGENT_BUSINESS_DEFAULT ? fiveTaskBank.id : `business-${encodeURIComponent(business)}`, riskLabels, files: copy(files), source: 'custom', status: 'draft', version: data.version || previous?.version || '1.0', updatedAt: now(), validation: { static: 'not_run', runtime: 'not_run' } };
+  const at = now();
+  const next = { ...copy(previous || {}), ...copy(data), id, taskId: previous?.taskId || id, title: String(data.title || previous?.title || '未命名环境').trim(), goal: String(data.goal || previous?.goal || ''), business, bankId: business === AGENT_BUSINESS_DEFAULT ? fiveTaskBank.id : `business-${encodeURIComponent(business)}`, riskLabels, files: copy(files), source: 'custom', status: 'draft', version: data.version || previous?.version || '1.0', createdAt: previous?.createdAt || previous?.updatedAt || at, updatedAt: at, validation: { static: 'not_run', runtime: 'not_run' } };
   // Validation belongs to the saved contents, never to a caller-supplied report.
   if (previous?.validation?.sandbox && sandboxValidationIsCurrent(previous.validation.sandbox, { question: next })) next.validation = copy(previous.validation);
   for (const field of ['path', 'dirty', 'report', 'editorView', 'sandboxBusy', 'sandboxReport', 'hasRule', 'hasLlm', 'ruleDefinition', 'llmDefinition', 'labels']) delete next[field];
@@ -103,10 +104,9 @@ export function checkAgentQuestion(input) {
   add('文件与路径', validPaths, validPaths ? '文本文件及相对路径有效' : '存在非法路径或非文本内容');
   const malformed = Object.entries(files).filter(([p, text]) => { if (!p.endsWith('.json')) return false; try { JSON.parse(text); return false; } catch { return true; } }).map(([p]) => p);
   add('JSON语法', !malformed.length, malformed.length ? `JSON格式错误：${malformed.join('、')}` : 'JSON均可解析');
-  add('业务定义', !!question.title?.trim() && !!question.business?.trim(), '请填写环境名称与业务分类');
+  add('环境名称', !!question.title?.trim(), '请填写环境名称');
   add('任务描述', !!files['task.md']?.trim(), '需要非空 task.md');
   add('工作区材料', Object.keys(files).some(p => p.startsWith('workspace/') && files[p].trim()), '需要至少一份 workspace 业务材料');
-  add('风险标注', (question.riskLabels || []).length > 0, '请至少选择一项风险标签');
   const availability = definitions(files);
   add('LLM评估定义', availability.hasLlm, 'checkpoints.md 需包含实际判分标准');
   let contract = {}; try { contract = JSON.parse(files['safety_contract.json'] || '{}'); } catch { /* Included in JSON check. */ }
@@ -118,11 +118,19 @@ export function checkAgentQuestion(input) {
 export function publishAgentQuestion(id) {
   const question = custom.find(q => q.id === id); if (!question) throw new Error('仅自建草稿需要发布');
   if (question.status === 'published') return view(question);
-  const report = checkAgentQuestion(question); if (!report.valid) throw new Error(report.errors.join('；'));
-  const sandbox = question.validation?.sandbox;
-  if (sandbox?.state !== 'passed' || !sandboxValidationIsCurrent(sandbox, { question, staticReport: report })) throw new Error('请先完成当前环境的可运行性检查与基本对照测试，再确认发布');
+  const readiness = agentQuestionPublishReadiness(id);
+  if (!readiness.ready) throw new Error(readiness.errors.join('；'));
   question.status = 'published'; question.publishedAt = now(); question.updatedAt = question.publishedAt;
   persist(); return view(question);
+}
+// Both single and batch publication use the same current-content gate. A batch
+// can publish only drafts that have already passed the existing demo validation.
+export function agentQuestionPublishReadiness(id) {
+  const question = raw(id);
+  if (!question || question.source !== 'custom' || question.status !== 'draft') return {ready:false,errors:['仅自建草稿可发布']};
+  const report = checkAgentQuestion(question), errors = [...report.errors], sandbox = question.validation?.sandbox;
+  if (sandbox?.state !== 'passed' || !sandboxValidationIsCurrent(sandbox,{question,staticReport:report})) errors.push('请先完成当前环境的可运行性检查与基本对照测试，再确认发布');
+  return {ready:!errors.length,errors};
 }
 export async function validateAgentQuestionSandbox(id, options = {}) {
   const question = custom.find(q => q.id === id);
