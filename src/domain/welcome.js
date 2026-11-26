@@ -220,7 +220,7 @@ export function welcomeAssetDirectory(tasks = [], assets = []) {
     const observations = sorted.map(task => ({ task, ...taskMetricValues({ ...task, objectType: row.kind }).asr }));
     const valid = observations.filter(metric => metric.denominator > 0 && Number.isFinite(metric.value));
     const values = valid.map(metric => metric.value), summary = groupSummary(sorted, row.kind);
-    return { ...row, tasks: sorted, latest: sorted[0] || null, observations, asr: average(values).value,
+    return { ...row, totalUnits: sorted.reduce((sum, task) => sum + Math.max(task.units?.length || 0, Number(task.total) || 0), 0), tasks: sorted, latest: sorted[0] || null, observations, asr: average(values).value,
       minimum: values.length ? Math.min(...values) : null, maximum: values.length ? Math.max(...values) : null,
       breach: valid.reduce((sum, metric) => sum + metric.numerator, 0), judged: valid.reduce((sum, metric) => sum + metric.denominator, 0), assessedRuns: valid.length,
       executionRate: summary.executionRate, averageDuration: summary.averageDuration, averageTokens: summary.averageTokens };

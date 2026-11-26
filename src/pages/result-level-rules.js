@@ -34,7 +34,7 @@ export function dataRulePage() {
     { title: '演练类型', width: '110px', render: rule => e(sourceName(rule.source)) },
     { title: '结果指标', width: '150px', render: rule => e(resultLevelMetric(rule.metricId)?.label || '旧指标') },
     { title: '等级映射', render: mapping },
-    { title: '状态', width: '80px', render: rule => UI.badge(rule.enabled ? '启用' : '停用', rule.enabled ? 'green' : 'gray') },
+    { title: '状态', width: '80px', render: rule => rule.enabled ? '<span class="metadata-text metadata-positive">启用</span>' : UI.badge('停用') },
     { title: '操作', width: '220px', cls: 'actions', render: rule => `<div class="row-actions">${UI.linkBtn('编辑', { onclick: `App.dlEdit('${rule.id}')` })}${UI.linkBtn('启用', {disabled:rule.enabled, onclick: `App.dlToggle('${rule.id}')` })}${UI.linkBtn('停用', {disabled:!rule.enabled, onclick: `App.dlToggle('${rule.id}')` })}${UI.linkBtn('删除', { danger: true, onclick: `App.dlDelete('${rule.id}')` })}</div>` },
   ], rows, '暂无匹配的数据等级规则');
   return UI.pageHead('数据等级', { actions: UI.btn('新建规则', { kind: 'primary', ico: 'plus', onclick: 'App.dlEdit()' }) }) + filters + UI.card('', table, '', true);

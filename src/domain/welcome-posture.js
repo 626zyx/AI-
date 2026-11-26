@@ -1,3 +1,4 @@
+import { taskOperationalMetrics } from './task-technical-metrics.js';
 /* Unified resource posture. Every plotted value is backed by completed execution
  * units; missing judgments stay null and tag filters recompute their denominator. */
 import { taskMetricValues } from './metrics.js';
@@ -203,7 +204,8 @@ export function welcomeUnifiedPosture(dashboard, { mode = 'resources', tag = nul
   const businessCoverage = classificationCoverage(records, 'business'), riskCoverage = classificationCoverage(records, 'risk');
   const axes = radarAxes(records);
   const businesses = classificationPosture(records, 'business', 4), risks = classificationPosture(records, 'risk', 6);
-  const metrics = tasks.map(task => taskMetricValues({ ...task, objectType: task.kind }).asr).filter(row => row.denominator > 0 && Number.isFinite(row.value));
+  const totalBreach = records.reduce((sum, record) => sum + record.metric.numerator, 0);
+  const totalExecuted = tasks.reduce((sum, task) => sum + taskOperationalMetrics({ ...task, objectType: task.kind }, { recordedOnly: true }).execution.executed, 0);
   return {
     radarAxes: axes,
     businessSeries: businesses.displayed, allBusinessSeries: businesses.all, unclassifiedBusiness: businesses.unclassified,
@@ -215,6 +217,7 @@ export function welcomeUnifiedPosture(dashboard, { mode = 'resources', tag = nul
       modelMethods: methods.filter(row => row.kind === 'model').length, agentMethods: methods.filter(row => row.kind === 'agent').length,
       businessTypes: businessCoverage.total, modelBusinessTypes: businessCoverage.model, agentBusinessTypes: businessCoverage.agent,
       riskScenarios: riskCoverage.total, modelRiskScenarios: riskCoverage.model, agentRiskScenarios: riskCoverage.agent },
-    overallAsr: metrics.length ? metrics.reduce((sum, row) => sum + row.value, 0) / metrics.length : null,
+    totalBreach, totalExecuted,
+    overallAsr: totalExecuted ? totalBreach / totalExecuted : null,
   };
 }
