@@ -184,3 +184,29 @@
 
 .tw-guard-control{display:flex;align-items:center;gap:12px}.tw-guard-control>.tw-resource-field{flex:1;min-width:0}
 #tw-choice-table .grid{min-width:660px}#tw-choice-table .grid td{line-height:1.7}#tw-choice-table .grid td:first-child{text-align:center}
+
+
+/* A single line uses the same box in both task creation forms. */
+.tw-single .tw-content :is(input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]), select, textarea, .tw-resource-field){
+  box-sizing:border-box;
+  height:var(--tw-control-height,40px);
+  min-height:40px;
+  padding:9px 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background-color:var(--surface);
+  font-family:inherit;
+  font-size:14px;
+  line-height:20px;
+}
+.tw-single .tw-content textarea{
+  field-sizing:content;
+  --tw-control-height:auto;
+  max-height:none;
+  resize:none;
+}
+.tw-single .tw-content .tw-resource-field{--tw-control-height:auto}
+.tw-single .tw-content .tw-resource-field>span:first-child{white-space:normal;overflow-wrap:anywhere}
+.tw-single .tw-content .tw-resource-action{flex:none}
+.tw-single .tw-content :is(input,select,textarea,.tw-resource-field):focus-visible{border-color:var(--primary);outline:2px solid var(--primary-bg)}
+.tw-single .tw-content .input-unit input{padding-right:58px}

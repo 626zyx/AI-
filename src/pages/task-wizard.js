@@ -259,7 +259,7 @@ function pickerField(id, label, key, rows, value, placeholder, note = '', showDe
 }
 function taskNameFields(form) {
   return `<div class="field"><label for="tw-name">任务名称 <span class="req">*</span></label><input id="tw-name" maxlength="100" value="${UI.esc(form.name)}" placeholder="例如：业务交付与保密验证" oninput="App.twField('name',this.value)" aria-describedby="tw-name-error"><span id="tw-name-error" class="tw-error" ${form.nameError ? '' : 'hidden'}>${UI.esc(form.nameError)}</span></div>
-    <div class="field"><label for="tw-description">任务描述</label><textarea id="tw-description" rows="2" maxlength="1000" placeholder="选填，说明本次演练的目的" oninput="App.twField('description',this.value)">${UI.esc(form.description)}</textarea></div>`;
+    <div class="field"><label for="tw-description">任务描述</label><textarea id="tw-description" rows="1" maxlength="1000" placeholder="选填，说明本次演练的目的" oninput="App.twField('description',this.value)">${UI.esc(form.description)}</textarea></div>`;
 }
 function agentExerciseFields(form) {
   return `<fieldset class="tw-choice-group" aria-label="演练方式"><div class="tw-mode-cards">
@@ -299,7 +299,8 @@ function agentQuestionTable(form,questions) {
   return `<div class="tw-question-list"><table class="table"><thead><tr><th><input type="checkbox" aria-label="选择当前筛选的全部环境" ${allSelected ? 'checked' : ''} onchange="App.twQuestionsAll(this.checked)"></th><th>环境名称</th><th>来源</th><th>业务类型</th><th>风险场景</th><th>评估定义</th></tr></thead><tbody>${rows.map(question => {const risks=question.classification.names.risk;return `<tr class="${form.questionIds.includes(question.id) ? 'selected' : ''}"><td><input type="checkbox" aria-label="选择 ${UI.esc(question.title)}" ${form.questionIds.includes(question.id) ? 'checked' : ''} onchange="App.twQuestion('${UI.esc(question.id)}',this.checked)"></td><td><strong title="${UI.esc(question.title)}">${UI.esc(question.title)}</strong><small>${UI.esc(question.taskId)}</small></td><td>${question.source === 'system' ? '系统' : '自建'}</td><td>${UI.esc(question.classification.names.business.join('、')||'—')}</td><td><div class="tw-risk-tags">${UI.esc(risks.slice(0,3).join('、')||'—')}${risks.length > 3 ? `<span title="${UI.esc(risks.join('、'))}" aria-label="查看全部风险场景">、…</span>` : ''}</div></td><td><span class="tw-definition">${question.hasLlm ? 'LLM 已配置' : 'LLM 缺失'}</span></td></tr>`;}).join('') || '<tr><td colspan="6" class="empty-cell">没有符合条件的已发布环境</td></tr>'}</tbody></table></div>`;
 }
 function agentQuestionFields(form) {
-  return `<div class="tw-environment-select">${button('选择环境', { onclick: 'App.twPickEnvironments()' })}<span class="tw-selection-count">已选 <strong id="tw-selected-count">${form.questionIds.length}</strong> 个环境</span></div>`;
+  const count = form.questionIds.length;
+  return `<div class="tw-single-picker"><button type="button" aria-label="选择环境" class="tw-resource-field${count ? ' has-value' : ''}" onclick="App.twPickEnvironments()"><span>${count ? `已选 <span id="tw-selected-count">${count}</span> 个环境` : '请选择环境'}</span><span class="tw-resource-action">${count ? '更换' : '选择'}</span></button></div>`;
 }
 function objectStep(form, config) {
   const rows = targetsOf(form.type), chosen = selectedTarget(form);
@@ -313,7 +314,7 @@ function objectStep(form, config) {
     <div class="field"><label for="tw-name">任务名称 <span class="req">*</span></label>
       <input id="tw-name" type="text" maxlength="100" value="${UI.esc(form.name)}" placeholder="为本次演练起一个名称" autocomplete="off" aria-describedby="tw-name-error" ${form.nameError ? 'aria-invalid="true"' : ''} oninput="App.twField('name',this.value)" />
       <span id="tw-name-error" class="tw-error" ${form.nameError ? '' : 'hidden'}>${UI.esc(form.nameError)}</span></div>
-    <div class="field"><label for="tw-description">任务描述</label><textarea id="tw-description" rows="3" maxlength="1000" placeholder="选填，说明本次演练的目的" oninput="App.twField('description',this.value)">${UI.esc(form.description)}</textarea></div>
+    <div class="field"><label for="tw-description">任务描述</label><textarea id="tw-description" rows="1" maxlength="1000" placeholder="选填，说明本次演练的目的" oninput="App.twField('description',this.value)">${UI.esc(form.description)}</textarea></div>
     ${object}${form.type === 'agent' ? injectionRange(form) : ''}</div>`);
 }
 function injectionRange(form) {
